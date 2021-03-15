@@ -1,0 +1,30 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <h1>My tasks:</h1>
+
+    {% if taskmodel_list %}
+        
+        <form action="" method="post">
+        {% csrf_token %}
+        <table>
+        {{ form }}
+        </table>
+        <input type="submit" value="Submit" />
+        </form>
+
+        <ul>
+            {% for task in taskmodel_list %}
+
+                <li><a href="{{ task.get_absolute_url }}">title: {{ task.title }}; created: {{ task.creation_date }}    |</a>
+                <a href="{% url 'update-task' pk=task.pk %}">update  |  </a><a href="{% url 'delete-task' pk=task.pk %}">delete</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>There are no your own tasks...</p>
+    {% endif %}
+
+    <p><a href="{% url 'create-task' %}">Create new task</a></p>
+    <p><a href="{% url 'assigned-tasks' %}">Assigned to me</a></p>
+
+{% endblock content %}

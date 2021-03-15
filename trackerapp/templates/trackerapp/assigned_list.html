@@ -1,0 +1,18 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <h1>Assinged tasks:</h1>
+
+    {% if assigned_tasks %}
+        <ul>
+            {% for task in assigned_tasks %}
+
+                <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a><a href="{% url 'update-task-status' pk=task.pk %}">     |   Update task's status</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No tasks assigned to you...</p>
+    {% endif %}
+
+    <a href="{% url 'tasks' %}">My tasks</a>
+{% endblock content %}

@@ -1,0 +1,13 @@
+{% extends "base_generic.html" %}
+
+{% block title %} <title>tasktracker app</title> {% endblock title%}
+
+{% block content %}
+<h1>Welcome in your Task Tracker</h1>
+
+  <p>Task Tracker has the following record counts:</p>
+  <ul>
+    <li><strong>TaskModels:</strong> {{ num_task }}</li>
+  </ul>
+
+{% endblock %}
