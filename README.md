@@ -1,7 +1,7 @@
 # task-trackerapp
 Test task
 
-Learning django. Try to create task-tracker with such base funcionality:\n
+Learning django. Try to create task-tracker with such base funcionality:
 
   1.New user must have an ability to register in tracker 
   2.Logged in user can create a new task and specify title and description 
