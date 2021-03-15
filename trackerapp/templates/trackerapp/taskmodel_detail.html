@@ -1,6 +1,7 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+    {% comment %} Task body {% endcomment %}
     {% if taskmodel %}
         <h1><strong>Title:</strong> {{ taskmodel.title }}</h1>
         <h2><strong>Description:</strong> </h2><p>{{ taskmodel.description }}</p>
@@ -9,6 +10,7 @@
             <li><strong>Status:</strong> {{ taskmodel.status }}</li>
             <li><strong>Owner:</strong> {{ taskmodel.owner.username }}</li>
         
+        {% comment %} If assigned to somebody {% endcomment %}
         {% if taskmodel.assignee %}
             <li><strong>Assignee:</strong></li>
             <ul>
@@ -19,7 +21,8 @@
             <p><a href="{% url 'update-task-status' pk=taskmodel.pk %}">Update task's status</a></p>
         {% endif %}
         </ul>
-        
+
+        {% comment %} If current user owner, then let him edit task  {% endcomment %}
         {% if user == taskmodel.owner %}
             <p><a href="{% url 'update-task' pk=taskmodel.pk %}">Edit task</a></p>
         {% endif %}

@@ -14,6 +14,12 @@ from .forms import TaskSortingForm
 from django.utils.translation import ugettext as _
 
 
+"""
+Pra-class to may create form in list view.
+Overriding get and post methods.
+"""
+
+
 class FormListView(FormMixin, generic.ListView):
     def get(self, request, *args, **kwargs):
         # From FormMixin
@@ -33,6 +39,11 @@ class FormListView(FormMixin, generic.ListView):
 
     def post(self, request, *args, **kwargs):
         return self.get(request, *args, **kwargs)
+
+
+""" 
+task_filter - to filter list of task by values from form
+"""
 
 
 def task_filter(obj, tasklist):
@@ -57,6 +68,11 @@ def task_filter(obj, tasklist):
     return tasklist
 
 
+""" 
+ListView of created by user tasks, contains form to filter tasks
+"""
+
+
 class TaskListView(LoginRequiredMixin, FormListView):
     model = TaskModel
     form_class = TaskSortingForm
@@ -66,6 +82,11 @@ class TaskListView(LoginRequiredMixin, FormListView):
         tasklist = TaskModel.objects.filter(
             owner__exact=self.request.user).order_by('creation_date')
         return task_filter(self, tasklist)
+
+
+""" 
+ListView of assigned to user tasks, contains form to filter tasks
+"""
 
 
 class AssigneeTaskListView(LoginRequiredMixin, FormListView):
@@ -80,29 +101,39 @@ class AssigneeTaskListView(LoginRequiredMixin, FormListView):
         return task_filter(self, tasklist)
 
 
-class TaskDetailView(LoginRequiredMixin, generic.DetailView):
-    model = TaskModel
+"""
+Form to create task.
+"""
 
 
 class TaskCreate(LoginRequiredMixin, CreateView):
     model = TaskModel
     fields = ['title', 'description', 'status', 'assignee']
 
+    # after successful creation redirects to the created task page
     def get_success_url(self):
         return reverse_lazy('task-detail', args=(self.object.id,))
 
+    # override form_valid, to save owner(creator) of the task
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super(TaskCreate, self).form_valid(form)
+
+
+"""
+Edit task form
+"""
 
 
 class TaskUpdate(LoginRequiredMixin, UpdateView):
     model = TaskModel
     fields = ['title', 'description', 'status', 'assignee']
 
+    # after successful edition redirects to the edited task page
     def get_success_url(self):
         return reverse_lazy('task-detail', args=(self.object.id,))
 
+    # Be sure that current user trying to edit his own task...
     def dispatch(self, request, *args, **kwargs):
         # Take pk from kwargs
         pk = kwargs.get('pk')  # example
@@ -116,10 +147,16 @@ class TaskUpdate(LoginRequiredMixin, UpdateView):
             raise PermissionDenied()
 
 
+"""
+Form to edit task status (for assignee...)
+"""
+
+
 class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
     model = TaskModel
     fields = ['status', ]
 
+    # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
         # Take pk from kwargs
         pk = kwargs.get('pk')  # example
@@ -136,10 +173,16 @@ class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
             raise Http404()
 
 
+"""
+Form to delete task
+"""
+
+
 class TaskDelete(LoginRequiredMixin, DeleteView):
     model = TaskModel
     success_url = reverse_lazy('tasks')
 
+    # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
         # Take pk from kwargs
         pk = kwargs.get('pk')  # example
@@ -153,6 +196,11 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
             raise PermissionDenied()
 
 
+"""
+To view task details
+"""
+
+
 @login_required
 def task_detail(request, pk):
     try:
@@ -164,6 +212,11 @@ def task_detail(request, pk):
     if user == task.owner or user in task.assignee.all():
         return render(request, 'trackerapp/taskmodel_detail.html', context={'taskmodel': task})
     raise PermissionDenied()
+
+
+"""
+Sign up new user
+"""
 
 
 def sign_up(request):

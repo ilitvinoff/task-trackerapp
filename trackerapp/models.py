@@ -14,6 +14,7 @@ class TaskModel(models.Model):
     description = TextField(
         max_length=1000, help_text="Enter a brief description of the task.")
 
+    # status choices
     LOAN_STATUS = (
         ('wS', 'waiting to start'),
         ('iW', 'in work'),
