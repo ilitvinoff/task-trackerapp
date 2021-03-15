@@ -28,13 +28,15 @@ class FormListView(FormMixin, generic.ListView):
             raise Http404(_(u"Empty list and '%(class_name)s.allow_empty' is False.")
                           % {'class_name': self.__class__.__name__})
 
-        context = self.get_context_data(object_list=self.object_list, form=self.form)
+        context = self.get_context_data(
+            object_list=self.object_list, form=self.form)
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         return self.get(request, *args, **kwargs)
 
-class TaskListView(LoginRequiredMixin,FormListView):
+
+class TaskListView(LoginRequiredMixin, FormListView):
     model = TaskModel
     form_class = TaskSortingForm
     paginate_by = 5
@@ -61,20 +63,40 @@ class TaskListView(LoginRequiredMixin,FormListView):
                     tasklist = tasklist.filter(status__exact=choose_status)
             else:
                 raise InvalidQuery()
-        else:
-            sorting_form = TaskSortingForm()
 
         return tasklist
 
 
-class AssigneeTaskListView(LoginRequiredMixin, generic.ListView):
+class AssigneeTaskListView(LoginRequiredMixin, FormListView):
     model = TaskModel
     context_object_name = 'assigned_tasks'
     template_name = 'trackerapp/assigned_list.html'
+    form_class = TaskSortingForm
     paginate_by = 5
 
     def get_queryset(self):
-        return TaskModel.objects.filter(assignee__exact=self.request.user)
+        tasklist = TaskModel.objects.filter(assignee__exact=self.request.user)
+
+        if self.request.method == 'POST':
+            sorting_form = TaskSortingForm(self.request.POST)
+
+            if sorting_form.is_valid():
+                date_from = sorting_form.cleaned_data['from_date']
+                date_till = sorting_form.cleaned_data['till_date']
+                choose_status = sorting_form.cleaned_data['choose_status']
+
+                if date_from:
+                    tasklist = tasklist.filter(creation_date__gte=date_from)
+
+                if date_till:
+                    tasklist = tasklist.filter(creation_date__lte=date_till)
+
+                if choose_status:
+                    tasklist = tasklist.filter(status__exact=choose_status)
+            else:
+                raise InvalidQuery()
+
+        return tasklist
 
 
 class TaskDetailView(LoginRequiredMixin, generic.DetailView):

@@ -2,6 +2,14 @@
 
 {% block content %}
     <h1>Assinged tasks:</h1>
+    
+    <form action="" method="post">
+        {% csrf_token %}
+        <table>
+        {{ form }}
+        </table>
+        <input type="submit" value="Submit" />
+    </form>
 
     {% if assigned_tasks %}
         <ul>
