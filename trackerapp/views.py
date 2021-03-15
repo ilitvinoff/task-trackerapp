@@ -4,14 +4,13 @@ from django.urls.base import reverse_lazy
 from django.views import generic
 from .models import TaskModel
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.shortcuts import render, redirect
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate
 from .forms import TaskSortingForm
-from django.views.generic.edit import FormMixin
 from django.utils.translation import ugettext as _
 
 
@@ -36,6 +35,28 @@ class FormListView(FormMixin, generic.ListView):
         return self.get(request, *args, **kwargs)
 
 
+def task_filter(obj, tasklist):
+    if obj.request.method == 'POST':
+        sorting_form = TaskSortingForm(obj.request.POST)
+
+        if sorting_form.is_valid():
+            date_from = sorting_form.cleaned_data['from_date']
+            date_till = sorting_form.cleaned_data['till_date']
+            choose_status = sorting_form.cleaned_data['choose_status']
+
+            if date_from:
+                tasklist = tasklist.filter(creation_date__gte=date_from)
+
+            if date_till:
+                tasklist = tasklist.filter(creation_date__lte=date_till)
+
+            if choose_status:
+                tasklist = tasklist.filter(status__exact=choose_status)
+        else:
+            raise InvalidQuery()
+    return tasklist
+
+
 class TaskListView(LoginRequiredMixin, FormListView):
     model = TaskModel
     form_class = TaskSortingForm
@@ -44,59 +65,19 @@ class TaskListView(LoginRequiredMixin, FormListView):
     def get_queryset(self):
         tasklist = TaskModel.objects.filter(
             owner__exact=self.request.user).order_by('creation_date')
-
-        if self.request.method == 'POST':
-            sorting_form = TaskSortingForm(self.request.POST)
-
-            if sorting_form.is_valid():
-                date_from = sorting_form.cleaned_data['from_date']
-                date_till = sorting_form.cleaned_data['till_date']
-                choose_status = sorting_form.cleaned_data['choose_status']
-
-                if date_from:
-                    tasklist = tasklist.filter(creation_date__gte=date_from)
-
-                if date_till:
-                    tasklist = tasklist.filter(creation_date__lte=date_till)
-
-                if choose_status:
-                    tasklist = tasklist.filter(status__exact=choose_status)
-            else:
-                raise InvalidQuery()
-
-        return tasklist
+        return task_filter(self, tasklist)
 
 
 class AssigneeTaskListView(LoginRequiredMixin, FormListView):
     model = TaskModel
+    form_class = TaskSortingForm
     context_object_name = 'assigned_tasks'
     template_name = 'trackerapp/assigned_list.html'
-    form_class = TaskSortingForm
     paginate_by = 5
 
     def get_queryset(self):
         tasklist = TaskModel.objects.filter(assignee__exact=self.request.user)
-
-        if self.request.method == 'POST':
-            sorting_form = TaskSortingForm(self.request.POST)
-
-            if sorting_form.is_valid():
-                date_from = sorting_form.cleaned_data['from_date']
-                date_till = sorting_form.cleaned_data['till_date']
-                choose_status = sorting_form.cleaned_data['choose_status']
-
-                if date_from:
-                    tasklist = tasklist.filter(creation_date__gte=date_from)
-
-                if date_till:
-                    tasklist = tasklist.filter(creation_date__lte=date_till)
-
-                if choose_status:
-                    tasklist = tasklist.filter(status__exact=choose_status)
-            else:
-                raise InvalidQuery()
-
-        return tasklist
+        return task_filter(self, tasklist)
 
 
 class TaskDetailView(LoginRequiredMixin, generic.DetailView):
