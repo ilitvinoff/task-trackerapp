@@ -2,9 +2,6 @@
 
 {% block content %}
     <h1>My tasks:</h1>
-
-    {% if taskmodel_list %}
-        
         <form action="" method="post">
         {% csrf_token %}
         <table>
@@ -13,6 +10,8 @@
         <input type="submit" value="Submit" />
         </form>
 
+    {% if taskmodel_list %}
+        
         <ul>
             {% for task in taskmodel_list %}
 

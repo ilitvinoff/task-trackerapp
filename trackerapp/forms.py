@@ -7,6 +7,7 @@ from .models import TaskModel
 class TaskSortingForm(forms.Form):
     from_date = DateField(label='date from:', widget=DateInput,
                           help_text='Enter the "date from" for lookup...', required=False)
-    till_date = DateField(label='date till',widget=DateInput,
+    till_date = DateField(label='date till', widget=DateInput,
                           help_text='Enter the "date until" for lookup ...', required=False)
-    choose_status = ChoiceField(label='choose status',choices=TaskModel.LOAN_STATUS,required=False)
+    choose_status = ChoiceField(
+        label='choose status', choices=TaskModel.LOAN_STATUS, required=False)

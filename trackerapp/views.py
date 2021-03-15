@@ -12,9 +12,29 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate
 from .forms import TaskSortingForm
 from django.views.generic.edit import FormMixin
+from django.utils.translation import ugettext as _
 
 
-class TaskListView(LoginRequiredMixin, FormMixin, generic.ListView):
+class FormListView(FormMixin, generic.ListView):
+    def get(self, request, *args, **kwargs):
+        # From FormMixin
+        form_class = self.get_form_class()
+        self.form = self.get_form(form_class)
+
+        # From ListView
+        self.object_list = self.get_queryset()
+        allow_empty = self.get_allow_empty()
+        if not allow_empty and len(self.object_list) == 0:
+            raise Http404(_(u"Empty list and '%(class_name)s.allow_empty' is False.")
+                          % {'class_name': self.__class__.__name__})
+
+        context = self.get_context_data(object_list=self.object_list, form=self.form)
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
+
+class TaskListView(LoginRequiredMixin,FormListView):
     model = TaskModel
     form_class = TaskSortingForm
     paginate_by = 5
