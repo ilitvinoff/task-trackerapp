@@ -9,18 +9,27 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('trackerapp', '0002_taskmodel_status'),
+        ("trackerapp", "0002_taskmodel_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='taskmodel',
-            name='assignee',
-            field=models.ManyToManyField(blank=True, help_text='Select a user who can watch / edit / complete the task', related_name='assignee', to=settings.AUTH_USER_MODEL),
+            model_name="taskmodel",
+            name="assignee",
+            field=models.ManyToManyField(
+                blank=True,
+                help_text="Select a user who can watch / edit / complete the task",
+                related_name="assignee",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='taskmodel',
-            name='owner',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            model_name="taskmodel",
+            name="owner",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

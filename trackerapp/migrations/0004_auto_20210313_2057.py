@@ -6,17 +6,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trackerapp', '0003_auto_20210311_0927'),
+        ("trackerapp", "0003_auto_20210311_0927"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='taskmodel',
-            options={'ordering': ['creation_date', 'title'], 'permissions': (('can_edit_task', '...'), ('can_change_status', '...'))},
+            name="taskmodel",
+            options={
+                "ordering": ["creation_date", "title"],
+                "permissions": (("can_edit_task", "..."), ("can_change_status", "...")),
+            },
         ),
         migrations.AlterField(
-            model_name='taskmodel',
-            name='status',
-            field=models.CharField(choices=[('wS', 'waiting to start'), ('iW', 'in work'), ('c', 'completed')], default='wS', help_text='Current task status', max_length=2),
+            model_name="taskmodel",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("wS", "waiting to start"),
+                    ("iW", "in work"),
+                    ("c", "completed"),
+                ],
+                default="wS",
+                help_text="Current task status",
+                max_length=2,
+            ),
         ),
     ]

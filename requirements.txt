@@ -1,0 +1,5 @@
+django
+pylint
+pylint-django
+black
+#mypy

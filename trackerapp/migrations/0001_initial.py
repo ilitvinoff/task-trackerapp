@@ -15,17 +15,54 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='TaskModel',
+            name="TaskModel",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creation_date', models.DateField(auto_created=True, auto_now_add=True)),
-                ('title', models.CharField(help_text='Enter title of your task)', max_length=200)),
-                ('description', models.TextField(help_text='Enter a brief description of the task.', max_length=1000)),
-                ('assignee', models.ManyToManyField(help_text='Select a user who can watch / edit / complete the task', related_name='assignee', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "creation_date",
+                    models.DateField(auto_created=True, auto_now_add=True),
+                ),
+                (
+                    "title",
+                    models.CharField(
+                        help_text="Enter title of your task)", max_length=200
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        help_text="Enter a brief description of the task.",
+                        max_length=1000,
+                    ),
+                ),
+                (
+                    "assignee",
+                    models.ManyToManyField(
+                        help_text="Select a user who can watch / edit / complete the task",
+                        related_name="assignee",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['creation_date', 'title'],
+                "ordering": ["creation_date", "title"],
             },
         ),
     ]
