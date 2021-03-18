@@ -1,3 +1,4 @@
 /trackerapp/migrations/__pycache__/
 /trackerapp/__pycache__/
 /tasktracker/__pycache__/
+db.sqlite3
