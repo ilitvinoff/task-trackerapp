@@ -1,27 +1,28 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-    <h1>Assinged tasks:</h1>
-    {% comment %} Filter form {% endcomment %}
-    <form action="" method="post">
-        {% csrf_token %}
-        <table>
+<h1>Assinged tasks:</h1>
+{% comment %} Filter form {% endcomment %}
+<form action="" method="post">
+    {% csrf_token %}
+    <table>
         {{ form }}
-        </table>
-        <input type="submit" value="Submit" />
-    </form>
+    </table>
+    <input type="submit" value="Submit" />
+</form>
 
-    {% comment %} If list exist, then printout it {% endcomment %}
-    {% if assigned_tasks %}
-        <ul>
-            {% for task in assigned_tasks %}
+{% comment %} If list exist, then printout it {% endcomment %}
+{% if assigned_tasks %}
+<ul>
+    {% for task in assigned_tasks %}
 
-                <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a><a href="{% url 'update-task-status' pk=task.pk %}">     |   Update task's status</a></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No tasks assigned to you...</p>
-    {% endif %}
-    
-    <a href="{% url 'tasks' %}">My tasks</a>
+    <li><a href="{{ task.get_absolute_url }}">{{ task.title }}</a><a href="{% url 'update-task-status' pk=task.pk %}"> |
+            Update task's status</a></li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No tasks assigned to you...</p>
+{% endif %}
+
+<a href="{% url 'tasks' %}">My tasks</a>
 {% endblock content %}

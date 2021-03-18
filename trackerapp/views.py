@@ -63,7 +63,7 @@ def task_filter(obj, tasklist):
             if choose_status:
                 tasklist = tasklist.filter(status__exact=choose_status)
         else:
-            raise InvalidQuery()
+            sorting_form = TaskSortingForm()
     return tasklist
 
 
@@ -158,7 +158,7 @@ class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
         try:
             task = TaskModel.objects.get(pk=pk)
 
-            if user in task.assignee.all():
+            if user in task.assignee.all() or user == task.owner:
                 return super(TaskStatusUpdate, self).dispatch(request, *args, **kwargs)
             raise PermissionDenied()
 
