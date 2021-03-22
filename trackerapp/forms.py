@@ -10,7 +10,7 @@ class DateInput(forms.DateInput):
 
 class TaskSortingForm(forms.Form):
     """
-    Form for filter by date(from-till) and by status
+    Form to filter task by date(from-till) and by status
     """
 
     from_date = DateField(
@@ -42,3 +42,22 @@ class TaskSortingForm(forms.Form):
             if from_date > till_date:
                 raise ValidationError('"date from" must be before "till date"')
         return data
+
+
+class MessageSortingForm(forms.Form):
+    """
+    Form to filter message by date(from-till)
+    """
+
+    from_date = DateField(
+        label="date from:",
+        widget=DateInput,
+        help_text='Format like 03.17.1979',
+        required=False,
+    )
+    till_date = DateField(
+        label="date to:",
+        widget=DateInput,
+        help_text='Format like 03.17.1979',
+        required=False,
+    )

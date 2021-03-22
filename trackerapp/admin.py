@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TaskModel
+from .models import TaskModel, Message
 
 
 @admin.register(TaskModel)
@@ -13,3 +13,9 @@ class TaskModelAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "description")}),
         ("Users:", {"fields": ("owner", "assignee", "status")}),
     )
+
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ("body", "owner", "task", "creation_date")
+    list_filter = ("owner", "task", "creation_date")

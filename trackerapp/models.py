@@ -20,11 +20,11 @@ class TaskModel(models.Model):
     )
 
     # status choices
-    LOAN_STATUS = (("wS", "waiting to start"),
-                   ("iW", "in work"), ("c", "completed"))
+    LOAN_STATUS = (("waiting to start", "waiting to start"),
+                   ("in work", "in work"), ("completed", "completed"))
 
     status = models.CharField(
-        max_length=2,
+        max_length=16,
         choices=LOAN_STATUS,
         blank=False,
         default="wS",
@@ -40,7 +40,8 @@ class TaskModel(models.Model):
         help_text="Select a user who can watch / edit / complete the task",
         related_name="assignee",
         blank=True,
-        on_delete=models.SET_NULL
+        on_delete=models.SET_NULL,
+        null=True
     )
 
     def __str__(self):
@@ -61,11 +62,9 @@ class TaskModel(models.Model):
 
 
 class Message(models.Model):
-    title = models.CharField(max_length=200, help_text='enter message title')
-
     body = models.CharField(max_length=1500, help_text='enter message body')
 
-    owner = models.ForeignKey(User, on_delete=models.SET_NULL)
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
 

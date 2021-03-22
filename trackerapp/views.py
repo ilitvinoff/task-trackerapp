@@ -10,7 +10,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMi
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
 from .models import TaskModel, Message
-from .forms import TaskSortingForm
+from .forms import TaskSortingForm, MessageSortingForm
 
 
 class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
@@ -62,7 +62,7 @@ def task_filter(obj, tasklist):
             if choose_status:
                 tasklist = tasklist.filter(status__exact=choose_status)
         else:
-            sorting_form = TaskSortingForm()
+            TaskSortingForm()
     return tasklist
 
 
@@ -157,7 +157,7 @@ class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
         try:
             task = TaskModel.objects.get(pk=pk)
 
-            if user in task.assignee.all() or user == task.owner:
+            if user == task.assignee or user == task.owner:
                 return super(TaskStatusUpdate, self).dispatch(request, *args, **kwargs)
             raise PermissionDenied()
 
@@ -174,7 +174,7 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
 
     # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
+        # Take pk from kwargs:
         pk = kwargs.get("pk")  # example
         # Take user from request
         user = request.user
@@ -186,8 +186,38 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
             raise PermissionDenied() from try_delete_not_owned_task
 
 
-class MessageListView(generic.ListView):
+def message_filter(obj, message_list):
+    """
+    message_filter - to filter list of messages by values from form
+    """
+    if obj.request.method == "POST":
+        sorting_form = MessageSortingForm(obj.request.POST)
+
+        if sorting_form.is_valid():
+            date_from = sorting_form.cleaned_data["from_date"]
+            date_till = sorting_form.cleaned_data["till_date"]
+
+            if date_from:
+                message_list = message_list.filter(creation_date__gte=date_from)
+
+            if date_till:
+                message_list = message_list.filter(creation_date__lte=date_till)
+
+        else:
+            MessageSortingForm()
+    return message_list
+
+
+class MessageListView(LoginRequiredMixin, FormListView):
     model = Message
+    form_class = MessageSortingForm
+    paginate_by = 5
+
+    def get_queryset(self):
+        message_list = Message.objects.filter(owner__exact=self.request.user).order_by(
+            "creation_date")
+        return message_filter(self, message_list)
+
 
 @login_required
 def task_detail(request, pk):
@@ -200,7 +230,7 @@ def task_detail(request, pk):
         raise Http404 from task_does_not_exist
 
     user = request.user
-    if user == task.owner or user in task.assignee.all():
+    if user == task.owner or user == task.assignee:
         return render(
             request, "trackerapp/taskmodel_detail.html", context={"taskmodel": task}
         )
