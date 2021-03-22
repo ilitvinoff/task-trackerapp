@@ -1,4 +1,3 @@
-from django.db.models.query_utils import InvalidQuery
 from django.http.response import Http404
 from django.urls.base import reverse_lazy
 from django.utils.translation import ugettext as _
@@ -10,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
-from .models import TaskModel
+from .models import TaskModel, Message
 from .forms import TaskSortingForm
 
 
@@ -186,6 +185,9 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
         except TaskModel.DoesNotExist as try_delete_not_owned_task:
             raise PermissionDenied() from try_delete_not_owned_task
 
+
+class MessageListView(generic.ListView):
+    model = Message
 
 @login_required
 def task_detail(request, pk):

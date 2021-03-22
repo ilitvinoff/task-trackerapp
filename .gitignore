@@ -2,3 +2,5 @@
 /trackerapp/__pycache__/
 /tasktracker/__pycache__/
 db.sqlite3
+/venv-tracker/*
+/.idea/*

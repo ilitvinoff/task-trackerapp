@@ -3,3 +3,7 @@
     padding: 0;
     list-style: none;
 }
+
+.navbar-fixed-bottom, .navbar-fixed-top {
+    position: relative;
+}

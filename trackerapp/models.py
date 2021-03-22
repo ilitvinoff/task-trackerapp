@@ -4,6 +4,7 @@ from django.db.models.fields import DateField, TextField
 from django.db.models.fields.related import ForeignKey
 from django.urls import reverse
 
+
 # Create your models here.
 
 
@@ -34,11 +35,12 @@ class TaskModel(models.Model):
 
     owner = ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=False)
 
-    assignee = models.ManyToManyField(
+    assignee = models.ForeignKey(
         User,
         help_text="Select a user who can watch / edit / complete the task",
         related_name="assignee",
         blank=True,
+        on_delete=models.SET_NULL
     )
 
     def __str__(self):
@@ -56,3 +58,15 @@ class TaskModel(models.Model):
     class Meta:
         ordering = ["creation_date", "title"]
         permissions = (("can_edit_task", "..."), ("can_change_status", "..."))
+
+
+class Message(models.Model):
+    title = models.CharField(max_length=200, help_text='enter message title')
+
+    body = models.CharField(max_length=1500, help_text='enter message body')
+
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL)
+
+    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+
+    creation_date = DateField(auto_created=True, auto_now_add=True)

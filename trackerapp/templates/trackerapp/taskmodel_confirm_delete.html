@@ -1,14 +1,14 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+    <div class="col-md-4">
+        <h1>Delete task</h1>
+        <p>Are you sure you want to delete the task: {{ taskmodel.title }}?</p>
+    </div>
 
-<h1>Delete Author</h1>
-
-<p>Are you sure you want to delete the author: {{ author }}?</p>
-
-<form action="" method="POST">
-  {% csrf_token %}
-  <input type="submit" value="Yes, delete." />
-</form>
+    <form action="" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-success" type="submit" value="Yes, delete."/>
+    </form>
 
 {% endblock %}
