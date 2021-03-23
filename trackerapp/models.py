@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.fields import DateField, TextField
+from django.db.models.fields import DateField, TextField, DateTimeField
 from django.db.models.fields.related import ForeignKey
 from django.urls import reverse
 
@@ -64,8 +64,17 @@ class TaskModel(models.Model):
 class Message(models.Model):
     body = models.CharField(max_length=1500, help_text='enter message body')
 
-    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='message_owner')
 
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
 
-    creation_date = DateField(auto_created=True, auto_now_add=True)
+    creation_date = DateTimeField(auto_created=True, auto_now_add=True)
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a particular instance of the model.
+        """
+        return reverse("message-detail", args=[str(self.id)])
+
+    class Meta:
+        ordering = ["creation_date", ]

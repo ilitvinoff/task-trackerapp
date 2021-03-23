@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.http.response import Http404
 from django.urls.base import reverse_lazy
 from django.utils.translation import ugettext as _
@@ -103,9 +104,9 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
-    # after successful creation redirects to the created task page
-    def get_success_url(self):
-        return reverse_lazy("task-detail", args=(self.object.id,))
+    # # after successful creation redirects to the created task page
+    # def get_success_url(self):
+    #     return reverse_lazy("task-detail", args=(self.object.id,))
 
     # override form_valid, to save owner(creator) of the task
     def form_valid(self, form):
@@ -174,8 +175,7 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
 
     # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs:
-        pk = kwargs.get("pk")  # example
+        pk = kwargs.get("pk")
         # Take user from request
         user = request.user
         # check permission
@@ -214,9 +214,71 @@ class MessageListView(LoginRequiredMixin, FormListView):
     paginate_by = 5
 
     def get_queryset(self):
-        message_list = Message.objects.filter(owner__exact=self.request.user).order_by(
-            "creation_date")
+        message_list = Message.objects.filter(Q(task_id__exact=self.kwargs.get("pk")),
+                                              Q(task__owner__exact=self.request.user) | Q(
+                                                  task__assignee__exact=self.request.user)).order_by("creation_date")
         return message_filter(self, message_list)
+
+
+class MessageCreate(LoginRequiredMixin, CreateView):
+    """
+    Form to create message...
+    """
+    model = Message
+    fields = ['body', ]
+
+    # after successful creation redirects to the created task page
+    # def get_success_url(self):
+    #     return reverse_lazy("message-detail", args=(self.object.id,))
+
+    def form_valid(self, form, **kwargs):
+        form.instance.owner = self.request.user
+        form.instance.task = TaskModel.objects.get(pk=self.kwargs.get('pk'))
+        return super(MessageCreate, self).form_valid(form)
+
+    # after successful creation redirects to the relatives task page
+    def get_success_url(self, **kwargs):
+        message = Message.objects.filter(task__pk=self.kwargs.get('pk'))
+        return reverse_lazy("message-list")
+
+
+class MessageUpdate(LoginRequiredMixin, UpdateView):
+    """
+    Form to update comments
+    """
+    model = Message
+    fields = ['body', ]
+
+    # Be sure that current user trying to edit his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        # Take pk from kwargs
+        pk = kwargs.get("pk")
+        # Take user from request
+        user = request.user
+        # check permission
+        try:
+            Message.objects.get(pk=pk, owner=user)
+            return super(MessageUpdate, self).dispatch(request, *args, **kwargs)
+        except Message.DoesNotExist as try_update_not_owned_message:
+            raise PermissionDenied() from try_update_not_owned_message
+
+
+class MessageDelete(LoginRequiredMixin, DeleteView):
+    model = Message
+    success_url = reverse_lazy("message-list")
+
+    # Be sure that current user trying to delete his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        # Take pk from kwargs
+        pk = kwargs.get("pk")
+        # Take user from request
+        user = request.user
+        # check permission
+        try:
+            Message.objects.get(pk=pk, owner=user)
+            return super(MessageDelete, self).dispatch(request, *args, **kwargs)
+        except Message.DoesNotExist as try_update_not_owned_message:
+            raise PermissionDenied() from try_update_not_owned_message
 
 
 @login_required
@@ -235,6 +297,35 @@ def task_detail(request, pk):
             request, "trackerapp/taskmodel_detail.html", context={"taskmodel": task}
         )
     raise PermissionDenied()
+
+
+class MessageDetail(generic.DetailView):
+    model = Message
+
+    # Be sure if user is owner of the message to view it
+    def get_object(self, queryset=None):
+        obj = super(MessageDetail, self).get_object(queryset=queryset)
+        if not (obj.owner == self.request.user or obj.task.assignee != self.request.user):
+            raise Http404()
+        return obj
+
+
+# @login_required
+# def message_detail(request, pk):
+#     """
+#     To view detail message info
+#     """
+#
+#     try:
+#         message = Message.objects.get(pk=pk)
+#     except ObjectDoesNotExist as message_does_not_exist:
+#         raise Http404 from message_does_not_exist
+#
+#     user = request.user
+#     if user == message.owner or user == message.assignee:
+#         return render(request, "trackerapp/message_detail.html", context={"message": message})
+#
+#     raise PermissionDenied()
 
 
 def sign_up(request):

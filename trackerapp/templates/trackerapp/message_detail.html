@@ -1,0 +1,36 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    {% if message %}
+        <div class="col-md-10">
+            <h1><strong>From: </strong> {{ message.owner }}</h1>
+            <h2><strong>Description:</strong></h2>
+            <p>{{ message.body }}</p>
+            <ul>
+                <li><strong>Creation date:</strong> {{ message.creation_date }} </li>
+
+                {% comment %} If assigned to somebody {% endcomment %}
+                {% if message.taskmodel.assignee %}
+                    <li><strong>Assignee:</strong></li>
+                    <div class="col-md-4">
+                        <p>
+                            {{ message.taskmodel.assignee }}
+                        </p>
+                    </div>
+
+                {% endif %}
+            </ul>
+        </div>
+
+        {% comment %} If current user owner, then let him edit task  {% endcomment %}
+        {% if user == message.owner %}
+            <p><a class="btn btn-success" href="{% url 'message-update' pk=message.pk %}">Edit comment</a></p>
+            <p><a class="btn btn-primary" role="button" href="{% url 'message-delete' pk=message.pk %}">delete</a></p>
+        {% endif %}
+
+        <p><a class="btn btn-primary" role="button" href="{% url 'message-list' %}">Comments</a></p>
+
+    {% else %}
+        <h2>There is no such task in your list</h2>
+    {% endif %}
+{% endblock %}
