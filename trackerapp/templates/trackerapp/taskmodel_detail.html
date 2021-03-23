@@ -32,7 +32,7 @@
         {% endif %}
 
         <p><a class="btn btn-primary" role="button" href="{% url 'message-create' pk=taskmodel.pk %}">Add comment</a></p>
-        <p><a class="btn btn-primary" role="button" href="{% url 'message-list' %}">Comments</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'message-list' pk=taskmodel.pk %}">Comments</a></p>
 
     {% else %}
         <h2>There is no such task in your list</h2>

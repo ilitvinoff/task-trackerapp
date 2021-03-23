@@ -26,6 +26,6 @@ urlpatterns = [
     url(r"message/(?P<pk>\d+)$", views.MessageDetail.as_view(), name="message-detail"),
     url(r"message/(?P<pk>\d+)/delete$", views.MessageDelete.as_view(), name="message-delete"),
     url(r"message/(?P<pk>\d+)/update$", views.MessageUpdate.as_view(), name="message-update"),
-    url(r"^messagelist$", views.MessageListView.as_view(), name="message-list"),
+    url(r"task/(?P<pk>\d+)/messagelist$", views.MessageListView.as_view(), name="message-list"),
 
 ]

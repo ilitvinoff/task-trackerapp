@@ -213,7 +213,7 @@ class MessageListView(LoginRequiredMixin, FormListView):
     form_class = MessageSortingForm
     paginate_by = 5
 
-    def get_queryset(self):
+    def get_queryset(self,**kwargs):
         message_list = Message.objects.filter(Q(task_id__exact=self.kwargs.get("pk")),
                                               Q(task__owner__exact=self.request.user) | Q(
                                                   task__assignee__exact=self.request.user)).order_by("creation_date")
