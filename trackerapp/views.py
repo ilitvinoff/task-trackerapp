@@ -12,6 +12,91 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
 from .models import TaskModel, Message
 from .forms import TaskSortingForm, MessageSortingForm
+from django.contrib.auth.models import User, Group
+from rest_framework import viewsets
+from rest_framework import permissions
+from .serializers import (
+    UserSerializer,
+    GroupSerializer,
+    TaskSerializer,
+    MessageSerializer,
+)
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Message.objects.all()
+            .filter(
+                Q(task__owner__exact=self.request.user)
+                | Q(task__assignee__exact=self.request.user),
+            )
+            .order_by("creation_date")
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        if self.get_object().owner == request.user:
+            return super().destroy(request, args, kwargs)
+        raise PermissionDenied()
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        if self.get_object().owner == request.user:
+            return super().update(request, args, kwargs)
+        raise PermissionDenied()
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = TaskModel.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TaskModel.objects.all().filter(
+            Q(owner__exact=self.request.user) | Q(assignee__exact=self.request.user)
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        if self.get_object().owner == request.user:
+            return super().destroy(request, args, kwargs)
+        raise PermissionDenied()
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        if (
+            self.get_object().owner == request.user
+            or self.get_object().assignee == request.user
+        ):
+            return super().update(request, args, kwargs)
+        raise PermissionDenied()
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows groups to be viewed or edited.
+    """
+
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
@@ -34,8 +119,7 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
                 % {"class_name": self.__class__.__name__}
             )
 
-        context = self.get_context_data(
-            object_list=self.object_list, form=self.form)
+        context = self.get_context_data(object_list=self.object_list, form=self.form)
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
@@ -67,10 +151,13 @@ def task_filter(obj, tasklist):
     return tasklist
 
 
-class TaskListView(LoginRequiredMixin, FormListView):  # pylint: disable=too-many-ancestors
+class TaskListView(
+    LoginRequiredMixin, FormListView
+):  # pylint: disable=too-many-ancestors
     """
     ListView of created by user tasks, contains form to filter tasks
     """
+
     model = TaskModel
     form_class = TaskSortingForm
     paginate_by = 5
@@ -82,10 +169,13 @@ class TaskListView(LoginRequiredMixin, FormListView):  # pylint: disable=too-man
         return task_filter(self, tasklist)
 
 
-class AssigneeTaskListView(LoginRequiredMixin, FormListView):  # pylint: disable=too-many-ancestors
+class AssigneeTaskListView(
+    LoginRequiredMixin, FormListView
+):  # pylint: disable=too-many-ancestors
     """
     ListView of assigned to user tasks, contains form to filter tasks
     """
+
     model = TaskModel
     form_class = TaskSortingForm
     context_object_name = "assigned_tasks"
@@ -101,6 +191,7 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     """
     Form to create task.
     """
+
     model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
@@ -118,6 +209,7 @@ class TaskUpdate(LoginRequiredMixin, UpdateView):
     """
     Edit task form
     """
+
     model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
@@ -143,6 +235,7 @@ class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
     """
     Form to edit task status (for assignee...)
     """
+
     model = TaskModel
     fields = [
         "status",
@@ -170,6 +263,7 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
     """
     Form to delete task
     """
+
     model = TaskModel
     success_url = reverse_lazy("tasks")
 
@@ -213,10 +307,12 @@ class MessageListView(LoginRequiredMixin, FormListView):
     form_class = MessageSortingForm
     paginate_by = 5
 
-    def get_queryset(self,**kwargs):
-        message_list = Message.objects.filter(Q(task_id__exact=self.kwargs.get("pk")),
-                                              Q(task__owner__exact=self.request.user) | Q(
-                                                  task__assignee__exact=self.request.user)).order_by("creation_date")
+    def get_queryset(self, **kwargs):
+        message_list = Message.objects.filter(
+            Q(task_id__exact=self.kwargs.get("pk")),
+            Q(task__owner__exact=self.request.user)
+            | Q(task__assignee__exact=self.request.user),
+        ).order_by("creation_date")
         return message_filter(self, message_list)
 
 
@@ -224,8 +320,11 @@ class MessageCreate(LoginRequiredMixin, CreateView):
     """
     Form to create message...
     """
+
     model = Message
-    fields = ['body', ]
+    fields = [
+        "body",
+    ]
 
     # after successful creation redirects to the created task page
     # def get_success_url(self):
@@ -233,12 +332,12 @@ class MessageCreate(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
-        form.instance.task = TaskModel.objects.get(pk=self.kwargs.get('pk'))
+        form.instance.task = TaskModel.objects.get(pk=self.kwargs.get("pk"))
         return super(MessageCreate, self).form_valid(form)
 
     # after successful creation redirects to the relatives task page
     def get_success_url(self, **kwargs):
-        message = Message.objects.filter(task__pk=self.kwargs.get('pk'))
+        message = Message.objects.filter(task__pk=self.kwargs.get("pk"))
         return reverse_lazy("message-list")
 
 
@@ -246,8 +345,11 @@ class MessageUpdate(LoginRequiredMixin, UpdateView):
     """
     Form to update comments
     """
+
     model = Message
-    fields = ['body', ]
+    fields = [
+        "body",
+    ]
 
     # Be sure that current user trying to edit his own comment...
     def dispatch(self, request, *args, **kwargs):
@@ -305,7 +407,9 @@ class MessageDetail(generic.DetailView):
     # Be sure if user is owner of the message to view it
     def get_object(self, queryset=None):
         obj = super(MessageDetail, self).get_object(queryset=queryset)
-        if not (obj.owner == self.request.user or obj.task.assignee != self.request.user):
+        if not (
+            obj.owner == self.request.user or obj.task.assignee != self.request.user
+        ):
             raise Http404()
         return obj
 

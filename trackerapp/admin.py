@@ -7,6 +7,7 @@ class TaskModelAdmin(admin.ModelAdmin):
     """
     Define admin panel's properties
     """
+
     list_display = ("title", "status", "owner", "creation_date")
     list_filter = ("owner", "status", "assignee", "creation_date")
     fieldsets = (

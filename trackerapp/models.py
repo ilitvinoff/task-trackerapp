@@ -12,16 +12,19 @@ class TaskModel(models.Model):
     """
     Model describes task properties
     """
-    title = models.CharField(
-        max_length=200, help_text="Enter title of your task)")
+
+    # status choices
+    LOAN_STATUS = (
+        ("waiting to start", "waiting to start"),
+        ("in work", "in work"),
+        ("completed", "completed"),
+    )
+
+    title = models.CharField(max_length=200, help_text="Enter title of your task)")
 
     description = TextField(
         max_length=1000, help_text="Enter a brief description of the task."
     )
-
-    # status choices
-    LOAN_STATUS = (("waiting to start", "waiting to start"),
-                   ("in work", "in work"), ("completed", "completed"))
 
     status = models.CharField(
         max_length=16,
@@ -41,7 +44,7 @@ class TaskModel(models.Model):
         related_name="assignee",
         blank=True,
         on_delete=models.SET_NULL,
-        null=True
+        null=True,
     )
 
     def __str__(self):
@@ -62,9 +65,11 @@ class TaskModel(models.Model):
 
 
 class Message(models.Model):
-    body = models.CharField(max_length=1500, help_text='enter message body')
+    body = models.CharField(max_length=1500, help_text="enter message body")
 
-    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='message_owner')
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
+    )
 
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
 
@@ -74,7 +79,9 @@ class Message(models.Model):
         """
         Returns the url to access a particular instance of the model.
         """
-        return reverse("message-detail", args=[str(self.id)])
+        return reverse("comment-detail", args=[str(self.id)])
 
     class Meta:
-        ordering = ["creation_date", ]
+        ordering = [
+            "creation_date",
+        ]

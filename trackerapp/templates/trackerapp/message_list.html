@@ -19,7 +19,7 @@
             {% for message in message_list %}
 
                 <li>
-                    <div class="col-md-10">
+                    <div>
                         <a class="btn btn-default" href="{{ message.get_absolute_url }}">{{ message.body }};
                     created: {{ message.creation_date }}</a>
                     <p>Owner: {{ message.owner }}</p>

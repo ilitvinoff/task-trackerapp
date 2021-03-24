@@ -9,28 +9,65 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('trackerapp', '0004_auto_20210313_2057'),
+        ("trackerapp", "0004_auto_20210313_2057"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='taskmodel',
-            name='assignee',
+            model_name="taskmodel",
+            name="assignee",
         ),
         migrations.AddField(
-            model_name='taskmodel',
-            name='assignee',
-            field=models.ForeignKey(blank=True, help_text='Select a user who can watch / edit / complete the task', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assignee', to=settings.AUTH_USER_MODEL),
+            model_name="taskmodel",
+            name="assignee",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Select a user who can watch / edit / complete the task",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="assignee",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.CreateModel(
-            name='Message',
+            name="Message",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('creation_date', models.DateField(auto_created=True, auto_now_add=True)),
-                ('title', models.CharField(help_text='enter message title', max_length=200)),
-                ('body', models.CharField(help_text='enter message body', max_length=1500)),
-                ('owner', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='trackerapp.taskmodel')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "creation_date",
+                    models.DateField(auto_created=True, auto_now_add=True),
+                ),
+                (
+                    "title",
+                    models.CharField(help_text="enter message title", max_length=200),
+                ),
+                (
+                    "body",
+                    models.CharField(help_text="enter message body", max_length=1500),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "task",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="trackerapp.taskmodel",
+                    ),
+                ),
             ],
         ),
     ]

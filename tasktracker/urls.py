@@ -16,12 +16,21 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
-from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework import routers
+from trackerapp import views
 
+router = routers.DefaultRouter()
+router.register(r"users", views.UserViewSet)
+router.register(r"groups", views.GroupViewSet)
+router.register(r"tasks", views.TaskViewSet)
+router.register(r"comments", views.MessageViewSet)
 
 urlpatterns = [
+    # REST API URLS
+    path("api/", include(router.urls)),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("admin/", admin.site.urls),
     path("", include("trackerapp.urls")),
     path("accounts/", include("django.contrib.auth.urls")),

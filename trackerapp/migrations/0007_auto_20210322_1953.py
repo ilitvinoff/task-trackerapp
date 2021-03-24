@@ -6,13 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trackerapp', '0006_remove_message_title'),
+        ("trackerapp", "0006_remove_message_title"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='taskmodel',
-            name='status',
-            field=models.CharField(choices=[('waiting to start', 'waiting to start'), ('in work', 'in work'), ('completed', 'completed')], default='wS', help_text='Current task status', max_length=16),
+            model_name="taskmodel",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("waiting to start", "waiting to start"),
+                    ("in work", "in work"),
+                    ("completed", "completed"),
+                ],
+                default="wS",
+                help_text="Current task status",
+                max_length=16,
+            ),
         ),
     ]

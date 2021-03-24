@@ -10,4 +10,5 @@ class TrackerappConfig(AppConfig):
     """
     TrackerappConfig ...ololo
     """
+
     name = "trackerapp"
