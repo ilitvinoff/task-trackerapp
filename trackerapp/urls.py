@@ -22,6 +22,11 @@ urlpatterns = [
         views.TaskStatusUpdate.as_view(),
         name="update-task-status",
     ),
+
+    # user profile urls
+    url(r"user-profile/(?P<pk>\d+)$", views.UserProfileDetail.as_view(), name="user-profile-detail"),
+    url(r"user-profile/(?P<pk>\d+)/update$", views.UserProfileUpdate.as_view(), name="user-profile-update"),
+
     # urls to manipulate with comments
     url(
         r"task/(?P<pk>\d+)/meassage/create$",

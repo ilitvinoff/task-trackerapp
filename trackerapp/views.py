@@ -6,13 +6,13 @@ from django.views import generic
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
-from .models import TaskModel, Message
-from .forms import TaskSortingForm, MessageSortingForm
-from .permissions import IsOwnerOrAssignee, IsTaskOwnerOrTaskAssignee
+from .models import TaskModel, Message, UserProfile
+from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm
+from .permissions import IsOwnerOrAssignee, IsTaskOwnerOrTaskAssignee, IsOwner
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, mixins, permissions
 from .serializers import (
@@ -30,12 +30,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return (
-            Message.objects.all()
-            .filter(
+            Message.objects.all().filter(
                 Q(task__owner__exact=self.request.user)
                 | Q(task__assignee__exact=self.request.user),
-            )
-            .order_by("creation_date")
+            ).order_by("creation_date")
         )
 
     def destroy(self, request, *args, **kwargs):
@@ -332,9 +330,9 @@ class MessageCreate(LoginRequiredMixin, CreateView):
         return super(MessageCreate, self).form_valid(form)
 
     # after successful creation redirects to the relatives task page
-    def get_success_url(self, **kwargs):
-        message = Message.objects.filter(task__pk=self.kwargs.get("pk"))
-        return reverse_lazy("message-list")
+    # def get_success_url(self, **kwargs):
+    #     message = Message.objects.filter(task__pk=self.kwargs.get("pk"))
+    #     return reverse_lazy("message-list")
 
 
 class MessageUpdate(LoginRequiredMixin, UpdateView):
@@ -404,28 +402,37 @@ class MessageDetail(generic.DetailView):
     def get_object(self, queryset=None):
         obj = super(MessageDetail, self).get_object(queryset=queryset)
         if not (
-            obj.owner == self.request.user or obj.task.assignee != self.request.user
+                obj.owner == self.request.user or obj.task.assignee != self.request.user
         ):
             raise Http404()
         return obj
 
 
-# @login_required
-# def message_detail(request, pk):
-#     """
-#     To view detail message info
-#     """
-#
-#     try:
-#         message = Message.objects.get(pk=pk)
-#     except ObjectDoesNotExist as message_does_not_exist:
-#         raise Http404 from message_does_not_exist
-#
-#     user = request.user
-#     if user == message.owner or user == message.assignee:
-#         return render(request, "trackerapp/message_detail.html", context={"message": message})
-#
-#     raise PermissionDenied()
+class UserProfileDetail(PermissionRequiredMixin, generic.DetailView, ):
+    permission_required = [IsOwner]
+    model = UserProfile
+    queryset = UserProfile.owner
+    #TODO: ...
+    def has_permission(self):
+        return True
+
+
+class UserProfileUpdate(UpdateView):
+    model = UserProfile
+    form_class = UserProfileForm
+
+    # Be sure that current user trying to edit his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        # Take pk from kwargs
+        pk = kwargs.get("pk")
+        # Take user from request
+        user = request.user
+        # check permission
+        try:
+            Message.objects.get(pk=pk, owner=user)
+            return super(UserProfileUpdate, self).dispatch(request, *args, **kwargs)
+        except UserProfile.DoesNotExist as try_update_not_owned_user_profile:
+            raise PermissionDenied() from try_update_not_owned_user_profile
 
 
 def sign_up(request):

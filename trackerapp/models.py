@@ -5,9 +5,6 @@ from django.db.models.fields.related import ForeignKey
 from django.urls import reverse
 
 
-# Create your models here.
-
-
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
     picture = models.ImageField()

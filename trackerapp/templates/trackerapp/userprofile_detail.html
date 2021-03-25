@@ -1,0 +1,14 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    {% if userprofile %}
+        <div class="col-md-12">
+        <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
+
+        </div>
+
+    {% else %}
+        <h1 class="col-md-10"> OLOLO </h1>
+
+    {% endif %}
+{% endblock %}
