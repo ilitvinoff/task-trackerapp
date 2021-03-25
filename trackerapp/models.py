@@ -8,6 +8,11 @@ from django.urls import reverse
 # Create your models here.
 
 
+class UserProfile(models.Model):
+    owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
+    picture = models.ImageField()
+
+
 class TaskModel(models.Model):
     """
     Model describes task properties
@@ -36,12 +41,18 @@ class TaskModel(models.Model):
 
     creation_date = DateField(auto_created=True, auto_now_add=True)
 
-    owner = ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=False)
+    owner = ForeignKey(
+        User,
+        related_name="owned_tasks",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False,
+    )
 
     assignee = models.ForeignKey(
         User,
         help_text="Select a user who can watch / edit / complete the task",
-        related_name="assignee",
+        related_name="assigned_tasks",
         blank=True,
         on_delete=models.SET_NULL,
         null=True,

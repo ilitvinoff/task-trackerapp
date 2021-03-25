@@ -12,9 +12,9 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
 from .models import TaskModel, Message
 from .forms import TaskSortingForm, MessageSortingForm
+from .permissions import IsOwnerOrAssignee, IsTaskOwnerOrTaskAssignee
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
-from rest_framework import permissions
+from rest_framework import viewsets, mixins, permissions
 from .serializers import (
     UserSerializer,
     GroupSerializer,
@@ -26,7 +26,7 @@ from .serializers import (
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrTaskAssignee]
 
     def get_queryset(self):
         return (
@@ -43,19 +43,19 @@ class MessageViewSet(viewsets.ModelViewSet):
             return super().destroy(request, args, kwargs)
         raise PermissionDenied()
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
     def update(self, request, *args, **kwargs):
         if self.get_object().owner == request.user:
             return super().update(request, args, kwargs)
         raise PermissionDenied()
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAssignee]
 
     def get_queryset(self):
         return TaskModel.objects.all().filter(
@@ -70,16 +70,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-    def update(self, request, *args, **kwargs):
-        if (
-            self.get_object().owner == request.user
-            or self.get_object().assignee == request.user
-        ):
-            return super().update(request, args, kwargs)
-        raise PermissionDenied()
 
-
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(
+    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -89,7 +83,9 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(
+    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
     """
     API endpoint that allows groups to be viewed or edited.
     """
