@@ -75,10 +75,14 @@ def dispatch_override(
 ):
     pk = kwargs.get("pk")
 
+    # TODO: Detail message not shown to it's owner...
     try:
-        obj = model_class.objects.get(owner_id=pk)
-        kwargs["obj"] = obj
+        if not assigneeModel:
+            obj = model_class.objects.get(pk=pk)
+            kwargs["obj"] = obj
         if assigneeModel:
+            obj = model_class.objects.get(owner_id=pk)
+            kwargs["obj"] = obj
             kwargs['assignee'] = obj.task.assignee
         return parent_class.dispatch(main_class_instance, request, *args, **kwargs)
     except model_class.DoesNotExist:
