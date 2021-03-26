@@ -3,12 +3,24 @@
 {% block content %}
     {% if userprofile %}
         <div class="col-md-12">
-        <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
+            <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
+            {% if userprofile.picture %}
+                <img src="{{ userprofile.picture.url }}">
+            {% endif %}
+            <ul class="col-md-10">
+                <li><strong>name:</strong> {{ userprofile.owner.first_name }}</li>
+                <li><strong>last name:</strong> {{ userprofile.owner.last_name }}</li>
+                <li><strong>email:</strong> {{ userprofile.owner.email }}</li>
+            </ul>
+
+            <h2>
+                <a class="right" href="{% url 'user-profile-update' pk=user.id %}"><strong>Update</strong></a>
+            </h2>
 
         </div>
 
     {% else %}
-        <h1 class="col-md-10"> OLOLO </h1>
+        <h1 class="col-md-10"> OLOLO. No such user profile... </h1>
 
     {% endif %}
 {% endblock %}

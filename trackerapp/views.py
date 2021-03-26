@@ -6,13 +6,21 @@ from django.views import generic
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
+
+from .filters import task_filter, message_filter
 from .models import TaskModel, Message, UserProfile
 from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm
-from .permissions import IsOwnerOrAssignee, IsTaskOwnerOrTaskAssignee, IsOwner
+from .permissions import (
+    IsOwnerOrAssigneeREST,
+    IsTaskOwnerOrTaskAssigneeREST,
+    IsOwnerOrAssigneePermissionRequiredMixin,
+    IsOwnerPermissionRequiredMixin,
+    dispatch_override,
+)
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, mixins, permissions
 from .serializers import (
@@ -26,7 +34,7 @@ from .serializers import (
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrTaskAssignee]
+    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrTaskAssigneeREST]
 
     def get_queryset(self):
         return (
@@ -53,7 +61,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAssignee]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAssigneeREST]
 
     def get_queryset(self):
         return TaskModel.objects.all().filter(
@@ -120,31 +128,6 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
         return self.get(request, *args, **kwargs)
 
 
-def task_filter(obj, tasklist):
-    """
-    task_filter - to filter list of task by values from form
-    """
-    if obj.request.method == "POST":
-        sorting_form = TaskSortingForm(obj.request.POST)
-
-        if sorting_form.is_valid():
-            date_from = sorting_form.cleaned_data["from_date"]
-            date_till = sorting_form.cleaned_data["till_date"]
-            choose_status = sorting_form.cleaned_data["choose_status"]
-
-            if date_from:
-                tasklist = tasklist.filter(creation_date__gte=date_from)
-
-            if date_till:
-                tasklist = tasklist.filter(creation_date__lte=date_till)
-
-            if choose_status:
-                tasklist = tasklist.filter(status__exact=choose_status)
-        else:
-            TaskSortingForm()
-    return tasklist
-
-
 class TaskListView(
     LoginRequiredMixin, FormListView
 ):  # pylint: disable=too-many-ancestors
@@ -189,17 +172,13 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
-    # # after successful creation redirects to the created task page
-    # def get_success_url(self):
-    #     return reverse_lazy("task-detail", args=(self.object.id,))
-
     # override form_valid, to save owner(creator) of the task
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super(TaskCreate, self).form_valid(form)
 
 
-class TaskUpdate(LoginRequiredMixin, UpdateView):
+class TaskUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
     """
     Edit task form
     """
@@ -213,19 +192,12 @@ class TaskUpdate(LoginRequiredMixin, UpdateView):
 
     # Be sure that current user trying to edit his own task...
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
-        pk = kwargs.get("pk")  # example
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            TaskModel.objects.get(pk=pk, owner=user)
-            return super(TaskUpdate, self).dispatch(request, *args, **kwargs)
-        except TaskModel.DoesNotExist as try_update_not_owned_task:
-            raise PermissionDenied() from try_update_not_owned_task
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
+        )
 
 
-class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
+class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, UpdateView):
     """
     Form to edit task status (for assignee...)
     """
@@ -237,23 +209,17 @@ class TaskStatusUpdate(LoginRequiredMixin, UpdateView):
 
     # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
-        pk = kwargs.get("pk")  # example
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            task = TaskModel.objects.get(pk=pk)
-
-            if user == task.assignee or user == task.owner:
-                return super(TaskStatusUpdate, self).dispatch(request, *args, **kwargs)
-            raise PermissionDenied()
-
-        except TaskModel.DoesNotExist as try_update_not_owned_task:
-            raise Http404() from try_update_not_owned_task
+        return dispatch_override(
+            self,
+            IsOwnerOrAssigneePermissionRequiredMixin,
+            TaskModel,
+            request,
+            *args,
+            **kwargs
+        )
 
 
-class TaskDelete(LoginRequiredMixin, DeleteView):
+class TaskDelete(IsOwnerPermissionRequiredMixin, DeleteView):
     """
     Form to delete task
     """
@@ -263,37 +229,9 @@ class TaskDelete(LoginRequiredMixin, DeleteView):
 
     # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
-        pk = kwargs.get("pk")
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            TaskModel.objects.get(pk=pk, owner=user)
-            return super(TaskDelete, self).dispatch(request, *args, **kwargs)
-        except TaskModel.DoesNotExist as try_delete_not_owned_task:
-            raise PermissionDenied() from try_delete_not_owned_task
-
-
-def message_filter(obj, message_list):
-    """
-    message_filter - to filter list of messages by values from form
-    """
-    if obj.request.method == "POST":
-        sorting_form = MessageSortingForm(obj.request.POST)
-
-        if sorting_form.is_valid():
-            date_from = sorting_form.cleaned_data["from_date"]
-            date_till = sorting_form.cleaned_data["till_date"]
-
-            if date_from:
-                message_list = message_list.filter(creation_date__gte=date_from)
-
-            if date_till:
-                message_list = message_list.filter(creation_date__lte=date_till)
-
-        else:
-            MessageSortingForm()
-    return message_list
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
+        )
 
 
 class MessageListView(LoginRequiredMixin, FormListView):
@@ -332,10 +270,10 @@ class MessageCreate(LoginRequiredMixin, CreateView):
     # after successful creation redirects to the relatives task page
     # def get_success_url(self, **kwargs):
     #     message = Message.objects.filter(task__pk=self.kwargs.get("pk"))
-    #     return reverse_lazy("message-list")
+    #     return reverse_lazy("comment-list")
 
 
-class MessageUpdate(LoginRequiredMixin, UpdateView):
+class MessageUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
     """
     Form to update comments
     """
@@ -347,34 +285,20 @@ class MessageUpdate(LoginRequiredMixin, UpdateView):
 
     # Be sure that current user trying to edit his own comment...
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
-        pk = kwargs.get("pk")
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            Message.objects.get(pk=pk, owner=user)
-            return super(MessageUpdate, self).dispatch(request, *args, **kwargs)
-        except Message.DoesNotExist as try_update_not_owned_message:
-            raise PermissionDenied() from try_update_not_owned_message
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
+        )
 
 
-class MessageDelete(LoginRequiredMixin, DeleteView):
+class MessageDelete(IsOwnerPermissionRequiredMixin, DeleteView):
     model = Message
-    success_url = reverse_lazy("message-list")
+    success_url = reverse_lazy("comment-list")
 
     # Be sure that current user trying to delete his own comment...
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
-        pk = kwargs.get("pk")
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            Message.objects.get(pk=pk, owner=user)
-            return super(MessageDelete, self).dispatch(request, *args, **kwargs)
-        except Message.DoesNotExist as try_update_not_owned_message:
-            raise PermissionDenied() from try_update_not_owned_message
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
+        )
 
 
 @login_required
@@ -395,44 +319,38 @@ def task_detail(request, pk):
     raise PermissionDenied()
 
 
-class MessageDetail(generic.DetailView):
+class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, generic.DetailView):
     model = Message
 
-    # Be sure if user is owner of the message to view it
-    def get_object(self, queryset=None):
-        obj = super(MessageDetail, self).get_object(queryset=queryset)
-        if not (
-                obj.owner == self.request.user or obj.task.assignee != self.request.user
-        ):
-            raise Http404()
-        return obj
+    # Be sure that current user trying to view his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        return dispatch_override(
+            self, IsOwnerOrAssigneePermissionRequiredMixin, Message, request, TaskModel, *args, **kwargs
+        )
 
 
-class UserProfileDetail(PermissionRequiredMixin, generic.DetailView, ):
-    permission_required = [IsOwner]
+class UserProfileDetail(IsOwnerPermissionRequiredMixin, generic.DetailView, ):
     model = UserProfile
-    queryset = UserProfile.owner
-    #TODO: ...
-    def has_permission(self):
-        return True
+    queryset = UserProfile.objects.all()
+
+    # Be sure that current user trying to view his own profile...
+    def dispatch(self, request, *args, **kwargs):
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs
+        )
 
 
-class UserProfileUpdate(UpdateView):
+class UserProfileUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
     model = UserProfile
     form_class = UserProfileForm
 
-    # Be sure that current user trying to edit his own comment...
+    def get_success_url(self):
+        return reverse_lazy("user-profile-detail", args=(self.object.id,))
+
+    # Be sure that current user trying to view his own profile...
     def dispatch(self, request, *args, **kwargs):
-        # Take pk from kwargs
-        pk = kwargs.get("pk")
-        # Take user from request
-        user = request.user
-        # check permission
-        try:
-            Message.objects.get(pk=pk, owner=user)
-            return super(UserProfileUpdate, self).dispatch(request, *args, **kwargs)
-        except UserProfile.DoesNotExist as try_update_not_owned_user_profile:
-            raise PermissionDenied() from try_update_not_owned_user_profile
+        return dispatch_override(
+            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs)
 
 
 def sign_up(request):

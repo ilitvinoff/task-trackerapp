@@ -21,7 +21,8 @@ class MessageAdmin(admin.ModelAdmin):
     list_display = ("body", "owner", "task", "creation_date")
     list_filter = ("owner", "task", "creation_date")
 
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("owner","picture")
+    list_display = ("owner", "picture")
     list_filter = ("owner",)

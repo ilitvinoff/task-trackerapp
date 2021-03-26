@@ -22,11 +22,17 @@ urlpatterns = [
         views.TaskStatusUpdate.as_view(),
         name="update-task-status",
     ),
-
     # user profile urls
-    url(r"user-profile/(?P<pk>\d+)$", views.UserProfileDetail.as_view(), name="user-profile-detail"),
-    url(r"user-profile/(?P<pk>\d+)/update$", views.UserProfileUpdate.as_view(), name="user-profile-update"),
-
+    url(
+        r"user-profile/(?P<pk>\d+)$",
+        views.UserProfileDetail.as_view(),
+        name="user-profile-detail",
+    ),
+    url(
+        r"user-profile/(?P<pk>\d+)/update$",
+        views.UserProfileUpdate.as_view(),
+        name="user-profile-update",
+    ),
     # urls to manipulate with comments
     url(
         r"task/(?P<pk>\d+)/meassage/create$",
@@ -44,9 +50,10 @@ urlpatterns = [
         views.MessageUpdate.as_view(),
         name="message-update",
     ),
+    # TODO: from message detail if click on comments button redirects to api url not to web....
     url(
         r"task/(?P<pk>\d+)/messagelist$",
         views.MessageListView.as_view(),
-        name="message-list",
+        name="comment-list",
     ),
 ]

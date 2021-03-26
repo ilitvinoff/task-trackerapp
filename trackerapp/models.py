@@ -7,7 +7,7 @@ from django.urls import reverse
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
-    picture = models.ImageField()
+    picture = models.ImageField(upload_to='uploads/userprofile/',blank=True,null=True)
 
 
 class TaskModel(models.Model):
