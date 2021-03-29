@@ -10,7 +10,7 @@ urlpatterns = [
     url("^$", views.TaskListView.as_view(), name="index"),
     url(r"^tasks$", views.TaskListView.as_view(), name="tasks"),
     url(r"^assigned$", views.AssigneeTaskListView.as_view(), name="assigned-tasks"),
-    url(r"^task/(?P<pk>\d+)$", views.task_detail, name="task-detail"),
+    url(r"^task/(?P<pk>\d+)$", views.TaskDetail.as_view(), name="task-detail"),
     # sign up view
     url(r"^signup$", views.sign_up, name="sign-up"),
     # urls to edit/create tasks

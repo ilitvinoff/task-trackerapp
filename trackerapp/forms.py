@@ -2,7 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
 from django.forms.fields import ChoiceField, DateField
-from .models import TaskModel, UserProfile
+from .models import TaskModel
+from django.core.validators import validate_email
 
 
 class DateInput(forms.DateInput):
@@ -64,12 +65,23 @@ class MessageSortingForm(forms.Form):
     )
 
 
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ["owner", "picture"]
-    def clean_avatar(self):
-        avatar = self.cleaned_data["avatar"]
+class UserProfileForm(forms.Form):
+    first_name = forms.CharField(max_length=100, label="first name")
+    last_name = forms.CharField(max_length=100, label="last name")
+    email = forms.CharField(max_length=100, label="your_address@domain.com")
+    picture = forms.ImageField(allow_empty_file=True)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+
+        try:
+            validate_email(email)
+            return email
+        except ValidationError:
+            raise ValidationError("Invalid email address.")
+
+    def clean_picture(self):
+        avatar = self.cleaned_data["picture"]
 
         try:
             w, h = get_image_dimensions(avatar)

@@ -1,14 +1,10 @@
 from django.db.models import Q
-from django.http.response import Http404
 from django.urls.base import reverse_lazy
-from django.utils.translation import ugettext as _
-from django.views import generic
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormMixin
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.views.generic.edit import FormView
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
 
 from .filters import task_filter, message_filter
@@ -23,14 +19,15 @@ from .permissions import (
 )
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets, mixins, permissions
+
+from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, \
+    ProfileInDeleteView
 from .serializers import (
     UserSerializer,
     GroupSerializer,
     TaskSerializer,
     MessageSerializer,
 )
-
-
 
 
 class MessageViewSet(viewsets.ModelViewSet):
@@ -103,41 +100,6 @@ class GroupViewSet(
     permission_classes = [permissions.IsAuthenticated]
 
 
-class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
-    """
-    Pra-class to may create form in list view.
-    Overriding get and post methods.
-    """
-
-    def get(self, request, *args, **kwargs):
-        # From FormMixin
-        form_class = self.get_form_class()
-        self.form = self.get_form(form_class)
-
-        # From ListView
-        self.object_list = self.get_queryset()
-        allow_empty = self.get_allow_empty()
-        if not allow_empty and len(self.object_list) == 0:
-            raise Http404(
-                _(u"Empty list and '%(class_name)s.allow_empty' is False.")
-                % {"class_name": self.__class__.__name__}
-            )
-
-        context = self.get_context_data(object_list=self.object_list, form=self.form)
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)
-        return self.render_to_response(context)
-
-    def post(self, request, *args, **kwargs):
-        return self.get(request, *args, **kwargs)
-
-class ProfileDetailInView(generic.DetailView):
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(object=self.object)
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)
-        return self.render_to_response(context)
-
 class TaskListView(
     LoginRequiredMixin, FormListView
 ):  # pylint: disable=too-many-ancestors
@@ -173,8 +135,17 @@ class AssigneeTaskListView(
         tasklist = TaskModel.objects.filter(assignee__exact=self.request.user)
         return task_filter(self, tasklist)
 
+class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
+    model = TaskModel
 
-class TaskCreate(LoginRequiredMixin, CreateView):
+    # Be sure that current user trying to view his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        return dispatch_override(
+            self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request, has_assignee=True, *args, **kwargs
+        )
+
+
+class TaskCreate(LoginRequiredMixin, ProfileInCreateView):
     """
     Form to create task.
     """
@@ -188,7 +159,7 @@ class TaskCreate(LoginRequiredMixin, CreateView):
         return super(TaskCreate, self).form_valid(form)
 
 
-class TaskUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
+class TaskUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
     """
     Edit task form
     """
@@ -207,7 +178,7 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
         )
 
 
-class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, UpdateView):
+class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdateView):
     """
     Form to edit task status (for assignee...)
     """
@@ -219,17 +190,11 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, UpdateView):
 
     # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
-            self,
-            IsOwnerOrAssigneePermissionRequiredMixin,
-            request,
-            has_assignee=True,
-            *args,
-            **kwargs
-        )
+        return dispatch_override(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request, has_assignee=True,
+                                 *args, **kwargs)
 
 
-class TaskDelete(IsOwnerPermissionRequiredMixin, DeleteView):
+class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     """
     Form to delete task
     """
@@ -258,7 +223,7 @@ class MessageListView(LoginRequiredMixin, FormListView):
         return message_filter(self, message_list)
 
 
-class MessageCreate(LoginRequiredMixin, CreateView):
+class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
     """
     Form to create message...
     """
@@ -283,7 +248,7 @@ class MessageCreate(LoginRequiredMixin, CreateView):
     #     return reverse_lazy("comment-list")
 
 
-class MessageUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
+class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
     """
     Form to update comments
     """
@@ -300,7 +265,7 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
         )
 
 
-class MessageDelete(IsOwnerPermissionRequiredMixin, DeleteView):
+class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     model = Message
     success_url = reverse_lazy("comment-list")
 
@@ -309,24 +274,6 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, DeleteView):
         return dispatch_override(
             self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
         )
-
-
-@login_required
-def task_detail(request, pk):
-    """
-    To view task details
-    """
-    try:
-        task = TaskModel.objects.get(pk=pk)
-    except ObjectDoesNotExist as task_does_not_exist:
-        raise Http404 from task_does_not_exist
-
-    user = request.user
-    if user == task.owner or user == task.assignee:
-        return render(
-            request, "trackerapp/taskmodel_detail.html", context={"taskmodel": task}
-        )
-    raise PermissionDenied()
 
 
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
@@ -339,7 +286,7 @@ class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInVie
         )
 
 
-class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView, ):
+class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView):
     model = UserProfile
     queryset = UserProfile.objects.all()
 
@@ -350,8 +297,8 @@ class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView, ):
         )
 
 
-class UserProfileUpdate(IsOwnerPermissionRequiredMixin, UpdateView):
-    model = UserProfile
+class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileDetailInView, FormView):
+    template_name = 'trackerapp/userprofile_form.html'
     form_class = UserProfileForm
 
     def get_success_url(self):
