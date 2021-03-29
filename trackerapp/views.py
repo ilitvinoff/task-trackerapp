@@ -4,100 +4,18 @@ from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
-
 from .filters import task_filter, message_filter
 from .models import TaskModel, Message, UserProfile
-from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm
+from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm, UserSignUpForm
 from .permissions import (
-    IsOwnerOrAssigneeREST,
-    IsTaskOwnerOrTaskAssigneeREST,
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
     dispatch_override,
 )
-from django.contrib.auth.models import User, Group
-from rest_framework import viewsets, mixins, permissions
 
 from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, \
-    ProfileInDeleteView
-from .serializers import (
-    UserSerializer,
-    GroupSerializer,
-    TaskSerializer,
-    MessageSerializer,
-)
-
-
-class MessageViewSet(viewsets.ModelViewSet):
-    queryset = Message.objects.all()
-    serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrTaskAssigneeREST]
-
-    def get_queryset(self):
-        return (
-            Message.objects.all().filter(
-                Q(task__owner__exact=self.request.user)
-                | Q(task__assignee__exact=self.request.user),
-            ).order_by("creation_date")
-        )
-
-    def destroy(self, request, *args, **kwargs):
-        if self.get_object().owner == request.user:
-            return super().destroy(request, args, kwargs)
-        raise PermissionDenied()
-
-    def update(self, request, *args, **kwargs):
-        if self.get_object().owner == request.user:
-            return super().update(request, args, kwargs)
-        raise PermissionDenied()
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-
-class TaskViewSet(viewsets.ModelViewSet):
-    queryset = TaskModel.objects.all()
-    serializer_class = TaskSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAssigneeREST]
-
-    def get_queryset(self):
-        return TaskModel.objects.all().filter(
-            Q(owner__exact=self.request.user) | Q(assignee__exact=self.request.user)
-        )
-
-    def destroy(self, request, *args, **kwargs):
-        if self.get_object().owner == request.user:
-            return super().destroy(request, args, kwargs)
-        raise PermissionDenied()
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-
-class UserViewSet(
-    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
-):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-
-    queryset = User.objects.all().order_by("-date_joined")
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class GroupViewSet(
-    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
-):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
-
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    ProfileInDeleteView, ProfileInFormView
 
 
 class TaskListView(
@@ -134,6 +52,7 @@ class AssigneeTaskListView(
     def get_queryset(self):
         tasklist = TaskModel.objects.filter(assignee__exact=self.request.user)
         return task_filter(self, tasklist)
+
 
 class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
     model = TaskModel
@@ -297,8 +216,9 @@ class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView):
         )
 
 
-class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileDetailInView, FormView):
+class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
     template_name = 'trackerapp/userprofile_form.html'
+    queryset = UserProfile.objects.all()
     form_class = UserProfileForm
 
     def get_success_url(self):
@@ -315,7 +235,7 @@ def sign_up(request):
     Sign up new user
     """
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = UserSignUpForm(request.POST)
         if form.is_valid():
             form.save()
             username = form.cleaned_data.get("username")
@@ -324,5 +244,5 @@ def sign_up(request):
             login(request, user)
             return redirect("/")
     else:
-        form = UserCreationForm()
+        form = UserSignUpForm()
     return render(request, "trackerapp/sign_up.html", {"form": form})

@@ -50,7 +50,6 @@ urlpatterns = [
         views.MessageUpdate.as_view(),
         name="message-update",
     ),
-    # TODO: from message detail if click on comments button redirects to api url not to web....
     url(
         r"task/(?P<pk>\d+)/messagelist$",
         views.MessageListView.as_view(),

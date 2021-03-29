@@ -1,3 +1,4 @@
+from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.fields import DateField, TextField, DateTimeField
@@ -7,10 +8,12 @@ from django.urls import reverse
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
-    picture = models.ImageField(upload_to='uploads/userprofile/', blank=True, null=True)
+    picture = models.ImageField(upload_to='uploads/userprofile/', blank=True, null=True,
+                                validators=[validate_image_file_extension])
 
     def get_owner(self):
         return self.owner
+
 
 class TaskModel(models.Model):
     """

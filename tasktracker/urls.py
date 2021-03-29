@@ -19,17 +19,17 @@ from django.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers
-from trackerapp import views
+from trackerapp import apiviews
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
 router = routers.DefaultRouter()
-router.register(r"users", views.UserViewSet)
-router.register(r"groups", views.GroupViewSet)
-router.register(r"tasks", views.TaskViewSet)
-router.register(r"comments", views.MessageViewSet)
+router.register(r"users", apiviews.UserViewSet)
+router.register(r"groups", apiviews.GroupViewSet)
+router.register(r"tasks", apiviews.TaskViewSet)
+router.register(r"comments", apiviews.MessageViewSet)
 
 urlpatterns = [
                   # REST API URLS

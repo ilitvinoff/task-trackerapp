@@ -9,7 +9,7 @@
     <link rel="icon" href="../../favicon.ico">
     <link rel="canonical" href="https://getbootstrap.com/docs/3.3/examples/jumbotron/">
 
-    <title>Taskltracker</title>
+    <title>Task tracker</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -37,7 +37,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{% url 'tasks' %}">Task tracker</a>
+            <a class="navbar-brand" href="{% url 'tasks' %}">Tasks</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
 
@@ -47,26 +47,22 @@
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                 </ul>
             {% else %}
-                <ul class="nav-pills">
 
-                    <li>
-                        <form class="navbar-form navbar-right" method="post" action="{% url 'login' %}">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <input type="text" placeholder="your name" class="form-control" name="username">
-                            </div>
-                            <div class="form-group">
-                                <input type="password" placeholder="Password" class="form-control" name="password">
-                            </div>
-                            <button type="submit" value="login" class="btn btn-success">Sign in</button>
-                        </form>
-                    </li>
-
-                    <li>
+                <div class="navbar-form navbar-right">
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <input type="text" placeholder="your name" class="form-control" name="username">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" placeholder="Password" class="form-control" name="password">
+                        </div>
+                        <button type="submit" value="login" class="btn btn-success">Sign in</button>
                         <a class="btn btn-success" href="{% url 'sign-up' %}">Sign up</a>
-                    </li>
+                    </form>
 
-                </ul>
+                </div>
+
             {% endif %}
         </div>
     </div>
