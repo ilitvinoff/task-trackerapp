@@ -31,6 +31,8 @@ from .serializers import (
 )
 
 
+
+
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -122,11 +124,19 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
             )
 
         context = self.get_context_data(object_list=self.object_list, form=self.form)
+        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         return self.get(request, *args, **kwargs)
 
+class ProfileDetailInView(generic.DetailView):
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)
+        return self.render_to_response(context)
 
 class TaskListView(
     LoginRequiredMixin, FormListView
@@ -212,8 +222,8 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, UpdateView):
         return dispatch_override(
             self,
             IsOwnerOrAssigneePermissionRequiredMixin,
-            TaskModel,
             request,
+            has_assignee=True,
             *args,
             **kwargs
         )
@@ -319,17 +329,17 @@ def task_detail(request, pk):
     raise PermissionDenied()
 
 
-class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, generic.DetailView):
+class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
     model = Message
 
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
         return dispatch_override(
-            self, IsOwnerOrAssigneePermissionRequiredMixin, Message, request, TaskModel, *args, **kwargs
+            self, IsOwnerOrAssigneePermissionRequiredMixin, Message, request, has_assignee=True, *args, **kwargs
         )
 
 
-class UserProfileDetail(IsOwnerPermissionRequiredMixin, generic.DetailView, ):
+class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView, ):
     model = UserProfile
     queryset = UserProfile.objects.all()
 

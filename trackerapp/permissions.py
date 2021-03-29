@@ -1,7 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from rest_framework import permissions
-from django.db.models import Q
 
 
 class IsOwnerOrAssigneeREST(permissions.BasePermission):
@@ -44,13 +43,15 @@ class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):
         return self.request.user.is_authenticated
 
     def dispatch(self, request, *args, **kwargs):
-        obj = kwargs["obj"]
-        if obj.owner:
-            if self.request.user != obj.owner:
+        try:
+            owner = kwargs["owner"]
+            if self.request.user != owner:
                 return self.handle_no_permission()
-        else:
-            raise PermissionDenied("Corrupted object. Bad request.")
-        return super().dispatch(request, *args, **kwargs)
+
+            return super().dispatch(request, *args, **kwargs)
+
+        except KeyError:
+            raise PermissionDenied("Have no permission. No owner found.")
 
 
 class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
@@ -62,28 +63,30 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
         return self.request.user.is_authenticated
 
     def dispatch(self, request, *args, **kwargs):
-        obj = kwargs["obj"]
-        assignee = kwargs['assignee']
+        try:
+            assigned_user = kwargs["assigned_user"]
+            owner = kwargs['owner']
+            if not (request.user == owner or request.user == assigned_user):
+                return self.handle_no_permission()
 
-        if not (request.user == obj.owner or request.user == assignee):
-            return self.handle_no_permission()
-        return super().dispatch(request, *args, **kwargs)
+            return super().dispatch(request, *args, **kwargs)
+
+        except KeyError:
+            raise PermissionDenied("Have no permission. No assigned user/owner found.")
 
 
 def dispatch_override(
-        main_class_instance, parent_class, model_class, request, assigneeModel=False, *args, **kwargs
+        main_class_instance, permission_parent_class, model_class, request, has_assignee=False, *args, **kwargs
 ):
     pk = kwargs.get("pk")
 
     # TODO: Detail message not shown to it's owner...
     try:
-        if not assigneeModel:
-            obj = model_class.objects.get(pk=pk)
-            kwargs["obj"] = obj
-        if assigneeModel:
-            obj = model_class.objects.get(owner_id=pk)
-            kwargs["obj"] = obj
-            kwargs['assignee'] = obj.task.assignee
-        return parent_class.dispatch(main_class_instance, request, *args, **kwargs)
+        if has_assignee:
+            kwargs["assigned_user"] = model_class.objects.get(pk=pk).get_assignee()
+
+        kwargs['owner'] = model_class.objects.get(pk=pk).get_owner()
+
+        return permission_parent_class.dispatch(main_class_instance, request, *args, **kwargs)
     except model_class.DoesNotExist:
-        raise PermissionDenied("Have no permission")
+        raise PermissionDenied("Have no permission. Object (task, msg, etc...) does not exist.")

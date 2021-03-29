@@ -7,8 +7,10 @@ from django.urls import reverse
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
-    picture = models.ImageField(upload_to='uploads/userprofile/',blank=True,null=True)
+    picture = models.ImageField(upload_to='uploads/userprofile/', blank=True, null=True)
 
+    def get_owner(self):
+        return self.owner
 
 class TaskModel(models.Model):
     """
@@ -67,6 +69,12 @@ class TaskModel(models.Model):
         """
         return reverse("task-detail", args=[str(self.id)])
 
+    def get_owner(self):
+        return self.owner
+
+    def get_assignee(self):
+        return self.assignee
+
     class Meta:
         ordering = ["creation_date", "title"]
         permissions = (("can_edit_task", "..."), ("can_change_status", "..."))
@@ -88,6 +96,12 @@ class Message(models.Model):
         Returns the url to access a particular instance of the model.
         """
         return reverse("comment-detail", args=[str(self.id)])
+
+    def get_owner(self):
+        return self.owner
+
+    def get_assignee(self):
+        return self.task.assignee
 
     class Meta:
         ordering = [
