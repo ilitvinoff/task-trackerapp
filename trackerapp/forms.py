@@ -2,8 +2,10 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.files.images import get_image_dimensions
 from django.forms.fields import ChoiceField, DateField
+from django.core.files.images import get_image_dimensions
+from .resize_img import resize
+
 from .models import TaskModel, UserProfile
 from django.core.validators import validate_email
 
@@ -70,11 +72,10 @@ class MessageSortingForm(forms.Form):
 class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, label="first name", required=False)
     last_name = forms.CharField(max_length=100, label="last name", required=False)
-    email = forms.CharField(max_length=100, label="your_address@domain.com")
 
     class Meta:
         model = UserProfile
-        fields = ['first_name', 'last_name', 'email', 'picture']
+        fields = ['first_name', 'last_name', 'picture']
 
     def clean_email(self):
         email = self.cleaned_data["email"]
@@ -85,46 +86,34 @@ class UserProfileForm(forms.ModelForm):
         except ValidationError:
             raise ValidationError("Invalid email address.")
 
+    def clean_picture(self):
+        avatar = self.cleaned_data["picture"]
+        max_width = max_height = 500
 
-def clean_picture(self):
-    avatar = self.cleaned_data["picture"]
-    max_width = max_height = 500
+        if avatar:
+            return resize(avatar)
 
-    if avatar:
-        w, h = get_image_dimensions(avatar)
-        if w > max_width or h > max_height:
-            raise forms.ValidationError(
-                u"Please use an image that is "
-                "%s x %s pixels or smaller." % (max_width, max_height)
+        return avatar
+
+    def save(self, commit=True):
+        if self.errors:
+            raise ValueError(
+                "The %s could not be %s because the data didn't validate." % (
+                    self.instance._meta.object_name,
+                    'created' if self.instance._state.adding else 'changed',
+                )
             )
 
-        # validate file size
-        if len(avatar) > (40 * 1024):
-            raise forms.ValidationError(u"Avatar file size may not exceed 20k.")
+        profile = super(UserProfileForm, self).save(commit=commit)
+        data = self.cleaned_data
 
-    return avatar
+        owner = profile.owner
+        owner.first_name = data['first_name']
+        owner.last_name = data['last_name']
 
-
-def save(self, commit=True):
-    if self.errors:
-        raise ValueError(
-            "The %s could not be %s because the data didn't validate." % (
-                self.instance._meta.object_name,
-                'created' if self.instance._state.adding else 'changed',
-            )
-        )
-
-    profile = super(UserProfileForm, self).save(commit=False)
-    data = self.cleaned_data
-
-    owner = profile.owner
-    owner.first_name = data['first_name']
-    owner.last_name = data['last_name']
-    owner.email = data['email']
-
-    if commit:
-        owner.save()
-    return profile
+        if commit:
+            owner.save()
+        return profile
 
 
 class UserSignUpForm(UserCreationForm):

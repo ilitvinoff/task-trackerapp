@@ -1,15 +1,17 @@
 from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import ImageField
 from django.db.models.fields import DateField, TextField, DateTimeField
 from django.db.models.fields.related import ForeignKey
 from django.urls import reverse
+from stdimage import StdImageField
+from stdimage.validators import MinSizeValidator
 
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
-    picture = models.ImageField(upload_to='uploads/userprofile/', blank=True, null=True,
-                                validators=[validate_image_file_extension])
+    picture = ImageField(upload_to='uploads/userprofile/', blank=True, null=True,validators=[validate_image_file_extension, ])
 
     def get_owner(self):
         return self.owner

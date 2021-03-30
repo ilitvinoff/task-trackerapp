@@ -1,21 +1,19 @@
-from django.db.models import Q
-from django.urls.base import reverse_lazy
 from django.contrib.auth import login, authenticate
-from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView
-from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Q
+from django.shortcuts import render, redirect
+from django.urls.base import reverse_lazy
+
 from .filters import task_filter, message_filter
-from .models import TaskModel, Message, UserProfile
 from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm, UserSignUpForm
+from .models import TaskModel, Message, UserProfile
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
-    dispatch_override,
+    custom_permissions_dispatch,
 )
-
 from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, \
-    ProfileInDeleteView, ProfileInFormView
+    ProfileInDeleteView
 
 
 class TaskListView(
@@ -59,7 +57,7 @@ class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
 
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request, has_assignee=True, *args, **kwargs
         )
 
@@ -92,7 +90,7 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
 
     # Be sure that current user trying to edit his own task...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
         )
 
@@ -109,8 +107,9 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdate
 
     # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request, has_assignee=True,
-                                 *args, **kwargs)
+        return custom_permissions_dispatch(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request,
+                                           has_assignee=True,
+                                           *args, **kwargs)
 
 
 class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
@@ -123,7 +122,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
 
     # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
         )
 
@@ -152,19 +151,10 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
         "body",
     ]
 
-    # after successful creation redirects to the created task page
-    # def get_success_url(self):
-    #     return reverse_lazy("message-detail", args=(self.object.id,))
-
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
         form.instance.task = TaskModel.objects.get(pk=self.kwargs.get("pk"))
         return super(MessageCreate, self).form_valid(form)
-
-    # after successful creation redirects to the relatives task page
-    # def get_success_url(self, **kwargs):
-    #     message = Message.objects.filter(task__pk=self.kwargs.get("pk"))
-    #     return reverse_lazy("comment-list")
 
 
 class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
@@ -179,7 +169,7 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
 
     # Be sure that current user trying to edit his own comment...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
         )
 
@@ -190,7 +180,7 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
 
     # Be sure that current user trying to delete his own comment...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
         )
 
@@ -200,7 +190,7 @@ class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInVie
 
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerOrAssigneePermissionRequiredMixin, Message, request, has_assignee=True, *args, **kwargs
         )
 
@@ -211,7 +201,7 @@ class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView):
 
     # Be sure that current user trying to view his own profile...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs
         )
 
@@ -226,7 +216,7 @@ class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
 
     # Be sure that current user trying to view his own profile...
     def dispatch(self, request, *args, **kwargs):
-        return dispatch_override(
+        return custom_permissions_dispatch(
             self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs)
 
 

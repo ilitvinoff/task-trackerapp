@@ -75,12 +75,25 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
             raise PermissionDenied("Have no permission. No assigned user/owner found.")
 
 
-def dispatch_override(
+
+def custom_permissions_dispatch(
         main_class_instance, permission_parent_class, model_class, request, has_assignee=False, *args, **kwargs
 ):
+    """
+    custom_permissions_dispatch (...) - use in views. Requires model_class from attrs to get owner / assignee from this model
+       and assign it the value ** kwargs. Then use the dispatch (...) method 'permission_parent_class' (our custom permission classes)
+       with modified ** kwargs to analyze if the user has permission. Model_class's class must define get_assignee() and get_owner() methods.
+
+    :param main_class_instance: View class's instance
+    :param permission_parent_class: permission class - parent of view class
+    :param model_class: class of the model where from we'll get owner/assignee
+    :param request: client request
+    :param has_assignee: bool
+    :param args:
+    :param kwargs:
+    """
     pk = kwargs.get("pk")
 
-    # TODO: Detail message not shown to it's owner...
     try:
         if has_assignee:
             kwargs["assigned_user"] = model_class.objects.get(pk=pk).get_assignee()

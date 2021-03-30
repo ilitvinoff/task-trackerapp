@@ -1,16 +1,8 @@
 from django.utils.translation import ugettext as _
 from django.views import generic
 from django.http.response import Http404
-from django.views.generic.edit import FormMixin, FormView
-
+from django.views.generic.edit import FormMixin
 from trackerapp.models import UserProfile
-
-
-class ProfileInFormView(FormView):
-    def get_context_data(self, **kwargs):
-        context = super(FormListView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
 
 
 class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors

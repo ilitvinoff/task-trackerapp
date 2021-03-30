@@ -11,8 +11,9 @@ from .permissions import (
     IsOwnerOrAssigneeREST,
     IsTaskOwnerOrTaskAssigneeREST,
 )
-from .models import Message,TaskModel
+from .models import Message, TaskModel
 from django.db.models import Q
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()

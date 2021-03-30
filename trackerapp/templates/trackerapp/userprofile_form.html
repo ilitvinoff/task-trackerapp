@@ -4,6 +4,7 @@
         {% csrf_token %}
         <div class="col-md-10">
             <h2><strong>username: </strong>{{ userprofile.owner.username }}</h2>
+            <h3><strong>email: </strong>{{ userprofile.owner.email }}</h3>
             {{ form.as_p }}
             <button type="submit">Upload</button>
         </div>

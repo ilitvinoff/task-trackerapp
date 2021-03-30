@@ -28,7 +28,7 @@
             <p><a class="btn btn-primary" role="button" href="{% url 'message-delete' pk=message.pk %}">delete</a></p>
         {% endif %}
 
-        <p><a class="btn btn-primary" role="button" href="{% url 'task-detail' pk=message.task_id %}">Comments for {{ message.task.title }}</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'comment-list' pk=message.task_id %}">Comments for {{ message.task.title }}</a></p>
 
     {% else %}
         <h2>There is no such task in your list</h2>
