@@ -1,13 +1,11 @@
 from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.fields import DateField, TextField, DateTimeField
-from django.db.models.fields.related import ForeignKey
 from django.urls import reverse
 
 
 class UserProfile(models.Model):
-    owner = models.OneToOneField(User, on_delete=models.CASCADE)
+    owner = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     picture = models.ImageField(
         upload_to="uploads/userprofile/",
         blank=True,
@@ -45,7 +43,7 @@ class TaskModel(models.Model):
 
     title = models.CharField(max_length=200, help_text="Enter title of your task)")
 
-    description = TextField(
+    description = models.fields.TextField(
         max_length=1000, help_text="Enter a brief description of the task."
     )
 
@@ -57,9 +55,9 @@ class TaskModel(models.Model):
         help_text="Current task status",
     )
 
-    creation_date = DateField(auto_created=True, auto_now_add=True)
+    creation_date = models.fields.DateField(auto_created=True, auto_now_add=True)
 
-    owner = ForeignKey(
+    owner = models.ForeignKey(
         User,
         related_name="owned_tasks",
         on_delete=models.SET_NULL,
@@ -75,6 +73,9 @@ class TaskModel(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    # TODO:
+    # attachment = models.FileField(upload_to="attachments/", blank=True, null=True)
 
     def __str__(self):
         """
@@ -108,7 +109,7 @@ class Message(models.Model):
 
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
 
-    creation_date = DateTimeField(auto_created=True, auto_now_add=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
     def get_absolute_url(self):
         """
