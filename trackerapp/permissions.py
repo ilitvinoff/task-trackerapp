@@ -85,9 +85,10 @@ def custom_permissions_dispatch(
     **kwargs
 ):
     """
-    custom_permissions_dispatch (...) - use in views. Requires model_class from attrs to get owner / assignee from this model
-       and assign it the value ** kwargs. Then use the dispatch (...) method 'permission_parent_class' (our custom permission classes)
-       with modified ** kwargs to analyze if the user has permission. Model_class's class must define get_assignee() and get_owner() methods.
+    custom_permissions_dispatch (...) - use in views. Requires model_class from attrs to get owner / assignee from
+    this model and assign it the value ** kwargs. Then use the dispatch (...) method 'permission_parent_class' (our
+    custom permission classes) with modified ** kwargs to analyze if the user has permission. Model_class's class
+    must define get_assignee() and get_owner() methods.
 
     :param main_class_instance: View class's instance
     :param permission_parent_class: permission class - parent of view class
@@ -108,7 +109,7 @@ def custom_permissions_dispatch(
         return permission_parent_class.dispatch(
             main_class_instance, request, *args, **kwargs
         )
-    except model_class.DoesNotExist as e:
+    except model_class.DoesNotExist:
         raise PermissionDenied(
             "Have no permission. Object (task, msg, etc...) does not exist."
         )

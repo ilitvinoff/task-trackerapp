@@ -2,12 +2,12 @@ from django.core.files import File
 from PIL import Image
 from io import BytesIO
 
-from django.db.models import ImageField
+from django.db.models.fields.files import ImageFieldFile
 
 MAX_WIDTH, MAX_HEIGHT = 250, 250
 
 
-def resize(image: ImageField):
+def resize(image: ImageFieldFile):
     width_size = MAX_WIDTH
     height_size = MAX_HEIGHT
 

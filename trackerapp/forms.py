@@ -3,7 +3,6 @@ from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms.fields import ChoiceField, DateField
-from django.core.files.images import get_image_dimensions
 from .resize_img import resize
 
 from .models import TaskModel, UserProfile

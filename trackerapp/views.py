@@ -5,7 +5,12 @@ from django.shortcuts import render, redirect
 from django.urls.base import reverse_lazy
 
 from .filters import task_filter, message_filter
-from .forms import TaskSortingForm, MessageSortingForm, UserProfileUpdateForm, UserSignUpForm
+from .forms import (
+    TaskSortingForm,
+    MessageSortingForm,
+    UserProfileUpdateForm,
+    UserSignUpForm,
+)
 from .models import TaskModel, Message, UserProfile
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
@@ -168,6 +173,7 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
         "body",
     ]
 
+    # set owner and task relations for created message
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
         form.instance.task = TaskModel.objects.get(pk=self.kwargs.get("pk"))
@@ -244,14 +250,14 @@ class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
         )
 
     def get_object(self, **kwargs):
-        return UserProfile.objects.get(pk=self.kwargs['pk'])
+        return UserProfile.objects.get(pk=self.kwargs["pk"])
 
-    #TODO: ...
-    def get(self):
-        profile = self.get_object()
-        self.object.picture = profile.picture
-        self.object.first_name = porfile.first_
-        return super().get(request, *args, **kwargs)
+    # to init first_name/last_name fields (OneToOne field in updateview do not init by default)
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["first_name"] = self.object.owner.first_name
+        initial["last_name"] = self.object.owner.last_name
+        return initial
 
 
 def sign_up(request):

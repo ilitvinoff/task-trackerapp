@@ -63,7 +63,6 @@ class ProfileInUpdateView(generic.UpdateView):
         return context
 
 
-
 class ProfileInCreateView(generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super(ProfileInCreateView, self).get_context_data(
