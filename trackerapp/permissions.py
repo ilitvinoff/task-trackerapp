@@ -65,7 +65,7 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         try:
             assigned_user = kwargs["assigned_user"]
-            owner = kwargs['owner']
+            owner = kwargs["owner"]
             if not (request.user == owner or request.user == assigned_user):
                 return self.handle_no_permission()
 
@@ -75,9 +75,14 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
             raise PermissionDenied("Have no permission. No assigned user/owner found.")
 
 
-
 def custom_permissions_dispatch(
-        main_class_instance, permission_parent_class, model_class, request, has_assignee=False, *args, **kwargs
+    main_class_instance,
+    permission_parent_class,
+    model_class,
+    request,
+    has_assignee=False,
+    *args,
+    **kwargs
 ):
     """
     custom_permissions_dispatch (...) - use in views. Requires model_class from attrs to get owner / assignee from this model
@@ -98,8 +103,12 @@ def custom_permissions_dispatch(
         if has_assignee:
             kwargs["assigned_user"] = model_class.objects.get(pk=pk).get_assignee()
 
-        kwargs['owner'] = model_class.objects.get(pk=pk).get_owner()
+        kwargs["owner"] = model_class.objects.get(pk=pk).get_owner()
 
-        return permission_parent_class.dispatch(main_class_instance, request, *args, **kwargs)
-    except model_class.DoesNotExist:
-        raise PermissionDenied("Have no permission. Object (task, msg, etc...) does not exist.")
+        return permission_parent_class.dispatch(
+            main_class_instance, request, *args, **kwargs
+        )
+    except model_class.DoesNotExist as e:
+        raise PermissionDenied(
+            "Have no permission. Object (task, msg, etc...) does not exist."
+        )

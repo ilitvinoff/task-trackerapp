@@ -5,15 +5,20 @@ from django.shortcuts import render, redirect
 from django.urls.base import reverse_lazy
 
 from .filters import task_filter, message_filter
-from .forms import TaskSortingForm, MessageSortingForm, UserProfileForm, UserSignUpForm
+from .forms import TaskSortingForm, MessageSortingForm, UserProfileUpdateForm, UserSignUpForm
 from .models import TaskModel, Message, UserProfile
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
     custom_permissions_dispatch,
 )
-from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, \
-    ProfileInDeleteView
+from .profile_generics import (
+    FormListView,
+    ProfileDetailInView,
+    ProfileInCreateView,
+    ProfileInUpdateView,
+    ProfileInDeleteView,
+)
 
 
 class TaskListView(
@@ -58,7 +63,13 @@ class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
         return custom_permissions_dispatch(
-            self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request, has_assignee=True, *args, **kwargs
+            self,
+            IsOwnerOrAssigneePermissionRequiredMixin,
+            TaskModel,
+            request,
+            has_assignee=True,
+            *args,
+            **kwargs
         )
 
 
@@ -107,9 +118,15 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdate
 
     # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request,
-                                           has_assignee=True,
-                                           *args, **kwargs)
+        return custom_permissions_dispatch(
+            self,
+            IsOwnerOrAssigneePermissionRequiredMixin,
+            TaskModel,
+            request,
+            has_assignee=True,
+            *args,
+            **kwargs
+        )
 
 
 class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
@@ -191,7 +208,13 @@ class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInVie
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
         return custom_permissions_dispatch(
-            self, IsOwnerOrAssigneePermissionRequiredMixin, Message, request, has_assignee=True, *args, **kwargs
+            self,
+            IsOwnerOrAssigneePermissionRequiredMixin,
+            Message,
+            request,
+            has_assignee=True,
+            *args,
+            **kwargs
         )
 
 
@@ -207,9 +230,9 @@ class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView):
 
 
 class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
-    template_name = 'trackerapp/userprofile_form.html'
+    template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
-    form_class = UserProfileForm
+    form_class = UserProfileUpdateForm
 
     def get_success_url(self):
         return reverse_lazy("user-profile-detail", args=(self.object.id,))
@@ -217,7 +240,18 @@ class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
     # Be sure that current user trying to view his own profile...
     def dispatch(self, request, *args, **kwargs):
         return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs)
+            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs
+        )
+
+    def get_object(self, **kwargs):
+        return UserProfile.objects.get(pk=self.kwargs['pk'])
+
+    #TODO: ...
+    def get(self):
+        profile = self.get_object()
+        self.object.picture = profile.picture
+        self.object.first_name = porfile.first_
+        return super().get(request, *args, **kwargs)
 
 
 def sign_up(request):

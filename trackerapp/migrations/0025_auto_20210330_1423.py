@@ -8,13 +8,18 @@ import stdimage.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trackerapp', '0024_auto_20210330_1419'),
+        ("trackerapp", "0024_auto_20210330_1419"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='picture',
-            field=stdimage.models.StdImageField(blank=True, null=True, upload_to='uploads/userprofile/', validators=[django.core.validators.validate_image_file_extension]),
+            model_name="userprofile",
+            name="picture",
+            field=stdimage.models.StdImageField(
+                blank=True,
+                null=True,
+                upload_to="uploads/userprofile/",
+                validators=[django.core.validators.validate_image_file_extension],
+            ),
         ),
     ]

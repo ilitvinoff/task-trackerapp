@@ -11,10 +11,26 @@ from stdimage.validators import MinSizeValidator
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
-    picture = ImageField(upload_to='uploads/userprofile/', blank=True, null=True,validators=[validate_image_file_extension, ])
+    picture = ImageField(
+        upload_to="uploads/userprofile/",
+        blank=True,
+        null=True,
+        validators=[
+            validate_image_file_extension,
+        ],
+    )
 
     def get_owner(self):
         return self.owner
+
+    def save(self, *args, **kwargs):
+        try:
+            previous_picture = UserProfile.objects.get(id=self.id).picture
+            previous_picture.delete()
+
+        except:
+            pass
+        super(UserProfile, self).save(*args, **kwargs)
 
 
 class TaskModel(models.Model):

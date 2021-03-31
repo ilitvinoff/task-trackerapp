@@ -9,13 +9,21 @@ import stdimage.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trackerapp', '0019_auto_20210330_0841'),
+        ("trackerapp", "0019_auto_20210330_0841"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='picture',
-            field=stdimage.models.StdImageField(blank=True, null=True, upload_to='uploads/userprofile/', validators=[django.core.validators.validate_image_file_extension, stdimage.validators.MinSizeValidator(200, 200)]),
+            model_name="userprofile",
+            name="picture",
+            field=stdimage.models.StdImageField(
+                blank=True,
+                null=True,
+                upload_to="uploads/userprofile/",
+                validators=[
+                    django.core.validators.validate_image_file_extension,
+                    stdimage.validators.MinSizeValidator(200, 200),
+                ],
+            ),
         ),
     ]

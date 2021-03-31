@@ -7,13 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trackerapp', '0018_auto_20210330_0734'),
+        ("trackerapp", "0018_auto_20210330_0734"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='picture',
-            field=models.ImageField(blank=True, null=True, upload_to='uploads/userprofile/', validators=[django.core.validators.validate_image_file_extension]),
+            model_name="userprofile",
+            name="picture",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                upload_to="uploads/userprofile/",
+                validators=[django.core.validators.validate_image_file_extension],
+            ),
         ),
     ]
