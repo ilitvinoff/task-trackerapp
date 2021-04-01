@@ -56,13 +56,16 @@ urlpatterns = [
         name="comment-list",
     ),
     # task's attachments urls
-    url(r"attachment/(?P<pk>\d+)$", views.AttachmentDetail.as_view(), name="attach-detail"),
+    url(
+        r"attachment/(?P<pk>\d+)$",
+        views.AttachmentDetail.as_view(),
+        name="attach-detail",
+    ),
     url(
         r"task/(?P<pk>\d+)/attachments$",
         views.AttachmentList.as_view(),
         name="attach-list",
     ),
-
     url(
         r"task/(?P<pk>\d+)/attachment/create$",
         views.AttachmentCreate.as_view(),

@@ -26,7 +26,9 @@ from .profile_generics import (
 )
 
 
-class TaskListView(LoginRequiredMixin, ProfileInFormListView):  # pylint: disable=too-many-ancestors
+class TaskListView(
+    LoginRequiredMixin, ProfileInFormListView
+):  # pylint: disable=too-many-ancestors
     """
     ListView of created by user tasks, contains form to filter tasks
     """
@@ -42,7 +44,9 @@ class TaskListView(LoginRequiredMixin, ProfileInFormListView):  # pylint: disabl
         return task_filter(self, tasklist)
 
 
-class AssigneeTaskListView(LoginRequiredMixin, ProfileInFormListView):  # pylint: disable=too-many-ancestors
+class AssigneeTaskListView(
+    LoginRequiredMixin, ProfileInFormListView
+):  # pylint: disable=too-many-ancestors
     """
     ListView of assigned to user tasks, contains form to filter tasks
     """
@@ -80,7 +84,12 @@ class TaskCreate(LoginRequiredMixin, ProfileInCreateView):
     """
 
     model = TaskModel
-    fields = ["title", "description", "status", "assignee", ]
+    fields = [
+        "title",
+        "description",
+        "status",
+        "assignee",
+    ]
 
     # override form_valid, to save owner(creator) of the task
     def form_valid(self, form):
@@ -172,7 +181,9 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
     # set owner and task relations for created message
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
-        form.instance.task = TaskModel.objects.get(Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user))
+        form.instance.task = TaskModel.objects.get(
+            Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user)
+        )
         return super(MessageCreate, self).form_valid(form)
 
 
@@ -198,7 +209,7 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     # success_url = reverse_lazy("comment-list")
 
     def get_success_url(self):
-        return reverse_lazy('comment-list',kwargs = {'pk':self.object.task_id})
+        return reverse_lazy("comment-list", kwargs={"pk": self.object.task_id})
 
     # Be sure that current user trying to delete his own comment...
     def dispatch(self, request, *args, **kwargs):
@@ -257,21 +268,22 @@ class AttachmentCreate(LoginRequiredMixin, ProfileInCreateView):
     model = Attachment
 
     fields = [
-        "description", "file",
+        "description",
+        "file",
     ]
 
     # set owner and task relations for created message
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
-        form.instance.task = TaskModel.objects.get(Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user))
+        form.instance.task = TaskModel.objects.get(
+            Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user)
+        )
         return super(AttachmentCreate, self).form_valid(form)
 
 
 class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
     model = Attachment
-    fields = [
-        "description","file"
-    ]
+    fields = ["description", "file"]
 
     # Be sure that current user trying to edit his own comment...
     def dispatch(self, request, *args, **kwargs):
@@ -280,11 +292,11 @@ class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
         )
 
 
-class AttachmentDelete(IsOwnerPermissionRequiredMixin,ProfileInDeleteView):
+class AttachmentDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     model = Attachment
 
     def get_success_url(self):
-        return reverse_lazy('attach-list', kwargs={'pk': self.object.task_id})
+        return reverse_lazy("attach-list", kwargs={"pk": self.object.task_id})
 
     # Be sure that current user trying to delete his own comment...
     def dispatch(self, request, *args, **kwargs):

@@ -5,7 +5,9 @@ from django.views.generic.edit import FormMixin
 from trackerapp.models import UserProfile
 
 
-class ProfileInFormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
+class ProfileInFormListView(
+    FormMixin, generic.ListView
+):  # pylint: disable=too-many-ancestors
     """
     Pra-class to may create form in list view.
     Overriding get and post methods.

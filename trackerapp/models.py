@@ -136,7 +136,9 @@ class Message(models.Model):
 
 
 class Attachment(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner")
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
+    )
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
     file = models.FileField(upload_to="attachments/", blank=True, null=True)
     description = models.fields.TextField(
@@ -151,7 +153,7 @@ class Attachment(models.Model):
         return reverse("attach-detail", args=[str(self.id)])
 
     def get_title_from_description(self):
-        return self.description[:40] + '...'
+        return self.description[:40] + "..."
 
     def get_owner(self):
         return self.owner
