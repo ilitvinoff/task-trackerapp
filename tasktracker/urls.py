@@ -13,17 +13,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
-from django.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include
+from django.urls import path
 from rest_framework import routers
-from trackerapp import apiviews
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+from trackerapp import apiviews
 
 router = routers.DefaultRouter()
 router.register(r"users", apiviews.UserViewSet)
@@ -32,16 +33,22 @@ router.register(r"tasks", apiviews.TaskViewSet)
 router.register(r"comments", apiviews.MessageViewSet)
 
 urlpatterns = [
-                  # REST API URLS
-                  path("api/", include(router.urls)),
-                  path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
-                  path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-                  path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-                  # WEB INTERFACE URLS
-                  path("admin/", admin.site.urls),
-                  path("", include("trackerapp.urls")),
-                  path("accounts/", include("django.contrib.auth.urls")),
-              ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # WEB INTERFACE URLS
+    path("", include("trackerapp.urls")),
+    path("admin/", admin.site.urls),
+    path("accounts/", include("django.contrib.auth.urls")),
+    # REST API URLS
+    path("api/", include([
+        path('', include(router.urls)),
+        path("auth/", include("rest_framework.urls", namespace="rest_framework")),
+        path("token/", include([
+            path("", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+            path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+        ]))
+    ])),
+]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL,

@@ -12,8 +12,7 @@ from .permissions import (
     IsOwnerPermissionRequiredMixin,
     custom_permissions_dispatch,
 )
-from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, \
-    ProfileInDeleteView
+from .profile_generics import FormListView, ProfileDetailInView, ProfileInCreateView, ProfileInUpdateView, ProfileInDeleteView
 
 
 class TaskListView(
@@ -118,7 +117,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     """
 
     model = TaskModel
-    success_url = reverse_lazy("tasks")
+    success_url = reverse_lazy("index")
 
     # Be sure that current user trying to delete his own task
     def dispatch(self, request, *args, **kwargs):
@@ -232,7 +231,7 @@ def sign_up(request):
             raw_password = form.cleaned_data.get("password1")
             user = authenticate(username=username, password=raw_password)
             login(request, user)
-            return redirect("/")
+            return redirect("index")
     else:
         form = UserSignUpForm()
     return render(request, "trackerapp/sign_up.html", {"form": form})

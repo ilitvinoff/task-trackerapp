@@ -1,8 +1,17 @@
+from django.http.response import Http404
 from django.utils.translation import ugettext as _
 from django.views import generic
-from django.http.response import Http404
 from django.views.generic.edit import FormMixin
+
 from trackerapp.models import UserProfile
+
+
+def add_userprofile(user_id, context):
+    try:
+        context["userprofile"] = UserProfile.objects.get(owner_id=user_id)  # add extra context
+    except UserProfile.DoesNotExist as e:
+        context["userprofile"] = None
+    return context
 
 
 class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
@@ -13,8 +22,7 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
 
     def get_context_data(self, **kwargs):
         context = super(FormListView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
+        return add_userprofile(self.request.user.id, context)
 
     def get(self, request, *args, **kwargs):
         # From FormMixin
@@ -40,28 +48,24 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
 class ProfileDetailInView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
-        context = super(ProfileDetailInView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
+        context = super().get_context_data(**kwargs)  # get the default context data
+        return add_userprofile(self.request.user.id, context)
 
 
 class ProfileInUpdateView(generic.UpdateView):
 
     def get_context_data(self, **kwargs):
-        context = super(ProfileInUpdateView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
+        context = super().get_context_data(**kwargs)  # get the default context data
+        return add_userprofile(self.request.user.id, context)
 
 
 class ProfileInCreateView(generic.CreateView):
     def get_context_data(self, **kwargs):
-        context = super(ProfileInCreateView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
+        context = super().get_context_data(**kwargs)  # get the default context data
+        return add_userprofile(self.request.user.id, context)
 
 
 class ProfileInDeleteView(generic.DeleteView):
     def get_context_data(self, **kwargs):
-        context = super(ProfileInDeleteView, self).get_context_data(**kwargs)  # get the default context data
-        context["userprofile"] = UserProfile.objects.get(owner_id=self.request.user.id)  # add extra context
-        return context
+        context = super().get_context_data(**kwargs)  # get the default context data
+        return add_userprofile(self.request.user.id, context)
