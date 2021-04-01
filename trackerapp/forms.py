@@ -49,7 +49,7 @@ class TaskSortingForm(forms.Form):
         return data
 
 
-class MessageSortingForm(forms.Form):
+class DateSortingForm(forms.Form):
     """
     Form to filter message by date(from-till)
     """

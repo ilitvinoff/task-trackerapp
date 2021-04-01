@@ -1,0 +1,16 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <div class="col-md-4">
+        <h1>Delete attachment</h1>
+        <p>Are you sure you want to delete the attachment: </p>
+        <p>{{ attachment.get_title_from_description }}</p>
+        <p>?</p>
+    </div>
+
+    <form action="" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-success" type="submit" value="Yes, delete."/>
+    </form>
+
+{% endblock %}

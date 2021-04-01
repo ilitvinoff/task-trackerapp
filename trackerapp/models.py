@@ -28,6 +28,12 @@ class UserProfile(models.Model):
             pass
         super(UserProfile, self).save(*args, **kwargs)
 
+    def __str__(self):
+        """
+        String for representing the Model object (in Admin site etc.)
+        """
+        return self.owner.username
+
 
 class TaskModel(models.Model):
     """
@@ -74,9 +80,6 @@ class TaskModel(models.Model):
         null=True,
     )
 
-    # TODO:
-    # attachment = models.FileField(upload_to="attachments/", blank=True, null=True)
-
     def __str__(self):
         """
         String for representing the Model object (in Admin site etc.)
@@ -116,6 +119,39 @@ class Message(models.Model):
         Returns the url to access a particular instance of the model.
         """
         return reverse("comment-detail", args=[str(self.id)])
+
+    def get_owner(self):
+        return self.owner
+
+    def get_assignee(self):
+        return self.task.assignee
+
+    def __str__(self):
+        return self.body
+
+    class Meta:
+        ordering = [
+            "creation_date",
+        ]
+
+
+class Attachment(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner")
+    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+    file = models.FileField(upload_to="attachments/", blank=True, null=True)
+    description = models.fields.TextField(
+        max_length=1000, help_text="Enter a brief description of the task."
+    )
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a particular instance of the model.
+        """
+        return reverse("attach-detail", args=[str(self.id)])
+
+    def get_title_from_description(self):
+        return self.description[:40] + '...'
 
     def get_owner(self):
         return self.owner

@@ -5,14 +5,14 @@ from django.views.generic.edit import FormMixin
 from trackerapp.models import UserProfile
 
 
-class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
+class ProfileInFormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
     """
     Pra-class to may create form in list view.
     Overriding get and post methods.
     """
 
     def get_context_data(self, **kwargs):
-        context = super(FormListView, self).get_context_data(
+        context = super(ProfileInFormListView, self).get_context_data(
             **kwargs
         )  # get the default context data
         context["userprofile"] = UserProfile.objects.get(
@@ -41,9 +41,9 @@ class FormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-anc
         return self.get(request, *args, **kwargs)
 
 
-class ProfileDetailInView(generic.DetailView):
+class ProfileInDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
-        context = super(ProfileDetailInView, self).get_context_data(
+        context = super(ProfileInDetailView, self).get_context_data(
             **kwargs
         )  # get the default context data
         context["userprofile"] = UserProfile.objects.get(

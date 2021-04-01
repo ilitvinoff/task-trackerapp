@@ -1,12 +1,12 @@
-from trackerapp.forms import MessageSortingForm, TaskSortingForm
+from trackerapp.forms import DateSortingForm, TaskSortingForm
 
 
-def message_filter(obj, message_list):
+def date_filter(obj, message_list):
     """
-    message_filter - to filter list of messages by values from form
+    date_filter - to filter list of messages by values from form
     """
     if obj.request.method == "POST":
-        sorting_form = MessageSortingForm(obj.request.POST)
+        sorting_form = DateSortingForm(obj.request.POST)
 
         if sorting_form.is_valid():
             date_from = sorting_form.cleaned_data["from_date"]
@@ -19,7 +19,7 @@ def message_filter(obj, message_list):
                 message_list = message_list.filter(creation_date__lte=date_till)
 
         else:
-            MessageSortingForm()
+            DateSortingForm()
     return message_list
 
 

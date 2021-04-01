@@ -4,31 +4,29 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.urls.base import reverse_lazy
 
-from .filters import task_filter, message_filter
+from .filters import task_filter, date_filter
 from .forms import (
     TaskSortingForm,
-    MessageSortingForm,
+    DateSortingForm,
     UserProfileUpdateForm,
     UserSignUpForm,
 )
-from .models import TaskModel, Message, UserProfile
+from .models import TaskModel, Message, UserProfile, Attachment
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
     custom_permissions_dispatch,
 )
 from .profile_generics import (
-    FormListView,
-    ProfileDetailInView,
+    ProfileInFormListView,
+    ProfileInDetailView,
     ProfileInCreateView,
     ProfileInUpdateView,
     ProfileInDeleteView,
 )
 
 
-class TaskListView(
-    LoginRequiredMixin, FormListView
-):  # pylint: disable=too-many-ancestors
+class TaskListView(LoginRequiredMixin, ProfileInFormListView):  # pylint: disable=too-many-ancestors
     """
     ListView of created by user tasks, contains form to filter tasks
     """
@@ -44,9 +42,7 @@ class TaskListView(
         return task_filter(self, tasklist)
 
 
-class AssigneeTaskListView(
-    LoginRequiredMixin, FormListView
-):  # pylint: disable=too-many-ancestors
+class AssigneeTaskListView(LoginRequiredMixin, ProfileInFormListView):  # pylint: disable=too-many-ancestors
     """
     ListView of assigned to user tasks, contains form to filter tasks
     """
@@ -62,7 +58,7 @@ class AssigneeTaskListView(
         return task_filter(self, tasklist)
 
 
-class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
+class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
     model = TaskModel
 
     # Be sure that current user trying to view his own comment...
@@ -84,7 +80,7 @@ class TaskCreate(LoginRequiredMixin, ProfileInCreateView):
     """
 
     model = TaskModel
-    fields = ["title", "description", "status", "assignee"]
+    fields = ["title", "description", "status", "assignee", ]
 
     # override form_valid, to save owner(creator) of the task
     def form_valid(self, form):
@@ -149,9 +145,9 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
         )
 
 
-class MessageListView(LoginRequiredMixin, FormListView):
+class MessageListView(LoginRequiredMixin, ProfileInFormListView):
     model = Message
-    form_class = MessageSortingForm
+    form_class = DateSortingForm
     paginate_by = 5
 
     def get_queryset(self, **kwargs):
@@ -160,7 +156,7 @@ class MessageListView(LoginRequiredMixin, FormListView):
             Q(task__owner__exact=self.request.user)
             | Q(task__assignee__exact=self.request.user),
         ).order_by("creation_date")
-        return message_filter(self, message_list)
+        return date_filter(self, message_list)
 
 
 class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
@@ -176,7 +172,7 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
     # set owner and task relations for created message
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
-        form.instance.task = TaskModel.objects.get(pk=self.kwargs.get("pk"))
+        form.instance.task = TaskModel.objects.get(Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user))
         return super(MessageCreate, self).form_valid(form)
 
 
@@ -199,7 +195,10 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
 
 class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     model = Message
-    success_url = reverse_lazy("comment-list")
+    # success_url = reverse_lazy("comment-list")
+
+    def get_success_url(self):
+        return reverse_lazy('comment-list',kwargs = {'pk':self.object.task_id})
 
     # Be sure that current user trying to delete his own comment...
     def dispatch(self, request, *args, **kwargs):
@@ -208,7 +207,7 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
         )
 
 
-class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInView):
+class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
     model = Message
 
     # Be sure that current user trying to view his own comment...
@@ -224,7 +223,77 @@ class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileDetailInVie
         )
 
 
-class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileDetailInView):
+class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
+    model = Attachment
+
+    # Be sure that current user trying to view his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        return custom_permissions_dispatch(
+            self,
+            IsOwnerOrAssigneePermissionRequiredMixin,
+            Attachment,
+            request,
+            has_assignee=True,
+            *args,
+            **kwargs
+        )
+
+
+class AttachmentList(LoginRequiredMixin, ProfileInFormListView):
+    model = Attachment
+    form_class = DateSortingForm
+    paginate_by = 5
+
+    def get_queryset(self, **kwargs):
+        attachment_list = Attachment.objects.filter(
+            Q(task_id__exact=self.kwargs.get("pk")),
+            Q(task__owner__exact=self.request.user)
+            | Q(task__assignee__exact=self.request.user),
+        ).order_by("creation_date")
+        return date_filter(self, attachment_list)
+
+
+class AttachmentCreate(LoginRequiredMixin, ProfileInCreateView):
+    model = Attachment
+
+    fields = [
+        "description", "file",
+    ]
+
+    # set owner and task relations for created message
+    def form_valid(self, form, **kwargs):
+        form.instance.owner = self.request.user
+        form.instance.task = TaskModel.objects.get(Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user))
+        return super(AttachmentCreate, self).form_valid(form)
+
+
+class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
+    model = Attachment
+    fields = [
+        "description","file"
+    ]
+
+    # Be sure that current user trying to edit his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        return custom_permissions_dispatch(
+            self, IsOwnerPermissionRequiredMixin, Attachment, request, *args, **kwargs
+        )
+
+
+class AttachmentDelete(IsOwnerPermissionRequiredMixin,ProfileInDeleteView):
+    model = Attachment
+
+    def get_success_url(self):
+        return reverse_lazy('attach-list', kwargs={'pk': self.object.task_id})
+
+    # Be sure that current user trying to delete his own comment...
+    def dispatch(self, request, *args, **kwargs):
+        return custom_permissions_dispatch(
+            self, IsOwnerPermissionRequiredMixin, Attachment, request, *args, **kwargs
+        )
+
+
+class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileInDetailView):
     model = UserProfile
     queryset = UserProfile.objects.all()
 
