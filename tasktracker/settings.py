@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "trackerapp.apps.TrackerappConfig",
     "rest_framework",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
