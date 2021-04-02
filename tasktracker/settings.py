@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "trackerapp.apps.TrackerappConfig",
     "rest_framework",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
@@ -131,13 +132,5 @@ REST_FRAMEWORK = {
     ),
 }
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
-
-# Img config
-# DJANGORESIZED_DEFAULT_SIZE = [400, 400]
-# DJANGORESIZED_DEFAULT_QUALITY = 75
-# DJANGORESIZED_DEFAULT_KEEP_META = True
-# DJANGORESIZED_DEFAULT_FORCE_FORMAT = 'JPEG'
-# DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
-# DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"

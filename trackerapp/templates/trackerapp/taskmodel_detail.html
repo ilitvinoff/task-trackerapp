@@ -3,27 +3,29 @@
 {% block content %}
     {% comment %} Task body {% endcomment %}
     {% if taskmodel %}
-        <div class="col-md-10">
+        <div class="col-md-6">
             <h1><strong>Title:</strong> {{ taskmodel.title }}</h1>
             <h2><strong>Description:</strong></h2>
-            <p>{{ taskmodel.description }}</p>
+            <p class="btn btn-default">{{ taskmodel.description }}</p>
+            <p>
             <ul class="col-md-4">
                 <li><strong>Creation date:</strong> {{ taskmodel.creation_date }} </li>
                 <li><strong>Status:</strong> {{ taskmodel.status }}</li>
                 <li><strong>Owner:</strong> {{ taskmodel.owner.username }}</li>
-
-                {% comment %} If assigned to somebody {% endcomment %}
-                {% if taskmodel.assignee %}
-                    <li><strong>Assignee:</strong></li>
-                    <ul class="col-md-4">
-                        <li>
-                            {{ taskmodel.assignee }}
-                        </li>
-                    </ul>
-                    <p><a class="btn btn-success" href="{% url 'update-task-status' pk=taskmodel.pk %}">Update task's
-                        status</a></p>
-                {% endif %}
             </ul>
+
+            {% comment %} If assigned to somebody {% endcomment %}
+            {% if taskmodel.assignee %}
+                <li><strong>Assignee:</strong></li>
+                <ul class="col-md-4">
+                    <li>
+                        {{ taskmodel.assignee }}
+                    </li>
+                </ul>
+                <p><a class="btn btn-success" href="{% url 'update-task-status' pk=taskmodel.pk %}">Update
+                    task's
+                    status</a></p>
+            {% endif %}
         </div>
 
         {% comment %} If current user owner, then let him edit task  {% endcomment %}
@@ -31,7 +33,11 @@
             <p><a class="btn btn-success" href="{% url 'update-task' pk=taskmodel.pk %}">Edit task</a></p>
         {% endif %}
 
-        <p><a class="btn btn-primary" role="button" href="{% url 'message-create' pk=taskmodel.pk %}">Add comment</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'attach-create' pk=taskmodel.pk %}">Add attachment</a>
+        </p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'attach-list' pk=taskmodel.pk %}">Attachments</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'message-create' pk=taskmodel.pk %}">Add comment</a>
+        </p>
         <p><a class="btn btn-primary" role="button" href="{% url 'comment-list' pk=taskmodel.pk %}">Comments</a></p>
 
     {% else %}

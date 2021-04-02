@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TaskModel, Message, UserProfile
+from .models import TaskModel, Message, UserProfile, Attachment
 
 
 @admin.register(TaskModel)
@@ -19,6 +19,12 @@ class TaskModelAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     list_display = ("body", "owner", "task", "creation_date")
+    list_filter = ("owner", "task", "creation_date")
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ("description", "file", "owner", "task", "creation_date")
     list_filter = ("owner", "task", "creation_date")
 
 

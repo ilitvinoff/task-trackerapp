@@ -1,0 +1,39 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+
+    {% comment %} Filter form {% endcomment %}
+    <form class="col-md-10" class=".navbar-left" action="" method="post">
+        {% csrf_token %}
+        <table class="btn btn-default">
+            {{ form }}
+        </table>
+        <input class="btn btn-success" type="submit" value="Submit"/>
+    </form>
+
+    <h1>Attachments:</h1>
+    {% comment %} Message list {% endcomment %}
+    {% if attachment_list %}
+
+        <ul class="col-md-10">
+            {% for attachment in attachment_list %}
+
+                <li>
+                    <div>
+                        <a class="btn btn-default" href="{{ attachment.get_absolute_url }}">{{ attachment.get_title_from_description }};
+                    created: {{ attachment.creation_date }}</a>
+                    <p>Owner: {{ attachment.get_owner }}</p>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No attachments detected...</p>
+    {% endif %}
+
+    <div class="col-md-4">
+        <p><a class="btn btn-primary" role="button" href="{% url 'tasks' %}">Tasks</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'assigned-tasks' %}">Assigned to me</a></p>
+    </div>
+
+{% endblock content %}

@@ -1,0 +1,37 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    {% if attachment %}
+        <div class="col-md-8">
+            <h2><strong>Attachment owner: </strong><div class="btn btn-default">{{ attachment.get_owner }}</div></h2>
+            <h2><strong>Description:</strong><p class="btn btn-default">{{ attachment.description }}</p></h2>
+
+            <h2><strong>Attachment: </strong><a class="btn btn-default" href="{{ attachment.file.url }}">{{ attachment.file.name }}</a></h2>
+            <ul>
+                <li><strong>Creation date:</strong> {{ attachment.creation_date }} </li>
+
+                {% comment %} If assigned to somebody {% endcomment %}
+                {% if attachment.get_assignee %}
+                    <li><strong>Assignee:</strong></li>
+                    <div class="col-md-4">
+                        <p>
+                            {{ attachment.get_assignee}}
+                        </p>
+                    </div>
+
+                {% endif %}
+            </ul>
+        </div>
+
+        {% comment %} If current user owner, then let him edit task  {% endcomment %}
+        {% if user == attachment.owner %}
+            <p><a class="btn btn-success" href="{% url 'attach-update' pk=attachment.id %}">Edit attachment</a></p>
+            <p><a class="btn btn-primary" role="button" href="{% url 'attach-delete' pk=attachment.id %}">delete</a></p>
+        {% endif %}
+
+        <p><a class="btn btn-primary" role="button" href="{% url 'attach-list' pk=attachment.task_id %}">{{ attachment.task.title }}'s attachments</a></p>
+
+    {% else %}
+        <h2>There is no such task in your list</h2>
+    {% endif %}
+{% endblock %}

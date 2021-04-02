@@ -22,10 +22,12 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return (
-            Message.objects.all().filter(
+            Message.objects.all()
+            .filter(
                 Q(task__owner__exact=self.request.user)
                 | Q(task__assignee__exact=self.request.user),
-            ).order_by("creation_date")
+            )
+            .order_by("creation_date")
         )
 
     def destroy(self, request, *args, **kwargs):
