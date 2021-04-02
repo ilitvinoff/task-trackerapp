@@ -125,15 +125,8 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdate
 
     # Be sure that current user trying to edit status of the task assigned to him
     def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self,
-            IsOwnerOrAssigneePermissionRequiredMixin,
-            TaskModel,
-            request,
-            has_assignee=True,
-            *args,
-            **kwargs
-        )
+        return custom_permissions_dispatch(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request,
+                                           has_assignee=True, *args, **kwargs)
 
 
 class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
@@ -179,7 +172,7 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
         form.instance.task = TaskModel.objects.get(
-            Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user)
+            Q(pk=self.kwargs.get("pk")), (Q(owner=self.request.user) | Q(assignee=self.request.user))
         )
         return super(MessageCreate, self).form_valid(form)
 
@@ -203,6 +196,7 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
 
 class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
     model = Message
+
     # success_url = reverse_lazy("comment-list")
 
     def get_success_url(self):
@@ -214,6 +208,9 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
             self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
         )
 
+
+# TODO: Add to attach-list/comments-list link to relative task. Add list of comments and attachments to task detail
+#  view. Add api functionality for userprofile,attachments.
 
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
     model = Message
@@ -273,7 +270,7 @@ class AttachmentCreate(LoginRequiredMixin, ProfileInCreateView):
     def form_valid(self, form, **kwargs):
         form.instance.owner = self.request.user
         form.instance.task = TaskModel.objects.get(
-            Q(pk=self.kwargs.get("pk")), Q(owner=self.request.user)
+            Q(pk=self.kwargs.get("pk")), (Q(owner=self.request.user) | Q(assignee=self.request.user))
         )
         return super(AttachmentCreate, self).form_valid(form)
 
