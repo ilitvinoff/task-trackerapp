@@ -18,7 +18,7 @@
 
                 <li><a class="btn btn-default" role="button" href="{{ task.get_absolute_url }}">{{ task.title }}</a>
                     <a class="btn btn-primary" role="button"
-                        href="{% url 'update-task-status' pk=task.pk %}">Update task's status</a></li>
+                       href="{% url 'update-task-status' pk=task.pk %}">Update task's status</a></li>
             {% endfor %}
         </ul>
     {% else %}

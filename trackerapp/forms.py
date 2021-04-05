@@ -2,11 +2,11 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.forms.fields import ChoiceField, DateField
-from .resize_img import resize
 
 from .models import TaskModel, UserProfile
-from django.core.validators import validate_email
+from .resize_img import resize
 
 
 class DateInput(forms.DateInput):

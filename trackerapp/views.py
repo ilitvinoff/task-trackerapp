@@ -4,6 +4,13 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.urls.base import reverse_lazy
 
+from .extended_generics import (
+    ExtendedFormListView,
+    ExtendedDetailView,
+    ExtendedCreateView,
+    ExtendedUpdateView,
+    ExtendedDeleteView, ListInDetailView,
+)
 from .filters import task_filter, date_filter
 from .forms import (
     TaskSortingForm,
@@ -16,14 +23,6 @@ from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
     custom_permissions_dispatch,
-)
-
-from .extended_generics import (
-    ExtendedFormListView,
-    ExtendedDetailView,
-    ExtendedCreateView,
-    ExtendedUpdateView,
-    ExtendedDeleteView, ListInDetailView,
 )
 
 

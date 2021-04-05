@@ -76,13 +76,13 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
 
 
 def custom_permissions_dispatch(
-    main_class_instance,
-    permission_parent_class,
-    model_class,
-    request,
-    has_assignee=False,
-    *args,
-    **kwargs
+        main_class_instance,
+        permission_parent_class,
+        model_class,
+        request,
+        has_assignee=False,
+        *args,
+        **kwargs
 ):
     """
     custom_permissions_dispatch (...) - use in views. Requires model_class from attrs to get owner / assignee from

@@ -18,7 +18,8 @@
         <ul class="col-md-4">
             {% for task in taskmodel_list %}
 
-                <li><a class="btn btn-default" href="{{ task.get_absolute_url }}">title: {{ task.title }}; created: {{ task.creation_date }}</a>
+                <li><a class="btn btn-default" href="{{ task.get_absolute_url }}">title: {{ task.title }};
+                    created: {{ task.creation_date }}</a>
                     <a class="btn btn-primary" role="button" href="{% url 'update-task' pk=task.pk %}">update</a><a
                             class="btn btn-primary" role="button" href="{% url 'delete-task' pk=task.pk %}">delete</a>
                 </li>

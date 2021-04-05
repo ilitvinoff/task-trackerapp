@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User, Group
-from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from rest_framework import serializers
+
+from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -1,18 +1,19 @@
+from django.contrib.auth.models import User, Group
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from rest_framework import viewsets, mixins, permissions
+
+from .models import Message, TaskModel, UserProfile, Attachment
+from .permissions import (
+    IsOwnerOrAssigneeREST,
+    IsTaskOwnerOrTaskAssigneeREST, IsOwnerREST,
+)
 from .serializers import (
     UserSerializer,
     GroupSerializer,
     TaskSerializer,
     MessageSerializer, ProfileSerializer, AttachmentSerializer,
 )
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.models import User, Group
-from rest_framework import viewsets, mixins, permissions
-from .permissions import (
-    IsOwnerOrAssigneeREST,
-    IsTaskOwnerOrTaskAssigneeREST, IsOwnerREST,
-)
-from .models import Message, TaskModel, UserProfile, Attachment
-from django.db.models import Q
 
 
 class MessageViewSet(viewsets.ModelViewSet):
@@ -106,6 +107,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+
 class AttachmentViewSet(viewsets.ModelViewSet):
     queryset = Attachment.objects.all()
     serializer_class = AttachmentSerializer
@@ -127,7 +129,7 @@ class AttachmentViewSet(viewsets.ModelViewSet):
         raise PermissionDenied()
 
     def update(self, request, *args, **kwargs):
-        if self.get_object().owner == request.user  or self.get_object().get_assignee()==request.user:
+        if self.get_object().owner == request.user or self.get_object().get_assignee() == request.user:
             return super().update(request, args, kwargs)
         raise PermissionDenied()
 

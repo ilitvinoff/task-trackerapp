@@ -6,7 +6,6 @@ from django.apps import AppConfig
 
 
 class TrackerappConfig(AppConfig):
-
     """
     TrackerappConfig ...ololo
     """

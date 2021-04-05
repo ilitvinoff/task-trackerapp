@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("trackerapp", "0022_auto_20210330_1338"),
     ]

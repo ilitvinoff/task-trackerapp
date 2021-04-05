@@ -23,9 +23,9 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .yasg import urlpatterns as yasg_urls
 
 from trackerapp import apiviews
+from .yasg import urlpatterns as yasg_urls
 
 router = routers.DefaultRouter()
 router.register(r"users", apiviews.UserViewSet)
