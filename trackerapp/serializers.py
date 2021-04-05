@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User, Group
-from trackerapp.models import TaskModel, Message
+from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from rest_framework import serializers
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     owned_tasks = serializers.PrimaryKeyRelatedField(
         many=True, queryset=TaskModel.objects.all()
     )
@@ -13,37 +13,72 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ["url", "username", "groups", "owned_tasks", "assigned_tasks"]
+        fields = ("id", "username", "groups", "owned_tasks", "assigned_tasks")
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ["url", "name"]
+        fields = ("id", "name")
 
 
-class TaskSerializer(serializers.HyperlinkedModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
     assignee = serializers.ReadOnlyField(source="assignee.username")
 
     class Meta:
         model = TaskModel
-        fields = ["url", "title", "description", "owner", "assignee", "creation_date"]
+        fields = ("id", "title", "description", "owner", "assignee", "creation_date")
 
 
-class MessageSerializer(serializers.HyperlinkedModelSerializer):
+class MessageSerializer(serializers.ModelSerializer):
     message_owner = serializers.ReadOnlyField(source="owner.username")
     task_owner = serializers.ReadOnlyField(source="task.owner.username")
     task_assigned_to = serializers.ReadOnlyField(source="task.assignee.username")
 
     class Meta:
         model = Message
-        fields = [
-            "url",
+        fields = (
+            "id",
             "body",
             "task",
             "message_owner",
             "task_owner",
             "task_assigned_to",
             "creation_date",
-        ]
+        )
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
+    userprofile_owner_id = serializers.ReadOnlyField(source="owner.id")
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "id",
+            "userprofile_owner",
+            "userprofile_owner_id",
+            "picture",
+        )
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
+    userprofile_owner_id = serializers.ReadOnlyField(source="owner.id")
+    related_task_assignee = serializers.ReadOnlyField(source="task.assignee.username")
+    related_task_assignee_id = serializers.ReadOnlyField(source="task.assignee.id")
+
+    class Meta:
+        model = Attachment
+        fields = (
+            "id",
+            "userprofile_owner",
+            "userprofile_owner_id",
+            "related_task_assignee",
+            "related_task_assignee_id",
+            "description",
+            "creation_date",
+            "task",
+            "file",
+        )

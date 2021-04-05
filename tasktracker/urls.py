@@ -29,9 +29,11 @@ from trackerapp import apiviews
 
 router = routers.DefaultRouter()
 router.register(r"users", apiviews.UserViewSet)
+router.register(r"profiles", apiviews.ProfileViewSet)
 router.register(r"groups", apiviews.GroupViewSet)
 router.register(r"tasks", apiviews.TaskViewSet)
 router.register(r"comments", apiviews.MessageViewSet)
+router.register(r"attachments", apiviews.AttachmentViewSet)
 
 urlpatterns = [
     # WEB INTERFACE URLS
