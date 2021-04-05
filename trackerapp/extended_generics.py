@@ -76,7 +76,7 @@ class ExtendedDeleteView(generic.DeleteView):
 
 
 class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
-    paginate_by = 5
+    paginate_by =5
     defaultModel = Message
 
     def get_context_data(self, **kwargs):

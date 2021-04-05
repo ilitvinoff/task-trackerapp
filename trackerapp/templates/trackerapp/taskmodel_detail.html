@@ -27,12 +27,23 @@
                             status</a></p>
                     {% endif %}
 
+            {% if attachment_list %}
+                <h2><strong>Attachments:</strong></h2>
+                <ul class="col-md-8">
+                    {% for attachment in attachment_list %}
+                        <li><a class="btn btn-default"
+                               href="{% url 'attach-detail' pk=attachment.pk %}">{{ attachment.get_title_from_description }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
             {% if object_list %}
                 <h2><strong>Comments:</strong></h2>
                 <ul class="col-md-8">
-                    {% for object in object_list %}
+                    {% for message in object_list %}
                         <li><a class="btn btn-default"
-                               href="{% url 'comment-detail' pk=object.pk %}">{{ object.get_title_from_description }}</a>
+                               href="{% url 'comment-detail' pk=message.pk %}">{{ message.get_title_from_description }}</a>
                         </li>
                     {% endfor %}
                 </ul>

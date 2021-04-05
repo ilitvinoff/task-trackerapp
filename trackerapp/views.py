@@ -63,6 +63,12 @@ class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ListInDetailView):
     model = TaskModel
     defaultModel = Message
 
+    # Add attachment list to context
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data['attachment_list'] = Attachment.objects.filter(task=self.get_object())
+        return context_data
+
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
         return custom_permissions_dispatch(
@@ -210,8 +216,8 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
         )
 
 
-# TODO: Add list of comments and attachments to task detail
-#  view. Add api functionality for userprofile,attachments.
+# TODO: Change hyper-links to id ir rest framework.
+#       Add api functionality for userprofile,attachments.
 
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
     model = Message
