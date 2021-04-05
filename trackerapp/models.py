@@ -114,6 +114,9 @@ class Message(models.Model):
 
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
+    def get_title_from_description(self):
+        return self.body[:40] + "..."
+
     def get_absolute_url(self):
         """
         Returns the url to access a particular instance of the model.

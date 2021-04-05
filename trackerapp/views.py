@@ -18,16 +18,16 @@ from .permissions import (
     custom_permissions_dispatch,
 )
 
-from .profile_generics import (
-    ProfileInFormListView,
-    ProfileInDetailView,
-    ProfileInCreateView,
-    ProfileInUpdateView,
-    ProfileInDeleteView,
+from .extended_generics import (
+    ExtendedFormListView,
+    ExtendedDetailView,
+    ExtendedCreateView,
+    ExtendedUpdateView,
+    ExtendedDeleteView, ListInDetailView,
 )
 
 
-class TaskListView(LoginRequiredMixin, ProfileInFormListView):
+class TaskListView(LoginRequiredMixin, ExtendedFormListView):
     """
     ListView of created by user tasks, contains form to filter tasks
     """
@@ -43,7 +43,7 @@ class TaskListView(LoginRequiredMixin, ProfileInFormListView):
         return task_filter(self, tasklist)
 
 
-class AssigneeTaskListView(LoginRequiredMixin, ProfileInFormListView):
+class AssigneeTaskListView(LoginRequiredMixin, ExtendedFormListView):
     """
     ListView of assigned to user tasks, contains form to filter tasks
     """
@@ -59,8 +59,9 @@ class AssigneeTaskListView(LoginRequiredMixin, ProfileInFormListView):
         return task_filter(self, tasklist)
 
 
-class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
+class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ListInDetailView):
     model = TaskModel
+    defaultModel = Message
 
     # Be sure that current user trying to view his own comment...
     def dispatch(self, request, *args, **kwargs):
@@ -75,7 +76,7 @@ class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
         )
 
 
-class TaskCreate(LoginRequiredMixin, ProfileInCreateView):
+class TaskCreate(LoginRequiredMixin, ExtendedCreateView):
     """
     Form to create task.
     """
@@ -94,7 +95,7 @@ class TaskCreate(LoginRequiredMixin, ProfileInCreateView):
         return super(TaskCreate, self).form_valid(form)
 
 
-class TaskUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
+class TaskUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     """
     Edit task form
     """
@@ -113,7 +114,7 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
         )
 
 
-class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdateView):
+class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedUpdateView):
     """
     Form to edit task status (for assignee...)
     """
@@ -129,7 +130,7 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInUpdate
                                            has_assignee=True, *args, **kwargs)
 
 
-class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
+class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     """
     Form to delete task
     """
@@ -144,7 +145,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
         )
 
 
-class MessageListView(LoginRequiredMixin, ProfileInFormListView):
+class MessageListView(LoginRequiredMixin, ExtendedFormListView):
     model = Message
     form_class = DateSortingForm
     paginate_by = 5
@@ -158,7 +159,7 @@ class MessageListView(LoginRequiredMixin, ProfileInFormListView):
         return date_filter(self, message_list)
 
 
-class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
+class MessageCreate(LoginRequiredMixin, ExtendedCreateView):
     """
     Form to create message...
     """
@@ -177,7 +178,7 @@ class MessageCreate(LoginRequiredMixin, ProfileInCreateView):
         return super(MessageCreate, self).form_valid(form)
 
 
-class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
+class MessageUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     """
     Form to update comments
     """
@@ -194,7 +195,7 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
         )
 
 
-class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
+class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     model = Message
 
     # success_url = reverse_lazy("comment-list")
@@ -209,10 +210,10 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
         )
 
 
-# TODO: Add to attach-list/comments-list link to relative task. Add list of comments and attachments to task detail
+# TODO: Add list of comments and attachments to task detail
 #  view. Add api functionality for userprofile,attachments.
 
-class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
+class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
     model = Message
 
     # Be sure that current user trying to view his own comment...
@@ -228,7 +229,7 @@ class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailVie
         )
 
 
-class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetailView):
+class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
     model = Attachment
 
     # Be sure that current user trying to view his own comment...
@@ -244,7 +245,7 @@ class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ProfileInDetail
         )
 
 
-class AttachmentList(LoginRequiredMixin, ProfileInFormListView):
+class AttachmentList(LoginRequiredMixin, ExtendedFormListView):
     model = Attachment
     form_class = DateSortingForm
     paginate_by = 5
@@ -258,7 +259,7 @@ class AttachmentList(LoginRequiredMixin, ProfileInFormListView):
         return date_filter(self, attachment_list)
 
 
-class AttachmentCreate(LoginRequiredMixin, ProfileInCreateView):
+class AttachmentCreate(LoginRequiredMixin, ExtendedCreateView):
     model = Attachment
 
     fields = [
@@ -275,7 +276,7 @@ class AttachmentCreate(LoginRequiredMixin, ProfileInCreateView):
         return super(AttachmentCreate, self).form_valid(form)
 
 
-class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
+class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     model = Attachment
     fields = ["description", "file"]
 
@@ -286,7 +287,7 @@ class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
         )
 
 
-class AttachmentDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
+class AttachmentDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     model = Attachment
 
     def get_success_url(self):
@@ -299,7 +300,7 @@ class AttachmentDelete(IsOwnerPermissionRequiredMixin, ProfileInDeleteView):
         )
 
 
-class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileInDetailView):
+class UserProfileDetail(IsOwnerPermissionRequiredMixin, ExtendedDetailView):
     model = UserProfile
     queryset = UserProfile.objects.all()
 
@@ -310,7 +311,7 @@ class UserProfileDetail(IsOwnerPermissionRequiredMixin, ProfileInDetailView):
         )
 
 
-class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ProfileInUpdateView):
+class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
     form_class = UserProfileUpdateForm

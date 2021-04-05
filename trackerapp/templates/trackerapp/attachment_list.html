@@ -20,9 +20,10 @@
 
                 <li>
                     <div>
-                        <a class="btn btn-default" href="{{ attachment.get_absolute_url }}">{{ attachment.get_title_from_description }};
-                    created: {{ attachment.creation_date }}</a>
-                    <p>Owner: {{ attachment.get_owner }}</p>
+                        <a class="btn btn-default"
+                           href="{{ attachment.get_absolute_url }}">{{ attachment.get_title_from_description }};
+                            created: {{ attachment.creation_date }}</a>
+                        <p>Owner: {{ attachment.get_owner }}</p>
                     </div>
                 </li>
             {% endfor %}
@@ -32,6 +33,8 @@
     {% endif %}
 
     <div class="col-md-4">
+        <p><a class="btn btn-primary" role="button" href="{% url 'task-detail' pk=related_task_id %}">Related to the
+            attachment task</a></p>
         <p><a class="btn btn-primary" role="button" href="{% url 'index' %}">Tasks</a></p>
         <p><a class="btn btn-primary" role="button" href="{% url 'assigned-tasks' %}">Assigned to me</a></p>
     </div>

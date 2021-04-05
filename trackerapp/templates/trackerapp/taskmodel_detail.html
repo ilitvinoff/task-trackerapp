@@ -3,29 +3,41 @@
 {% block content %}
     {% comment %} Task body {% endcomment %}
     {% if taskmodel %}
-        <div class="col-md-6">
+        <div class="col-md-10">
             <h1><strong>Title:</strong> {{ taskmodel.title }}</h1>
             <h2><strong>Description:</strong></h2>
             <p class="btn btn-default">{{ taskmodel.description }}</p>
             <p>
-            <ul class="col-md-4">
-                <li><strong>Creation date:</strong> {{ taskmodel.creation_date }} </li>
-                <li><strong>Status:</strong> {{ taskmodel.status }}</li>
-                <li><strong>Owner:</strong> {{ taskmodel.owner.username }}</li>
-            </ul>
-
-            {% comment %} If assigned to somebody {% endcomment %}
-            {% if taskmodel.assignee %}
-                <li><strong>Assignee:</strong></li>
                 <ul class="col-md-4">
-                    <li>
-                        {{ taskmodel.assignee }}
-                    </li>
+                    <li><strong>Creation date:</strong> {{ taskmodel.creation_date }} </li>
+                    <li><strong>Status:</strong> {{ taskmodel.status }}</li>
+                    <li><strong>Owner:</strong> {{ taskmodel.owner.username }}</li>
+
+
+                    {% comment %} If assigned to somebody {% endcomment %}
+                    {% if taskmodel.assignee %}
+                        <li><strong>Assignee:</strong></li>
+                        <ul class="col-md-4">
+                            <li>
+                                {{ taskmodel.assignee }}
+                            </li>
+                        </ul>
+                        <p><a class="btn btn-success" href="{% url 'update-task-status' pk=taskmodel.pk %}">Update
+                            task's
+                            status</a></p>
+                    {% endif %}
+
+            {% if object_list %}
+                <h2><strong>Comments:</strong></h2>
+                <ul class="col-md-8">
+                    {% for object in object_list %}
+                        <li><a class="btn btn-default"
+                               href="{% url 'comment-detail' pk=object.pk %}">{{ object.get_title_from_description }}</a>
+                        </li>
+                    {% endfor %}
                 </ul>
-                <p><a class="btn btn-success" href="{% url 'update-task-status' pk=taskmodel.pk %}">Update
-                    task's
-                    status</a></p>
             {% endif %}
+            </ul>
         </div>
 
         {% comment %} If current user owner, then let him edit task  {% endcomment %}

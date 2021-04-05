@@ -3,26 +3,32 @@ from django.utils.translation import ugettext as _
 from django.views import generic
 from django.views.generic.edit import FormMixin
 
-from trackerapp.models import UserProfile
+from trackerapp.models import UserProfile, Message
 
 
-def add_userprofile(user_id, context_data):
+def add_extra_context(user_id, context_data):
     try:
-        context_data["userprofile"] = UserProfile.objects.get(owner_id=user_id)  # add extra context
+        context_data["userprofile_id"] = UserProfile.objects.get(owner_id=user_id).id  # add extra context
     except UserProfile.DoesNotExist as e:
-        context_data["userprofile"] = None
+        context_data["userprofile_id"] = None
     return context_data
 
 
-class ProfileInFormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
+class ExtendedFormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
     """
     Pra-class to may create form in list view.
-    Overriding get and post methods.
+    Overriding get and post methods, extended with extra context
+    in overridden get_context_date method.
     """
 
+    # add extra-context and task-related to message/attachment list
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data
-        return add_userprofile(self.request.user.id, context_data)
+        try:
+            context_data['related_task_id'] = self.kwargs['pk']
+        except:
+            pass
+        return add_extra_context(self.request.user.id, context_data)
 
     def get(self, request, *args, **kwargs):
         # From FormMixin
@@ -45,25 +51,35 @@ class ProfileInFormListView(FormMixin, generic.ListView):  # pylint: disable=too
         return self.get(request, *args, **kwargs)
 
 
-class ProfileInDetailView(generic.DetailView):
+class ExtendedDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data
-        return add_userprofile(self.request.user.id, context_data)
+        return add_extra_context(self.request.user.id, context_data)
 
 
-class ProfileInUpdateView(generic.UpdateView):
+class ExtendedUpdateView(generic.UpdateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data
-        return add_userprofile(self.request.user.id, context_data)
+        return add_extra_context(self.request.user.id, context_data)
 
 
-class ProfileInCreateView(generic.CreateView):
+class ExtendedCreateView(generic.CreateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data
-        return add_userprofile(self.request.user.id, context_data)
+        return add_extra_context(self.request.user.id, context_data)
 
 
-class ProfileInDeleteView(generic.DeleteView):
+class ExtendedDeleteView(generic.DeleteView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data
-        return add_userprofile(self.request.user.id, context_data)
+        return add_extra_context(self.request.user.id, context_data)
+
+
+class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
+    paginate_by = 5
+    defaultModel = Message
+
+    def get_context_data(self, **kwargs):
+        object_list = self.defaultModel.objects.filter(task=self.get_object())
+        context_data = super().get_context_data(object_list=object_list, **kwargs)
+        return add_extra_context(self.request.user.id, context_data)

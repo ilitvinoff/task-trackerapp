@@ -43,7 +43,7 @@
 
             {% if user.is_authenticated %}
                 <ul class="navbar-brand navbar-right">
-                    <li><a href="{% url 'user-profile-detail' pk=userprofile.id %}">{{ user.username }}</a></li>
+                    <li><a href="{% url 'user-profile-detail' pk=userprofile_id %}">{{ user.username }}</a></li>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                 </ul>
             {% else %}
