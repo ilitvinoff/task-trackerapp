@@ -57,7 +57,7 @@ class TaskModel(models.Model):
         max_length=16,
         choices=LOAN_STATUS,
         blank=False,
-        default="wS",
+        default="waiting to start",
         help_text="Current task status",
     )
 
@@ -100,7 +100,6 @@ class TaskModel(models.Model):
 
     class Meta:
         ordering = ["creation_date", "title"]
-        permissions = (("can_edit_task", "..."), ("can_change_status", "..."))
 
 
 class Message(models.Model):

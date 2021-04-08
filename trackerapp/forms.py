@@ -130,7 +130,10 @@ class UserSignUpForm(UserCreationForm):
 
         try:
             validate_email(email)
-            return email
+            if not UserProfile.objects.all().filter(owner__email=email):
+                return email
+            else:
+                raise ValidationError("We have a user with such email already... ")
         except ValidationError:
             raise ValidationError("Invalid email address.")
 

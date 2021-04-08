@@ -9,7 +9,8 @@ from .extended_generics import (
     ExtendedDetailView,
     ExtendedCreateView,
     ExtendedUpdateView,
-    ExtendedDeleteView, ListInDetailView,
+    ExtendedDeleteView,
+    ListInDetailView,
 )
 from .filters import task_filter, date_filter
 from .forms import (

@@ -1,8 +1,11 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.http.response import Http404
 from django.utils.translation import ugettext as _
 from django.views import generic
 from django.views.generic.edit import FormMixin
 
+from trackerapp import forms
 from trackerapp.models import UserProfile, Message
 
 
