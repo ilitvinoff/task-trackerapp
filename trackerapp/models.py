@@ -3,6 +3,9 @@ from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.urls import reverse
 
+TASK_TITLE_MAX_LENGTH = 200
+DESCRIPTION_MAX_LENGTH = 1000
+DESCRIPTION_AS_TITLE_LENGTH = 40
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
@@ -47,10 +50,10 @@ class TaskModel(models.Model):
         ("completed", "completed"),
     )
 
-    title = models.CharField(max_length=200, help_text="Enter title of your task)")
+    title = models.CharField(max_length=TASK_TITLE_MAX_LENGTH, help_text="Enter title of your task)")
 
     description = models.fields.TextField(
-        max_length=1000, help_text="Enter a brief description of the task."
+        max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
 
     status = models.CharField(
@@ -103,7 +106,7 @@ class TaskModel(models.Model):
 
 
 class Message(models.Model):
-    body = models.CharField(max_length=1500, help_text="enter message body")
+    body = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, help_text="enter message body")
 
     owner = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
@@ -114,7 +117,7 @@ class Message(models.Model):
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
     def get_title_from_description(self):
-        return self.body[:40] + "..."
+        return self.body[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
 
     def get_absolute_url(self):
         """
@@ -144,7 +147,7 @@ class Attachment(models.Model):
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
     file = models.FileField(upload_to="attachments/", blank=True, null=True)
     description = models.fields.TextField(
-        max_length=1000, help_text="Enter a brief description of the task."
+        max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
@@ -155,7 +158,7 @@ class Attachment(models.Model):
         return reverse("attach-detail", args=[str(self.id)])
 
     def get_title_from_description(self):
-        return self.description[:40] + "..."
+        return self.description[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
 
     def get_owner(self):
         return self.owner
