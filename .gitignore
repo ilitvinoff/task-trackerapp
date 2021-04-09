@@ -11,3 +11,4 @@ images.jpeg
 /uploads/*
 /media/*
 /tracker-venv/*
+.coverage

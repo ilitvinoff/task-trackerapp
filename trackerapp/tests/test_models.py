@@ -1,5 +1,5 @@
 import os
-from sqlite3.dbapi2 import Date
+from datetime import date
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -74,7 +74,7 @@ class TaskModelTestCase(TestCase):
         self.assertEqual(TaskModel.objects.get(id=1).status, "waiting to start")
 
     def test_creation_date_is_today(self):
-        self.assertEqual(TaskModel.objects.get(id=1).creation_date, Date.today())
+        self.assertEqual(TaskModel.objects.get(id=1).creation_date, date.today())
 
 
 class MessageTestCase(TestCase):
@@ -95,3 +95,12 @@ class AttachmentTestCase(TestCase):
     @override_settings(MEDIA_ROOT=TEST_MEDIA_PATH)
     def setUp(self) -> None:
         create_models()
+
+    def test_get_absolute_url(self):
+        self.assertEqual(Attachment.objects.get(id=1).get_absolute_url(), "/attachment/1/")
+
+    def test_get_owner(self):
+        self.assertEqual(Attachment.objects.get(id=1).get_owner(), User.objects.get(email__exact=OWNER_EMAIL))
+
+    def test_get_assignee(self):
+        self.assertEqual(Attachment.objects.get(id=1).get_assignee(), User.objects.get(email__exact=ASSIGNEE_EMAIL))

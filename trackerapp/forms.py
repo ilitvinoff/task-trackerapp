@@ -1,3 +1,5 @@
+from datetime import date
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
@@ -11,42 +13,6 @@ from .resize_img import resize
 
 class DateInput(forms.DateInput):
     input_type = "date"
-
-
-class TaskSortingForm(forms.Form):
-    """
-    Form to filter task by date(from-till) and by status
-    """
-
-    from_date = DateField(
-        label="date from:",
-        widget=DateInput,
-        help_text="Format like 03.17.1979",
-        required=False,
-    )
-    till_date = DateField(
-        label="date to:",
-        widget=DateInput,
-        help_text="Format like 03.17.1979",
-        required=False,
-    )
-
-    STATUS_CHOICE_LIST = list(TaskModel.LOAN_STATUS)
-    STATUS_CHOICE_LIST.append(("", "-----"))
-
-    choose_status = ChoiceField(
-        label="choose status", choices=STATUS_CHOICE_LIST, required=False
-    )
-
-    def clean(self):
-        data = super().clean()
-        from_date = data.get("from_date")
-        till_date = data.get("till_date")
-
-        if from_date and till_date:
-            if from_date > till_date:
-                raise ValidationError('"date from" must be before "till date"')
-        return data
 
 
 class DateSortingForm(forms.Form):
@@ -67,6 +33,31 @@ class DateSortingForm(forms.Form):
         required=False,
     )
 
+    def clean(self):
+        data = super().clean()
+        from_date = data.get("from_date")
+        till_date = data.get("till_date")
+        today = date.today()
+
+        if from_date > today:
+            raise ValidationError('"date from" must be before today')
+        if from_date and till_date:
+            if from_date > till_date:
+                raise ValidationError('"date from" must be before "till date"')
+        return data
+
+
+class TaskSortingForm(DateSortingForm):
+    """
+    Form to filter task by date(from-till) and by status
+    """
+
+    STATUS_CHOICE_LIST = list(TaskModel.LOAN_STATUS)
+    STATUS_CHOICE_LIST.append(("", "-----"))
+
+    choose_status = ChoiceField(
+        label="choose status", choices=STATUS_CHOICE_LIST, required=False
+    )
 
 class UserProfileUpdateForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, label="first name", required=False)
@@ -76,15 +67,7 @@ class UserProfileUpdateForm(forms.ModelForm):
         model = UserProfile
         fields = ["first_name", "last_name", "picture"]
 
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-
-        try:
-            validate_email(email)
-            return email
-        except ValidationError:
-            raise ValidationError("Invalid email address.")
-
+    # Picture resizing before store it in DB
     def clean_picture(self):
         avatar = self.cleaned_data["picture"]
 
@@ -93,6 +76,7 @@ class UserProfileUpdateForm(forms.ModelForm):
 
         return avatar
 
+    # Override save to store first/last names from form to UserProfile.owner directly
     def save(self, commit=True):
         if self.errors:
             raise ValueError(
@@ -132,10 +116,10 @@ class UserSignUpForm(UserCreationForm):
             validate_email(email)
             if not UserProfile.objects.all().filter(owner__email=email):
                 return email
-            else:
-                raise ValidationError("We have a user with such email already... ")
-        except ValidationError:
-            raise ValidationError("Invalid email address.")
+            raise ValidationError("We have a user with such email already... ")
+
+        except ValidationError as e:
+            raise ValidationError(e.message)
 
     def save(self, commit=True):
         if self.errors:

@@ -15,7 +15,7 @@ def resize(image: ImageFieldFile):
     thumb_io = BytesIO()  # create a BytesIO object
 
     # check if uploaded image need's to be resized
-    if im.size[0] > MAX_WIDTH or im.size[1] > MAX_HEIGHT:
+    if im.size[0] > MAX_WIDTH or im.size[1] > MAX_HEIGHT or (im.size[0] < MAX_WIDTH and im.size[1] < MAX_HEIGHT):
 
         # get coefficient from aspect ratio
         if im.size[0] < im.size[1]:
