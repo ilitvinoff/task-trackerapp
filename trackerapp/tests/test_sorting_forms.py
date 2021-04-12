@@ -49,7 +49,7 @@ class UserProfileUpdateFormTest(TestCase):
             'last_name': 'last name'
         }
         form = UserProfileUpdateForm(data=form_data)
-        # form.save(commit=True)
+        form.save(commit=True)
         self.assertFalse(form.is_valid())
 
 
