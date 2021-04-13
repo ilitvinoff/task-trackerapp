@@ -22,13 +22,13 @@ def resize(image: ImageFieldFile):
         if im.size[0] < im.size[1]:
             height_percent = MAX_HEIGHT / float(im.size[1])
             width_size = int((float(im.size[0]) * float(height_percent)))
-        else:
+        elif im.size[0] > im.size[1]:
             width_percentage = MAX_WIDTH / float(im.size[0])
             height_size = int((float(im.size[1])) * float(width_percentage))
 
         im.convert("RGB")  # convert mode
         im.thumbnail((width_size, height_size))  # resize image
-        im.save(thumb_io, "JPEG", quality=85)  # save image to BytesIO object
+        im.save(thumb_io, "JPEG", quality=100)  # save image to BytesIO object
 
     im.close()
     image = File(thumb_io, name=os.path.split(image.name)[1])  # create a django friendly File object
