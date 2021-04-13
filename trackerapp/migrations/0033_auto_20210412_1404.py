@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('trackerapp', '0032_auto_20210408_1505'),
     ]
@@ -14,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='userprofile',
             name='picture',
-            field=models.ImageField(blank=True, default='', upload_to='uploads/userprofile/', validators=[django.core.validators.validate_image_file_extension]),
+            field=models.ImageField(blank=True, default='', upload_to='uploads/userprofile/',
+                                    validators=[django.core.validators.validate_image_file_extension]),
         ),
     ]

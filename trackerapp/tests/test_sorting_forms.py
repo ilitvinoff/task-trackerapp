@@ -33,4 +33,3 @@ class TaskSortingFormTest(TestCase):
         }
         status_choices = set(form.STATUS_CHOICE_LIST)
         self.assertEqual(expected_choices, status_choices)
-

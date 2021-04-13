@@ -1,9 +1,5 @@
-import json
-from urllib.parse import urlencode
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.test.client import MULTIPART_CONTENT
 
 from trackerapp.models import UserProfile
 
