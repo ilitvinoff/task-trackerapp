@@ -26,6 +26,8 @@ class UserProfile(models.Model):
     def save(self, *args, **kwargs):
         try:
 
+            # check if has new picture to upload (not self.picture),
+            # if new picture, - really new (self.picture.url != profile.picture.url)
             profile = UserProfile.objects.get(id=self.id)
             if not self.picture or self.picture.url != profile.picture.url:
                 previous_picture = profile.picture

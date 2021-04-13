@@ -72,6 +72,10 @@ class UserProfileUpdateForm(forms.ModelForm):
     def clean_picture(self):
         avatar = self.cleaned_data["picture"]
         previous_avatar = UserProfile.objects.get(id=self.instance.id).picture
+
+        # check if has new avatar to resize (if avatar),
+        # if profile has no old avatar (not previous_avatar) -> resize,
+        # else check if new avatar, is really new, but not old version of itself (avatar.name != previous_avatar.name)
         if avatar and (not previous_avatar or avatar.name != previous_avatar.name):
             return resize(avatar)
         return avatar
