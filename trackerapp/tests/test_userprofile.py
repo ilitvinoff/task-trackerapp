@@ -3,6 +3,7 @@ import shutil
 
 from PIL import Image
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse_lazy
@@ -10,11 +11,13 @@ from django.urls import reverse_lazy
 from tasktracker import settings
 from trackerapp.models import UserProfile
 
-OWNER_EMAIL = "owner@a.b"
-OWNER_CREDENTIALS = ('owner', '12test12')
+OWNER_EMAIL = "owner@a.com"
+OWNER_CREDENTIALS = ('owner', '12Asasas12')
 HACKER_EMAIL = "hacker@b.b"
 HACKER_CREDENTIALS = ('hacker', '12test12')
 TEST_MEDIA_PATH = os.path.join(settings.BASE_DIR, "test-media")
+FIRST_NAME = 'first name'
+LAST_NAME = 'last name'
 
 
 def profile_initial_conditions(self):
@@ -23,7 +26,7 @@ def profile_initial_conditions(self):
                                                       email=OWNER_EMAIL)
     self.owner.save()
 
-    self.test_profile = UserProfile(owner=self.owner)
+    self.test_profile = UserProfile.objects.create(owner=self.owner)
     self.test_profile.save()
 
     self.hacker = get_user_model().objects.create_user(username=HACKER_CREDENTIALS[0],
@@ -40,7 +43,7 @@ class UserProfileDetailView(TestCase):
         response = self.client.get(reverse_lazy("user-profile-detail", kwargs={
             'pk': UserProfile.objects.get(owner__email__exact=OWNER_EMAIL).id}), follow=True)
         self.assertEqual(response.redirect_chain[0], ("/accounts/login/?next=/user-profile/{}/".format(
-            UserProfile.objects.get(owner__email__exact=OWNER_EMAIL).id),302))
+            UserProfile.objects.get(owner__email__exact=OWNER_EMAIL).id), 302))
 
     def test_get_wrong_profile(self):
         self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
@@ -132,4 +135,52 @@ class UserProfileUpdateTest(TestCase):
 
 
 class UserSignUpTest(TestCase):
-    pass
+    def test_when_valid_data(self):
+        data = {
+            'username': OWNER_CREDENTIALS[0],
+            'first_name': FIRST_NAME,
+            'last_name': LAST_NAME,
+            'email': OWNER_EMAIL,
+            'password1': OWNER_CREDENTIALS[1],
+            'password2': OWNER_CREDENTIALS[1]
+        }
+        response = self.client.post(reverse_lazy("sign-up"), data=data, follow=True)
+        self.assertEqual(response.redirect_chain[0], (reverse_lazy('index'), 302))
+        created_user = User.objects.filter(email__exact=OWNER_EMAIL).first()
+        self.assertTrue(created_user)
+        self.assertEqual(created_user.username, data['username'])
+        self.assertEqual(created_user.first_name, data['first_name'])
+        self.assertEqual(created_user.last_name, data['last_name'])
+
+    def test_with_invalid_password(self):
+        data = {
+            'username': OWNER_CREDENTIALS[0],
+            'first_name': FIRST_NAME,
+            'last_name': LAST_NAME,
+            'email': OWNER_EMAIL,
+            'password1': 'password',
+            'password2': 'password'
+        }
+        response = self.client.post(reverse_lazy("sign-up"), data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        created_user_count = User.objects.filter(email__exact=OWNER_EMAIL).count()
+        self.assertEqual(created_user_count, 0)
+
+    def test_username_or_email_already_exist(self):
+        owner = get_user_model().objects.create_user(username=OWNER_CREDENTIALS[0],
+                                                     password=OWNER_CREDENTIALS[1],
+                                                     email=OWNER_EMAIL)
+        owner.save()
+
+        data = {
+            'username': HACKER_CREDENTIALS[0],
+            'first_name': FIRST_NAME,
+            'last_name': LAST_NAME,
+            'email': OWNER_EMAIL,
+            'password1': OWNER_CREDENTIALS[1],
+            'password2': OWNER_CREDENTIALS[1]
+        }
+        response = self.client.post(reverse_lazy('sign-up'), data=data)
+        created_user = User.objects.filter(email__exact=OWNER_EMAIL).last()
+        self.assertFalse(created_user.username == HACKER_CREDENTIALS[0])
+        self.assertEqual(response.status_code, 200)

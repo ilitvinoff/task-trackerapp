@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "trackerapp.apps.TrackerappConfig",
     "rest_framework",
     "drf_yasg",
+    "coverage",
 ]
 
 MIDDLEWARE = [

@@ -106,7 +106,7 @@ class UserProfileUpdateForm(forms.ModelForm):
 class UserSignUpForm(UserCreationForm):
     first_name = forms.CharField(max_length=100, label="first name", required=False)
     last_name = forms.CharField(max_length=100, label="last name", required=False)
-    email = forms.CharField(max_length=100, label="your_address@domain.com")
+    email = forms.CharField(max_length=100, help_text="your_address@domain.com")
 
     class Meta:
         model = User
@@ -118,7 +118,7 @@ class UserSignUpForm(UserCreationForm):
 
         try:
             validate_email(email)
-            if not UserProfile.objects.all().filter(owner__email=email):
+            if not User.objects.all().filter(email=email):
                 return email
             raise ValidationError("We have a user with such email already... ")
 

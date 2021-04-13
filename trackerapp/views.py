@@ -26,6 +26,8 @@ from .permissions import (
     custom_permissions_dispatch,
 )
 
+ITEMS_ON_PAGE = 5
+
 
 class TaskListView(LoginRequiredMixin, ExtendedFormListView):
     """
@@ -34,7 +36,7 @@ class TaskListView(LoginRequiredMixin, ExtendedFormListView):
 
     model = TaskModel
     form_class = TaskSortingForm
-    paginate_by = 5
+    paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self):
         tasklist = TaskModel.objects.filter(owner__exact=self.request.user).order_by(
@@ -52,7 +54,7 @@ class AssigneeTaskListView(LoginRequiredMixin, ExtendedFormListView):
     form_class = TaskSortingForm
     context_object_name = "assigned_tasks"
     template_name = "trackerapp/assigned_list.html"
-    paginate_by = 5
+    paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self):
         tasklist = TaskModel.objects.filter(assignee__exact=self.request.user)
@@ -154,7 +156,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
 class MessageListView(LoginRequiredMixin, ExtendedFormListView):
     model = Message
     form_class = DateSortingForm
-    paginate_by = 5
+    paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self, **kwargs):
         message_list = Message.objects.filter(
@@ -251,7 +253,7 @@ class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailV
 class AttachmentList(LoginRequiredMixin, ExtendedFormListView):
     model = Attachment
     form_class = DateSortingForm
-    paginate_by = 5
+    paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self, **kwargs):
         attachment_list = Attachment.objects.filter(
