@@ -59,6 +59,7 @@ class TaskSortingForm(DateSortingForm):
         label="choose status", choices=STATUS_CHOICE_LIST, required=False
     )
 
+
 class UserProfileUpdateForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, label="first name", required=False)
     last_name = forms.CharField(max_length=100, label="last name", required=False)
@@ -70,10 +71,9 @@ class UserProfileUpdateForm(forms.ModelForm):
     # Picture resizing before store it in DB
     def clean_picture(self):
         avatar = self.cleaned_data["picture"]
-
-        if avatar:
+        previous_avatar = UserProfile.objects.get(id=self.instance.id).picture
+        if avatar and (not previous_avatar or avatar.name != previous_avatar.name):
             return resize(avatar)
-
         return avatar
 
     # Override save to store first/last names from form to UserProfile.owner directly

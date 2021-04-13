@@ -1,3 +1,4 @@
+import os
 from io import BytesIO
 
 from PIL import Image
@@ -30,5 +31,5 @@ def resize(image: ImageFieldFile):
         im.save(thumb_io, "JPEG", quality=85)  # save image to BytesIO object
 
     im.close()
-    image = File(thumb_io, name=image.name)  # create a django friendly File object
+    image = File(thumb_io, name=os.path.split(image.name)[1])  # create a django friendly File object
     return image

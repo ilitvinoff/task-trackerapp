@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('trackerapp', '0030_auto_20210406_1624'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='taskmodel',
             name='status',
-            field=models.CharField(choices=[('waiting to start', 'waiting to start'), ('in work', 'in work'), ('completed', 'completed')], default='waiting to start', help_text='Current task status', max_length=16),
+            field=models.CharField(
+                choices=[('waiting to start', 'waiting to start'), ('in work', 'in work'), ('completed', 'completed')],
+                default='waiting to start', help_text='Current task status', max_length=16),
         ),
     ]

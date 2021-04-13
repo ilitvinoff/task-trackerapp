@@ -216,9 +216,6 @@ class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
         )
 
 
-# TODO: Change hyper-links to id ir rest framework.
-#       Add api functionality for userprofile,attachments.
-
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
     model = Message
 

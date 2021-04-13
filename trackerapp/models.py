@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
@@ -6,6 +8,7 @@ from django.urls import reverse
 TASK_TITLE_MAX_LENGTH = 200
 DESCRIPTION_MAX_LENGTH = 1000
 DESCRIPTION_AS_TITLE_LENGTH = 40
+
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
@@ -24,8 +27,11 @@ class UserProfile(models.Model):
     # to delete previous picture override save(...)
     def save(self, *args, **kwargs):
         try:
-            previous_picture = UserProfile.objects.get(id=self.id).picture
-            previous_picture.delete()
+
+            profile = UserProfile.objects.get(id=self.id)
+            if not self.picture or self.picture.url != profile.picture.url:
+                previous_picture = profile.picture
+                previous_picture.delete(False)
 
         except:
             pass

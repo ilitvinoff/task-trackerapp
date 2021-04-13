@@ -5,7 +5,6 @@ from django.test import TestCase
 from trackerapp.forms import (
     TaskSortingForm,
     DateSortingForm,
-    UserProfileUpdateForm,
 )
 
 
@@ -35,23 +34,3 @@ class TaskSortingFormTest(TestCase):
         status_choices = set(form.STATUS_CHOICE_LIST)
         self.assertEqual(expected_choices, status_choices)
 
-
-class UserProfileUpdateFormTest(TestCase):
-    def test_picture_when_valid(self):
-        form_data = {'picture': 'assets/200x200_legion.jpg'}
-        form = UserProfileUpdateForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_picture_when_invalid(self):
-        form_data = {
-            'picture': 'assets/just_text_with_img_extension.jpeg',
-            'first_name': 'first name',
-            'last_name': 'last name'
-        }
-        form = UserProfileUpdateForm(data=form_data)
-        form.save(commit=True)
-        self.assertFalse(form.is_valid())
-
-
-class UserSignUpFormTest(TestCase):
-    pass
