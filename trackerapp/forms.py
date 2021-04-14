@@ -39,11 +39,12 @@ class DateSortingForm(forms.Form):
         till_date = data.get("till_date")
         today = date.today()
 
-        if from_date > today:
-            raise ValidationError('"date from" must be before today')
-        if from_date and till_date:
-            if from_date > till_date:
-                raise ValidationError('"date from" must be before "till date"')
+        if from_date:
+            if from_date > today:
+                raise ValidationError('"date from" must be before today')
+            if from_date and till_date:
+                if from_date > till_date:
+                    raise ValidationError('"date from" must be before "till date"')
         return data
 
 

@@ -1,19 +1,26 @@
+import datetime
 import os
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse_lazy
+from freezegun import freeze_time
 
 from tasktracker import settings
 from trackerapp.models import TaskModel
+from trackerapp.views import ITEMS_ON_PAGE
 
 OWNER_EMAIL = "owner@a.com"
 OWNER_CREDENTIALS = ('owner', '12Asasas12')
 HACKER_EMAIL = "hacker@b.b"
 HACKER_CREDENTIALS = ('hacker', '12test12')
 TEST_MEDIA_PATH = os.path.join(settings.BASE_DIR, "test-media")
-ITEMS_ON_PAGE = 5
+
 PAGE_COUNT = 5
+# amount of users authorized in tracker app, must be greater or equal 2
+USERS_COUNT = 2
+INITIAL_CREATION_DATE = sorted([datetime.date.today() - datetime.timedelta(days=i) for i in range(0, ITEMS_ON_PAGE)])
+INITIAL_STATUS = ("waiting to start", "in work", "completed")
 
 
 def taskmodel_test_initial_conditions(self):
@@ -35,16 +42,32 @@ class TaskAssigneeListTestCase(TestCase):
     def create_lists_for_different_users(self, page_count):
         self.owner_task_set = set()
         self.hacker_task_list = set()
+        self.status_count = {}
+        date_index = 0
+        status_index = 0
 
-        for i in range(0, ITEMS_ON_PAGE * page_count * 2):
-            if i % 2 == 0:
-                task = TaskModel.objects.create(owner=self.owner, assignee=self.hacker, title=i, description=i)
-                task.save()
-                self.owner_task_set.add(task)
-            else:
-                task = TaskModel.objects.create(owner=self.hacker, assignee=self.owner, title=i, description=i)
-                task.save()
-                self.hacker_task_list.add(task)
+        for i in range(0, ITEMS_ON_PAGE * page_count * USERS_COUNT):
+
+            if date_index >= len(INITIAL_CREATION_DATE):
+                date_index = 0
+            if status_index >= len(INITIAL_STATUS):
+                status_index = 0
+
+            with freeze_time(INITIAL_CREATION_DATE[date_index]):
+                if i % USERS_COUNT == 0:
+                    task = TaskModel.objects.create(owner=self.owner, assignee=self.hacker, title=i, description=i,
+                                                    status=INITIAL_STATUS[status_index])
+                    task.save()
+                    self.owner_task_set.add(task)
+                else:
+                    task = TaskModel.objects.create(owner=self.hacker, assignee=self.owner, title=i, description=i,
+                                                    status=INITIAL_STATUS[status_index])
+                    task.save()
+                    self.hacker_task_list.add(task)
+                    date_index += 1
+                    self.status_count[INITIAL_STATUS[status_index]] = self.status_count.get(
+                        INITIAL_STATUS[status_index], 0) + 1
+                    status_index += 1
 
     def test_list_related_to_owner_only(self):
         self.create_lists_for_different_users(page_count=1)
@@ -75,10 +98,38 @@ class TaskAssigneeListTestCase(TestCase):
         self.assertEqual(page_count, PAGE_COUNT)
         self.assertEqual(len(self.owner_task_set), 0)
 
+    def test_filter_options_tasks_by_date(self):
+        self.create_lists_for_different_users(page_count=1)
+        self.client.login(username=self.owner.username, password=OWNER_CREDENTIALS[1])
+
+        from_date = INITIAL_CREATION_DATE[1]
+        till_date = INITIAL_CREATION_DATE[-2]
+
+        response = self.client.post(reverse_lazy("index"), data={'from_date': from_date, 'till_date': till_date})
+        query_list = set(response.context_data['object_list'])
+
+        self.assertEqual(len(query_list), len(INITIAL_CREATION_DATE) - 2)
+
+        for task in query_list:
+            self.assertTrue(till_date >= task.creation_date >= from_date)
+
+    def test_filter_tasks_by_status(self):
+        self.create_lists_for_different_users(page_count=1)
+        self.client.login(username=self.owner.username, password=OWNER_CREDENTIALS[1])
+
+        for current_status in range(0, len(INITIAL_STATUS)):
+            response = self.client.post(reverse_lazy('index'),
+                                        data={'choose_status': INITIAL_STATUS[current_status]})
+            query_list = set(response.context_data['object_list'])
+            self.assertEqual(len(query_list), self.status_count[INITIAL_STATUS[current_status]])
+
+            for task in query_list:
+                self.assertEqual(task.status, INITIAL_STATUS[current_status])
+
     def test_assignee_list(self):
         self.create_lists_for_different_users(page_count=1)
-
         self.client.login(username=self.owner.username, password=OWNER_CREDENTIALS[1])
+
         response = self.client.get(reverse_lazy("assigned-tasks"))
         query_list = set(response.context_data['object_list'])
         self.assertSetEqual(self.hacker_task_list, query_list)
