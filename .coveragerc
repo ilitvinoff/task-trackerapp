@@ -1,3 +1,5 @@
 [run]
 omit = *venv-tracker/*
        *trackerapp/tests*
+       *migrations*
+       manage.py
