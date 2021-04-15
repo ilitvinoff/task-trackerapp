@@ -1,8 +1,7 @@
-import datetime
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse_lazy
+from django.utils import timezone
 from freezegun import freeze_time
 
 from trackerapp.models import TaskModel
@@ -13,7 +12,7 @@ HACKER_CREDENTIALS = ('hacker', '12test12', "hacker@b.b")
 PAGE_COUNT = 5
 # amount of users authorized in tracker app, must be greater or equal 2
 USERS_COUNT = 2
-INITIAL_CREATION_DATE = sorted([datetime.date.today() - datetime.timedelta(days=i) for i in range(0, ITEMS_ON_PAGE)])
+INITIAL_CREATION_DATE = sorted([timezone.now() - timezone.timedelta(days=i) for i in range(0, ITEMS_ON_PAGE)])
 INITIAL_STATUS = ("waiting to start", "in work", "completed")
 
 

@@ -172,8 +172,6 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
 class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     model = permission_class_model = Message
 
-    # success_url = reverse_lazy("comment-list")
-
     def get_success_url(self):
         return reverse_lazy("comment-list", kwargs={"pk": self.object.task_id})
 
@@ -186,7 +184,7 @@ class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailV
     model = permission_class_model = Attachment
 
 
-class AttachmentList(LoginRequiredMixin, ExtendedFormListView):
+class AttachmentList(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedFormListView):
     model = Attachment
     permission_class_model = TaskModel
     form_class = DateSortingForm

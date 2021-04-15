@@ -1,17 +1,16 @@
-from datetime import date
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.forms.fields import ChoiceField, DateField
+from django.forms.fields import ChoiceField, DateTimeField
+from django.utils import timezone
 
 from .models import TaskModel, UserProfile
 from .resize_img import resize
 
 
-class DateInput(forms.DateInput):
+class DateInput(forms.DateTimeInput):
     input_type = "date"
 
 
@@ -20,13 +19,13 @@ class DateSortingForm(forms.Form):
     Form to filter message by date(from-till)
     """
 
-    from_date = DateField(
+    from_date = DateTimeField(
         label="date from:",
         widget=DateInput,
         help_text="Format like 03.17.1979",
         required=False,
     )
-    till_date = DateField(
+    till_date = DateTimeField(
         label="date to:",
         widget=DateInput,
         help_text="Format like 03.17.1979",
@@ -37,7 +36,7 @@ class DateSortingForm(forms.Form):
         data = super().clean()
         from_date = data.get("from_date")
         till_date = data.get("till_date")
-        today = date.today()
+        today = timezone.now()
 
         if from_date:
             if from_date > today:

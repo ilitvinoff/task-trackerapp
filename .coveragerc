@@ -3,3 +3,6 @@ omit = *venv-tracker/*
        *trackerapp/tests*
        *migrations*
        manage.py
+       tasktracker/wsgi.py
+       tasktracker/settings.py
+       tasktracker/asgi.py

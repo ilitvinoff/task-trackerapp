@@ -136,3 +136,11 @@ REST_FRAMEWORK = {
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
+
+DATETIME_INPUT_FORMATS = [
+    '%d/%m/%Y %H:%M'  # '25/10/2006 14:30'
+]
+
+DATE_INPUT_FORMATS = [
+    '%m/%d/%Y'  # '10/25/2006'
+]

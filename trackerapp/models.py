@@ -70,7 +70,7 @@ class TaskModel(models.Model):
         help_text="Current task status",
     )
 
-    creation_date = models.fields.DateField(auto_created=True, auto_now_add=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
     owner = models.ForeignKey(
         User,
@@ -108,7 +108,9 @@ class TaskModel(models.Model):
         return self.assignee
 
     class Meta:
-        ordering = ["creation_date", "title"]
+        ordering = [
+            "creation_date", "title"
+        ]
 
 
 class Message(models.Model):
@@ -142,7 +144,7 @@ class Message(models.Model):
 
     class Meta:
         ordering = [
-            "creation_date",
+            "creation_date"
         ]
 
 
@@ -155,6 +157,7 @@ class Attachment(models.Model):
     description = models.fields.TextField(
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
+
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
     def get_absolute_url(self):
@@ -174,5 +177,5 @@ class Attachment(models.Model):
 
     class Meta:
         ordering = [
-            "creation_date",
+            "creation_date"
         ]

@@ -74,7 +74,7 @@ class TaskModelTestCase(TestCase):
         self.assertEqual(TaskModel.objects.get(id=1).status, "waiting to start")
 
     def test_creation_date_is_today(self):
-        self.assertEqual(TaskModel.objects.get(id=1).creation_date, date.today())
+        self.assertEqual(TaskModel.objects.get(id=1).creation_date.date(), date.today())
 
 
 class MessageTestCase(TestCase):

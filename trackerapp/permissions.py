@@ -44,7 +44,7 @@ class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            pk = kwargs.get("pk")
+            pk = kwargs["pk"]
 
             if self.permission_class_model:
                 owner = self.permission_class_model.objects.get(pk=pk).get_owner()
@@ -70,7 +70,7 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            pk = kwargs.get("pk")
+            pk = kwargs["pk"]
 
             if self.permission_class_model:
                 assigned_user = self.permission_class_model.objects.get(pk=pk).get_assignee()
@@ -83,5 +83,5 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
 
             return super().dispatch(request, *args, **kwargs)
 
-        except KeyError:
+        except Exception:
             raise PermissionDenied("Bad request. Have no permission. No assigned user/owner found.")
