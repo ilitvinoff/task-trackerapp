@@ -83,13 +83,7 @@ class UserProfileUpdateForm(forms.ModelForm):
     # Override save to store first/last names from form to UserProfile.owner directly
     def save(self, commit=True):
         if self.errors:
-            raise ValueError(
-                "The %s could not be %s because the data didn't validate."
-                % (
-                    self.instance._meta.object_name,
-                    "created" if self.instance._state.adding else "changed",
-                )
-            )
+            raise ValueError(self.errors)
 
         profile = super(UserProfileUpdateForm, self).save(commit=commit)
         data = self.cleaned_data
@@ -127,13 +121,7 @@ class UserSignUpForm(UserCreationForm):
 
     def save(self, commit=True):
         if self.errors:
-            raise ValueError(
-                "The %s could not be %s because the data didn't validate."
-                % (
-                    self.instance._meta.object_name,
-                    "created" if self.instance._state.adding else "changed",
-                )
-            )
+            raise ValueError(self.errors)
 
         user = super(UserSignUpForm, self).save(commit=False)
         data = self.cleaned_data

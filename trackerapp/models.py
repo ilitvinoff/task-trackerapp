@@ -33,7 +33,7 @@ class UserProfile(models.Model):
                 previous_picture = profile.picture
                 previous_picture.delete(False)
 
-        except:
+        except Exception:
             pass
         super(UserProfile, self).save(*args, **kwargs)
 
