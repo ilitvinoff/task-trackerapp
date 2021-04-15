@@ -8,8 +8,8 @@ from freezegun import freeze_time
 from trackerapp.models import TaskModel, Message
 from trackerapp.views import ITEMS_ON_PAGE
 
-USER1_CREDENTIALS = ('shwonder', '12Asasas12', "shwonder@a.com")
-USER2_CREDENTIALS = ('sharikoff', '12Asasas12', "sharikoff@a.com")
+USER1_CREDENTIALS = ('user1', '12Asasas12', "shwonder@a.com")
+USER2_CREDENTIALS = ('user2', '12Asasas12', "sharikoff@a.com")
 HACKER_CREDENTIALS = ('hacker', '12test12', "hacker@b.b")
 
 PAGE_COUNT = 5

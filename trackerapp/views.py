@@ -23,7 +23,6 @@ from .models import TaskModel, Message, UserProfile, Attachment
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
     IsOwnerPermissionRequiredMixin,
-    custom_permissions_dispatch,
 )
 
 ITEMS_ON_PAGE = 5
@@ -62,7 +61,7 @@ class AssigneeTaskListView(LoginRequiredMixin, ExtendedFormListView):
 
 
 class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ListInDetailView):
-    model = TaskModel
+    model = permission_class_model = TaskModel
     defaultModel = Message
 
     # Add attachment list to context
@@ -70,18 +69,6 @@ class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ListInDetailView):
         context_data = super().get_context_data(**kwargs)
         context_data['attachment_list'] = Attachment.objects.filter(task=self.get_object())
         return context_data
-
-    # Be sure that current user trying to view his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self,
-            IsOwnerOrAssigneePermissionRequiredMixin,
-            TaskModel,
-            request,
-            has_assignee=True,
-            *args,
-            **kwargs
-        )
 
 
 class TaskCreate(LoginRequiredMixin, ExtendedCreateView):
@@ -108,18 +95,12 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     Edit task form
     """
 
-    model = TaskModel
+    model = permission_class_model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
     # after successful edition redirects to the edited task page
     def get_success_url(self):
         return reverse_lazy("task-detail", args=(self.object.id,))
-
-    # Be sure that current user trying to edit his own task...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
-        )
 
 
 class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedUpdateView):
@@ -127,15 +108,10 @@ class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedUpdateV
     Form to edit task status (for assignee...)
     """
 
-    model = TaskModel
+    model = permission_class_model = TaskModel
     fields = [
         "status",
     ]
-
-    # Be sure that current user trying to edit status of the task assigned to him
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(self, IsOwnerOrAssigneePermissionRequiredMixin, TaskModel, request,
-                                           has_assignee=True, *args, **kwargs)
 
 
 class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
@@ -143,20 +119,16 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     Form to delete task
     """
 
-    model = TaskModel
+    model = permission_class_model = TaskModel
     success_url = reverse_lazy("index")
 
-    # Be sure that current user trying to delete his own task
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, TaskModel, request, *args, **kwargs
-        )
 
-
-class MessageListView(LoginRequiredMixin, ExtendedFormListView):
+class MessageListView(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedFormListView):
     model = Message
     form_class = DateSortingForm
     paginate_by = ITEMS_ON_PAGE
+    permission_class_model = TaskModel
+    has_assignee = True
 
     def get_queryset(self, **kwargs):
         message_list = Message.objects.filter(
@@ -191,67 +163,32 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     Form to update comments
     """
 
-    model = Message
+    model = permission_class_model = Message
     fields = [
         "body",
     ]
 
-    # Be sure that current user trying to edit his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
-        )
-
 
 class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
-    model = Message
+    model = permission_class_model = Message
 
     # success_url = reverse_lazy("comment-list")
 
     def get_success_url(self):
         return reverse_lazy("comment-list", kwargs={"pk": self.object.task_id})
 
-    # Be sure that current user trying to delete his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, Message, request, *args, **kwargs
-        )
-
 
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
-    model = Message
-
-    # Be sure that current user trying to view his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self,
-            IsOwnerOrAssigneePermissionRequiredMixin,
-            Message,
-            request,
-            has_assignee=True,
-            *args,
-            **kwargs
-        )
+    model = permission_class_model = Message
 
 
 class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
-    model = Attachment
-
-    # Be sure that current user trying to view his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self,
-            IsOwnerOrAssigneePermissionRequiredMixin,
-            Attachment,
-            request,
-            has_assignee=True,
-            *args,
-            **kwargs
-        )
+    model = permission_class_model = Attachment
 
 
 class AttachmentList(LoginRequiredMixin, ExtendedFormListView):
     model = Attachment
+    permission_class_model = TaskModel
     form_class = DateSortingForm
     paginate_by = ITEMS_ON_PAGE
 
@@ -282,53 +219,30 @@ class AttachmentCreate(LoginRequiredMixin, ExtendedCreateView):
 
 
 class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
-    model = Attachment
+    model = permission_class_model = Attachment
     fields = ["description", "file"]
-
-    # Be sure that current user trying to edit his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, Attachment, request, *args, **kwargs
-        )
 
 
 class AttachmentDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
-    model = Attachment
+    model = permission_class_model = Attachment
 
     def get_success_url(self):
         return reverse_lazy("attach-list", kwargs={"pk": self.object.task_id})
 
-    # Be sure that current user trying to delete his own comment...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, Attachment, request, *args, **kwargs
-        )
-
 
 class UserProfileDetail(IsOwnerPermissionRequiredMixin, ExtendedDetailView):
-    model = UserProfile
+    model = permission_class_model = UserProfile
     queryset = UserProfile.objects.all()
-
-    # Be sure that current user trying to view his own profile...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs
-        )
 
 
 class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
+    permission_class_model = UserProfile
     template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
     form_class = UserProfileUpdateForm
 
     def get_success_url(self):
         return reverse_lazy("user-profile-detail", args=(self.object.id,))
-
-    # Be sure that current user trying to view his own profile...
-    def dispatch(self, request, *args, **kwargs):
-        return custom_permissions_dispatch(
-            self, IsOwnerPermissionRequiredMixin, UserProfile, request, *args, **kwargs
-        )
 
     def get_object(self, **kwargs):
         return UserProfile.objects.get(pk=self.kwargs["pk"])
