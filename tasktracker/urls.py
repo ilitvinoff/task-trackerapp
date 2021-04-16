@@ -25,10 +25,10 @@ from rest_framework_simplejwt.views import (
 )
 
 from trackerapp import apiviews
+from trackerapp.apiviews import AttachmentViewSet, MessageViewSet
 from .yasg import urlpatterns as yasg_urls
 
 router = routers.DefaultRouter()
-router.register(r"users", apiviews.UserViewSet)
 router.register(r"profiles", apiviews.ProfileViewSet)
 router.register(r"groups", apiviews.GroupViewSet)
 router.register(r"tasks", apiviews.TaskViewSet)
@@ -45,6 +45,8 @@ urlpatterns = [
     # REST API URLS
     path("api/", include([
         path('', include(router.urls)),
+        path('task/<pk>/attachments/', AttachmentViewSet.as_view({'get': 'list'})),
+        path('task/<pk>/messages/', MessageViewSet.as_view({'get': 'list'})),
         path("auth/", include("rest_framework.urls", namespace="rest_framework")),
         path("token/", include([
             path("", TokenObtainPairView.as_view(), name="token_obtain_pair"),

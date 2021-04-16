@@ -136,6 +136,9 @@ class Message(models.Model):
     def get_owner(self):
         return self.owner
 
+    def get_related_obj_owner(self):
+        return self.task.owner
+
     def get_assignee(self):
         return self.task.assignee
 
@@ -171,6 +174,9 @@ class Attachment(models.Model):
 
     def get_owner(self):
         return self.owner
+
+    def get_related_obj_owner(self):
+        return self.task.owner
 
     def get_assignee(self):
         return self.task.assignee

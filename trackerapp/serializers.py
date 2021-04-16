@@ -33,6 +33,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    task_id = serializers.ReadOnlyField(source="task.id")
     message_owner = serializers.ReadOnlyField(source="owner.username")
     task_owner = serializers.ReadOnlyField(source="task.owner.username")
     task_assigned_to = serializers.ReadOnlyField(source="task.assignee.username")
@@ -42,7 +43,7 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "body",
-            "task",
+            "task_id",
             "message_owner",
             "task_owner",
             "task_assigned_to",
@@ -50,21 +51,8 @@ class MessageSerializer(serializers.ModelSerializer):
         )
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
-    userprofile_owner_id = serializers.ReadOnlyField(source="owner.id")
-
-    class Meta:
-        model = UserProfile
-        fields = (
-            "id",
-            "userprofile_owner",
-            "userprofile_owner_id",
-            "picture",
-        )
-
-
 class AttachmentSerializer(serializers.ModelSerializer):
+    task_id = serializers.ReadOnlyField(source="task.id")
     userprofile_owner = serializers.ReadOnlyField(source="owner.username")
     userprofile_owner_id = serializers.ReadOnlyField(source="owner.id")
     related_task_assignee = serializers.ReadOnlyField(source="task.assignee.username")
@@ -80,6 +68,18 @@ class AttachmentSerializer(serializers.ModelSerializer):
             "related_task_assignee_id",
             "description",
             "creation_date",
-            "task",
+            "task_id",
             "file",
+        )
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "id",
+            "userprofile_owner",
+            "picture",
         )
