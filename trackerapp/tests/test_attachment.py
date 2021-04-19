@@ -90,6 +90,7 @@ def create_lists_for_different_users(self, page_count):
                             attachment_owners[owner_index]] = self.attachment_for_owner_count.get(
                             attachment_owners[owner_index], 0) + 1
                         owner_index += 1
+
     wrapper()
 
 
@@ -100,6 +101,7 @@ def remove_test_media_dir():
         except Exception as a:
             print("ERR: CAN'T REMOVE TEST_MEDIA_DIR AFTER TEST END \n {}".format(a))
 
+
 class AttachmentListView(TestCase):
     def setUp(self) -> None:
         attachment_test_initial_conditions(self)
@@ -108,7 +110,7 @@ class AttachmentListView(TestCase):
         remove_test_media_dir()
 
     def test_valid_user_request(self):
-        create_lists_for_different_users(self,page_count=1)
+        create_lists_for_different_users(self, page_count=1)
         self.client.login(username=USER1_CREDENTIALS[0], password=USER1_CREDENTIALS[1])
 
         # owner of the related to attachment task
@@ -120,20 +122,20 @@ class AttachmentListView(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_bad_user_request(self):
-        create_lists_for_different_users(self,page_count=1)
+        create_lists_for_different_users(self, page_count=1)
         self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
 
         response = self.client.get(reverse_lazy('attach-list', kwargs={'pk': self.task1.id}))
         self.assertEqual(response.status_code, 403)
 
     def test_unauthorized_request(self):
-        create_lists_for_different_users(self,page_count=1)
+        create_lists_for_different_users(self, page_count=1)
         response = self.client.get(reverse_lazy('attach-list', kwargs={'pk': self.task1.id}), follow=True)
         self.assertEqual(response.redirect_chain[0],
                          ("/accounts/login/?next=/task/{}/attachment/".format(self.task1.id), 302))
 
     def test_pagination(self):
-        create_lists_for_different_users(self,page_count=PAGE_COUNT)
+        create_lists_for_different_users(self, page_count=PAGE_COUNT)
         self.client.login(username=USER1_CREDENTIALS[0], password=USER1_CREDENTIALS[1])
         page_count = 1
 
@@ -153,7 +155,7 @@ class AttachmentListView(TestCase):
         self.assertEqual(len(self.user1_attachment_set), 0)
 
     def test_filter_by_date(self):
-        create_lists_for_different_users(self,page_count=1)
+        create_lists_for_different_users(self, page_count=1)
         self.client.login(username=USER1_CREDENTIALS[0], password=USER1_CREDENTIALS[1])
 
         from_date = INITIAL_CREATION_DATE[1]

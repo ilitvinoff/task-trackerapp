@@ -103,11 +103,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=30, min_length=6, allow_blank=False, trim_whitespace=True, source= "owner.username")
+    username = serializers.CharField(max_length=30, min_length=6, allow_blank=False, trim_whitespace=True,
+                                     source="owner.username")
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
     email = serializers.CharField(
-        validators=[UniqueValidator(queryset=User.objects.all(), message='email already taken')],source="owner.email")
+        validators=[UniqueValidator(queryset=User.objects.all(), message='email already taken')], source="owner.email")
     picture = serializers.ImageField(required=False, allow_null=True, use_url=PROFILE_IMG_UPLOAD_TO)
 
     def validate_email(self, value):
