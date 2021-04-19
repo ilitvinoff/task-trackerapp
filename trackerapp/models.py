@@ -6,12 +6,14 @@ from django.urls import reverse
 TASK_TITLE_MAX_LENGTH = 200
 DESCRIPTION_MAX_LENGTH = 1000
 DESCRIPTION_AS_TITLE_LENGTH = 40
+PROFILE_IMG_UPLOAD_TO = "uploads/userprofile/"
+ATTACHMENT_UPLOAD_TO = "attachments/"
 
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     picture = models.ImageField(
-        upload_to="uploads/userprofile/",
+        upload_to=PROFILE_IMG_UPLOAD_TO,
         blank=True,
         null=True,
         validators=[
@@ -156,7 +158,7 @@ class Attachment(models.Model):
         User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
     )
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
-    file = models.FileField(upload_to="attachments/", blank=True, null=True)
+    file = models.FileField(upload_to=ATTACHMENT_UPLOAD_TO, blank=True, null=True)
     description = models.fields.TextField(
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )

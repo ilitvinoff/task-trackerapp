@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from rest_framework import viewsets, mixins, permissions
+from rest_framework import viewsets, mixins, permissions, status, response
 
 from .models import Message, TaskModel, UserProfile, Attachment
 from .permissions import (
@@ -11,7 +11,7 @@ from .serializers import (
     UserSerializer,
     GroupSerializer,
     TaskSerializer,
-    MessageSerializer, ProfileSerializer, AttachmentSerializer,
+    MessageSerializer, ProfileSerializer, AttachmentSerializer, UserRegisterSerializer,
 )
 
 
@@ -142,5 +142,14 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return UserProfile.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    def get_permissions(self):
+        if self.action == 'create':
+            return []
+        return super().get_permissions()
+
+    def create(self, request, *args, **kwargs):
+        serializer = UserRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return response.Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

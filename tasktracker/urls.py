@@ -29,11 +29,11 @@ from trackerapp.apiviews import AttachmentViewSet, MessageViewSet
 from .yasg import urlpatterns as yasg_urls
 
 router = routers.DefaultRouter()
-router.register(r"profiles", apiviews.ProfileViewSet)
-router.register(r"groups", apiviews.GroupViewSet)
-router.register(r"tasks", apiviews.TaskViewSet)
-router.register(r"comments", apiviews.MessageViewSet)
-router.register(r"attachments", apiviews.AttachmentViewSet)
+router.register(r"profiles", apiviews.ProfileViewSet,basename='profile-api')
+router.register(r"groups", apiviews.GroupViewSet,basename='group-api')
+router.register(r"tasks", apiviews.TaskViewSet,basename='task-api')
+router.register(r"comments", apiviews.MessageViewSet,basename='message-api')
+router.register(r"attachments", apiviews.AttachmentViewSet,basename='attachment-api')
 
 urlpatterns = [
     # WEB INTERFACE URLS
@@ -45,8 +45,8 @@ urlpatterns = [
     # REST API URLS
     path("api/", include([
         path('', include(router.urls)),
-        path('task/<pk>/attachments/', AttachmentViewSet.as_view({'get': 'list'})),
-        path('task/<pk>/messages/', MessageViewSet.as_view({'get': 'list'})),
+        path('task/<pk>/attachments/', AttachmentViewSet.as_view({'get': 'list'}),name='task-attachment-list-api'),
+        path('task/<pk>/messages/', MessageViewSet.as_view({'get': 'list'}),name='task-message-list-api'),
         path("auth/", include("rest_framework.urls", namespace="rest_framework")),
         path("token/", include([
             path("", TokenObtainPairView.as_view(), name="token_obtain_pair"),

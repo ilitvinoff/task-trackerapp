@@ -1,7 +1,15 @@
+import re
+
+from coreschema.formats import validate_email
+from django.contrib.auth import password_validation
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
-from trackerapp.models import TaskModel, Message, UserProfile, Attachment
+from trackerapp.models import TaskModel, Message, UserProfile, Attachment, PROFILE_IMG_UPLOAD_TO
+from trackerapp.resize_img import resize
+
+USERNAME_PATTERN = '^(?=[a-zA-Z0-9._]{8,20}$)(?!.*[_.]{2})[^_.].*[^_.]$'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -75,11 +83,72 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     userprofile_owner = serializers.ReadOnlyField(source="owner.username")
+    profile_id = serializers.ReadOnlyField(source="id")
+    queryset = UserProfile.objects.all()
+
+    def validate_picture(self, new_picture):
+        previous_picture = UserProfile.objects.get(id=self.instance.id).picture
+
+        if new_picture and (not previous_picture or new_picture.name != previous_picture.name):
+            return resize(new_picture)
+        return new_picture
 
     class Meta:
         model = UserProfile
         fields = (
-            "id",
+            "profile_id",
             "userprofile_owner",
             "picture",
         )
+
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=30, min_length=6, allow_blank=False, trim_whitespace=True, source= "owner.username")
+    password1 = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
+    email = serializers.CharField(
+        validators=[UniqueValidator(queryset=User.objects.all(), message='email already taken')],source="owner.email")
+    picture = serializers.ImageField(required=False, allow_null=True, use_url=PROFILE_IMG_UPLOAD_TO)
+
+    def validate_email(self, value):
+        validate_email(value)
+        return value
+
+    def validate_username(self, value):
+        if re.match(USERNAME_PATTERN, value):
+            return value
+        raise serializers.ValidationError('plz use letters with (if want) digits to create username')
+
+    def validate_picture(self, new_picture):
+        previous_picture = UserProfile.objects.get(id=self.instance.id).picture
+
+        if new_picture and (not previous_picture or new_picture.name != previous_picture.name):
+            return resize(new_picture)
+        return new_picture
+
+    def create(self, validated_data):
+        password1 = validated_data.get('password1', '')
+        password2 = validated_data.get('password2', '')
+
+        if password1 == password2:
+            password_validation.validate_password(password1, self.instance)
+        else:
+            raise serializers.ValidationError('the passwords values do not match')
+
+        user = User.objects.create_user(
+            username=validated_data['owner']['username'],
+            email=validated_data['owner']['email'],
+            password=validated_data['password1'],
+        )
+        try:
+            profile = UserProfile.objects.create(owner=user)
+        except Exception as e:
+            user.delete()
+            raise Exception(e)
+
+        return profile
+
+    class Meta:
+        model = UserProfile
+        # Tuple of serialized model fields (see link [2])
+        fields = ("username", "password1", "password2", "email", "picture")
