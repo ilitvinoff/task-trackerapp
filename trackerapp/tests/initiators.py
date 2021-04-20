@@ -8,7 +8,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 
 from tasktracker import settings
-from trackerapp.models import TaskModel, Attachment
+from trackerapp.models import TaskModel, Attachment, Message
 from trackerapp.views import ITEMS_ON_PAGE
 
 USER1_CREDENTIALS = ('user1', '12Asasas12', "shwonder@a.com")
@@ -22,6 +22,9 @@ DEFAULT_STATUS = "waiting to start"
 TEST_MEDIA_PATH = os.path.join(settings.BASE_DIR, "test-media")
 TEST_FILE_PATH = 'assets/1920x1080_legion.jpg'
 TEST_PATH_FOR_UPDATE_FILE = 'assets/200x200_legion.jpg'
+INITIAL_STATUS = ("waiting to start", "in work", "completed")
+
+USERS_COUNT = 2
 
 
 def get_user(user_credentials):
@@ -48,10 +51,13 @@ def initial_test_conditions(self):
     self.task2.save()
 
 
-def get_item(model_class, task, msg, owner, f):
+def get_item(model_class, task, msg, owner, assignee, f, status):
     if model_class == Attachment:
         return model_class.objects.create(task=task, description=msg, file=f, owner=owner)
-    return model_class.objects.create(task=task, body=msg, owner=owner)
+    elif model_class == Message:
+        return model_class.objects.create(task=task, body=msg, owner=owner)
+    elif model_class == TaskModel:
+        return model_class.objects.create(owner=owner, assignee=assignee, status=status)
 
 
 def create_lists_for_different_users(self, page_count, model_class):
@@ -60,10 +66,12 @@ def create_lists_for_different_users(self, page_count, model_class):
         self.user1_item_set = set()
         self.user2_item_set = set()
         self.item_owner_count = {}
+        self.status_count = {}
         owners = [self.user1, self.user2]
         users_count = len(owners)
         owner_index = 1
         date_index = 0
+        status_index = 0
 
         with open(TEST_FILE_PATH, 'rb') as file:
             f = File(file, name='ololo')
@@ -76,23 +84,33 @@ def create_lists_for_different_users(self, page_count, model_class):
                 if owner_index >= len(owners):
                     owner_index = 0
 
+                if status_index >= len(INITIAL_STATUS):
+                    status_index = 0
+
                 with freeze_time(INITIAL_CREATION_DATE[date_index]):
 
                     if i % users_count == 0:
-                        item = get_item(model_class, self.task1, i, owners[owner_index], f)
+                        item = get_item(model_class, self.task1, i, owners[owner_index], owners[(owner_index * (-1))],
+                                        f,INITIAL_STATUS[status_index])
                         item.save()
                         self.user1_item_set.add(item)
 
                     else:
-                        item = get_item(model_class, self.task2, i, owners[owner_index], f)
+                        item = get_item(model_class, self.task2, i, owners[owner_index], owners[(owner_index * (-1))],
+                                        f,INITIAL_STATUS[status_index])
                         item.save()
                         self.user2_item_set.add(item)
 
                         date_index += 1
+
                         self.item_owner_count[
                             owners[owner_index]] = self.item_owner_count.get(
                             owners[owner_index], 0) + 1
                         owner_index += 1
+
+                        self.status_count[INITIAL_STATUS[status_index]] = self.status_count.get(
+                            INITIAL_STATUS[status_index], 0) + 1
+                        status_index += 1
 
     wrapper()
 
