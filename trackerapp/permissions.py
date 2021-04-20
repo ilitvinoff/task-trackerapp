@@ -38,8 +38,9 @@ class IsOwnerOrAssigneeREST(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if view.action == 'retrieve':
-            return obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user
-        return obj.get_owner() == request.user
+            return obj and (
+                        obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user)
+        return obj and (obj.get_owner() == request.user)
 
 
 class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):

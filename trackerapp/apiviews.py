@@ -58,13 +58,17 @@ class AttachmentViewSet(RelatedModelViewSet):
     serializer_class = AttachmentSerializer
 
     def perform_create(self, serializer):
-        related_task = serializer.validated_data.get('task', None)
+        try:
+            related_task = TaskModel.objects.get(id=serializer.initial_data["task_id"])
+        except:
+            raise PermissionDenied("Bad request")
+
         request_user = self.request.user
 
         if related_task and (request_user == related_task.get_owner() or request_user == related_task.get_assignee()):
             serializer.save(owner=request_user, task=related_task)
         else:
-            raise PermissionDenied()
+            raise PermissionDenied("Have no permission to set attachment to the task(id)={}".format(related_task.id))
 
 
 class MessageViewSet(RelatedModelViewSet):
@@ -77,7 +81,11 @@ class MessageViewSet(RelatedModelViewSet):
     serializer_class = MessageSerializer
 
     def perform_create(self, serializer):
-        related_task = serializer.validated_data.get('task', None)
+        try:
+            related_task = TaskModel.objects.get(id=serializer.initial_data["task_id"])
+        except:
+            raise PermissionDenied("Bad request")
+
         request_user = self.request.user
 
         if related_task and (request_user == related_task.get_owner() or request_user == related_task.get_assignee()):

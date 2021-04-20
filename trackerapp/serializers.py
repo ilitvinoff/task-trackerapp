@@ -42,7 +42,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     task_id = serializers.ReadOnlyField(source="task.id")
-    message_owner = serializers.ReadOnlyField(source="owner.username")
+    owner = serializers.ReadOnlyField(source="owner.username")
     task_owner = serializers.ReadOnlyField(source="task.owner.username")
     task_assigned_to = serializers.ReadOnlyField(source="task.assignee.username")
 
@@ -52,7 +52,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "id",
             "body",
             "task_id",
-            "message_owner",
+            "owner",
             "task_owner",
             "task_assigned_to",
             "creation_date",
@@ -61,8 +61,8 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class AttachmentSerializer(serializers.ModelSerializer):
     task_id = serializers.ReadOnlyField(source="task.id")
-    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
-    userprofile_owner_id = serializers.ReadOnlyField(source="owner.id")
+    owner_username = serializers.ReadOnlyField(source="owner.username")
+    owner_id = serializers.ReadOnlyField(source="owner.id")
     related_task_assignee = serializers.ReadOnlyField(source="task.assignee.username")
     related_task_assignee_id = serializers.ReadOnlyField(source="task.assignee.id")
 
@@ -70,8 +70,8 @@ class AttachmentSerializer(serializers.ModelSerializer):
         model = Attachment
         fields = (
             "id",
-            "userprofile_owner",
-            "userprofile_owner_id",
+            "owner_username",
+            "owner_id",
             "related_task_assignee",
             "related_task_assignee_id",
             "description",
