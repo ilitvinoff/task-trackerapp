@@ -24,8 +24,6 @@ TEST_FILE_PATH = 'assets/1920x1080_legion.jpg'
 TEST_PATH_FOR_UPDATE_FILE = 'assets/200x200_legion.jpg'
 INITIAL_STATUS = ("waiting to start", "in work", "completed")
 
-USERS_COUNT = 2
-
 
 def get_user(user_credentials):
     return get_user_model().objects.create_user(username=user_credentials[0],
@@ -57,7 +55,7 @@ def get_item(model_class, task, msg, owner, assignee, f, status):
     elif model_class == Message:
         return model_class.objects.create(task=task, body=msg, owner=owner)
     elif model_class == TaskModel:
-        return model_class.objects.create(owner=owner, assignee=assignee, status=status)
+        return model_class.objects.create(title=msg, description=msg, owner=owner, assignee=assignee, status=status)
 
 
 def create_lists_for_different_users(self, page_count, model_class):
@@ -65,11 +63,10 @@ def create_lists_for_different_users(self, page_count, model_class):
     def wrapper():
         self.user1_item_set = set()
         self.user2_item_set = set()
-        self.item_owner_count = {}
         self.status_count = {}
         owners = [self.user1, self.user2]
         users_count = len(owners)
-        owner_index = 1
+        owner_index = 0
         date_index = 0
         status_index = 0
 
@@ -90,27 +87,25 @@ def create_lists_for_different_users(self, page_count, model_class):
                 with freeze_time(INITIAL_CREATION_DATE[date_index]):
 
                     if i % users_count == 0:
-                        item = get_item(model_class, self.task1, i, owners[owner_index], owners[(owner_index * (-1))],
-                                        f,INITIAL_STATUS[status_index])
+                        item = get_item(model_class, self.task1, str(i), owners[owner_index],
+                                        owners[abs(owner_index - 1)],
+                                        f, INITIAL_STATUS[status_index])
                         item.save()
                         self.user1_item_set.add(item)
 
                     else:
-                        item = get_item(model_class, self.task2, i, owners[owner_index], owners[(owner_index * (-1))],
-                                        f,INITIAL_STATUS[status_index])
+                        item = get_item(model_class, self.task2, str(i), owners[owner_index],
+                                        owners[abs(owner_index - 1)],
+                                        f, INITIAL_STATUS[status_index])
                         item.save()
                         self.user2_item_set.add(item)
 
                         date_index += 1
 
-                        self.item_owner_count[
-                            owners[owner_index]] = self.item_owner_count.get(
-                            owners[owner_index], 0) + 1
-                        owner_index += 1
-
                         self.status_count[INITIAL_STATUS[status_index]] = self.status_count.get(
                             INITIAL_STATUS[status_index], 0) + 1
                         status_index += 1
+                    owner_index += 1
 
     wrapper()
 
@@ -121,3 +116,20 @@ def remove_test_media_dir():
             shutil.rmtree(TEST_MEDIA_PATH)
         except Exception as a:
             print("ERR: CAN'T REMOVE TEST_MEDIA_DIR AFTER TEST END \n {}".format(a))
+
+
+def delete_item_from_list(initial_list, item):
+    for i in range(0, len(initial_list)):
+
+        if initial_list[i]['id'] == item['id']:
+            del initial_list[i]
+            break
+
+
+def get_initial_list(serializer_instance, item_set):
+    return [serializer_instance.to_representation(item) for item in item_set]
+
+
+def list_update_difference(list1, list2):
+    for item in list1:
+        delete_item_from_list(list2, item)

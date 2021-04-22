@@ -39,7 +39,20 @@ class IsOwnerOrAssigneeREST(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if view.action == 'retrieve':
             return obj and (
-                        obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user)
+                    obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user)
+        return obj and (obj.get_owner() == request.user)
+
+
+class IsTaskOwnerOrAssignee(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return True
+        raise PermissionDenied()
+
+    def has_object_permission(self, request, view, obj):
+        if view.action == 'retrieve':
+            return obj and (obj.get_owner() == request.user or obj.get_assignee() == request.user)
         return obj and (obj.get_owner() == request.user)
 
 

@@ -20,10 +20,17 @@ class AttachmentListViewSetTestCase(APITestCase):
     def test_valid_user_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Attachment)
         self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initial_list = initiators.get_initial_list(AttachmentSerializer(), self.user1_item_set)
 
         # owner of the related to attachment task
         response = self.client.get(reverse_lazy('task-attachment-list-api', kwargs={'pk': self.task1.id}))
         self.assertEqual(response.status_code, 200)
+
+        try:
+            initiators.list_update_difference(response.data['results'], initial_list)
+
+        except ValueError:
+            self.assertFalse(True, "element of response's list not present in initial data list")
 
         # assignee of the related to attachment task
         response = self.client.get(reverse_lazy('task-attachment-list-api', kwargs={'pk': self.task2.id}))
@@ -45,22 +52,14 @@ class AttachmentListViewSetTestCase(APITestCase):
         initiators.create_lists_for_different_users(self, page_count=initiators.PAGE_COUNT, model_class=Attachment)
         self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
         page_count = 1
-        initial_list = [AttachmentSerializer().to_representation(item) for item in self.user1_item_set]
+        initial_list = initiators.get_initial_list(AttachmentSerializer(), self.user1_item_set)
 
         while True:
             response = self.client.get(
                 reverse_lazy('task-attachment-list-api', kwargs={'pk': self.task1.id}) + '?page={}'.format(page_count))
 
             try:
-                query_list = response.data['results']
-
-                for item in query_list:
-                    for i in range(0, len(initial_list)):
-
-                        if initial_list[i]['id'] == item['id'] and initial_list[i]['description'] == item[
-                            'description']:
-                            del initial_list[i]
-                            break
+                initiators.list_update_difference(response.data['results'], initial_list)
 
             except ValueError:
                 self.assertFalse(True, "element of response's list not present in initial data list")
@@ -118,7 +117,7 @@ class AttachmentCreateViewSetTestCase(APITestCase):
         initiators.remove_test_media_dir()
 
     @override_settings(MEDIA_ROOT=initiators.TEST_MEDIA_PATH)
-    def test_owner_and_task_assign_into_attachment_automatically(self):
+    def test_owner_and_task_assign_set_into_attachment_automatically(self):
         self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
         with open(initiators.TEST_FILE_PATH, 'rb') as file:
             data = {'description': 'test attachment create', 'file': file, 'task_id': self.task1.id}
