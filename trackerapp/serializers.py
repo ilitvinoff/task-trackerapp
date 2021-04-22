@@ -10,8 +10,6 @@ from rest_framework.validators import UniqueValidator
 from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from trackerapp.resize_img import resize
 
-USERNAME_PATTERN = '^(?=[a-zA-Z0-9._]{8,20}$)(?!.*[_.]{2})[^_.].*[^_.]$'
-
 
 class UserSerializer(serializers.ModelSerializer):
     owned_tasks = serializers.PrimaryKeyRelatedField(
@@ -36,14 +34,10 @@ class TaskSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
     assignee_username = serializers.ReadOnlyField(source="assignee.username")
 
-    def validate_assignee_username(self, value):
-        if re.match(USERNAME_PATTERN, value):
-            return value
-        raise serializers.ValidationError('plz use letters with (if want) digits to create username')
-
     def save(self, **kwargs):
         user = None
         request = self.context.get("request", None)
+
 
         # get request user to set owner of the task
         if request and hasattr(request, "user"):
