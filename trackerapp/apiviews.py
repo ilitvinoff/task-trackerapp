@@ -5,7 +5,7 @@ from rest_framework import viewsets, mixins, permissions, status, response
 
 from .models import Message, TaskModel, UserProfile, Attachment
 from .permissions import (
-    IsOwnerOrAssigneeREST, FullPermissionDenied, IsOwnerREST,
+    IsOwnerOrAssigneeREST, FullPermissionDenied, IsOwnerREST, IsTaskOwnerOrAssignee,
 )
 from .serializers import (
     UserSerializer,
@@ -91,16 +91,20 @@ class MessageViewSet(RelatedModelViewSet):
         if related_task and (request_user == related_task.get_owner() or request_user == related_task.get_assignee()):
             serializer.save(owner=request_user, task=related_task)
         else:
-            raise PermissionDenied()
+            raise PermissionDenied("Have no permission to set message to the task(id)={}".format(related_task.id))
 
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsOwnerOrAssigneeREST]
+    permission_classes = [IsTaskOwnerOrAssignee]
 
     def get_object(self):
-        obj = TaskModel.objects.get(id=self.kwargs['pk'])
+        pk = self.kwargs.get('pk', None)
+        if not pk:
+            raise ValueError("pk not present in request to identifier task"
+                             "")
+        obj = TaskModel.objects.get(id=pk)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -108,9 +112,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskModel.objects.all().filter(
             Q(owner__exact=self.request.user) | Q(assignee__exact=self.request.user)
         )
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
 
 class UserViewSet(

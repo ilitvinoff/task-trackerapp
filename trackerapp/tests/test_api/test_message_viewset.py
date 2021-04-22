@@ -13,10 +13,17 @@ class MessageListView(APITestCase):
     def test_valid_user_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Message)
         self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initial_list = initiators.get_initial_list(MessageSerializer(), self.user1_item_set)
 
         # owner of the related to message task
         response = self.client.get(reverse_lazy('task-message-list-api', kwargs={'pk': self.task1.id}))
         self.assertEqual(response.status_code, 200)
+
+        try:
+            initiators.list_update_difference(response.data['results'], initial_list)
+
+        except ValueError:
+            self.assertFalse(True, "element of response's list not present in initial data list")
 
         # assignee of the related to message task
         response = self.client.get(reverse_lazy('task-message-list-api', kwargs={'pk': self.task2.id}))
@@ -38,27 +45,21 @@ class MessageListView(APITestCase):
         initiators.create_lists_for_different_users(self, page_count=initiators.PAGE_COUNT, model_class=Message)
         self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
         page_count = 1
-        initial_list = [MessageSerializer().to_representation(item) for item in self.user1_item_set]
+        initial_list = initiators.get_initial_list(MessageSerializer(), self.user1_item_set)
 
         while True:
             response = self.client.get(
                 reverse_lazy('task-message-list-api', kwargs={'pk': self.task1.id}) + '?page={}'.format(page_count))
 
             try:
-                query_list = response.data['results']
-
-                for item in query_list:
-                    for i in range(0, len(initial_list)):
-
-                        if initial_list[i]['id'] == item['id'] and initial_list[i]['body'] == item['body']:
-                            del initial_list[i]
-                            break
+                initiators.list_update_difference(response.data['results'], initial_list)
 
             except ValueError:
                 self.assertFalse(True, "element of response's list not present in initial data list")
             except KeyError:
                 page_count -= 1
                 break
+
             page_count += 1
 
         self.assertEqual(page_count, initiators.PAGE_COUNT)

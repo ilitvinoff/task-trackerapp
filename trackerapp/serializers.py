@@ -33,11 +33,58 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
-    assignee = serializers.ReadOnlyField(source="assignee.username")
+    assignee_username = serializers.ReadOnlyField(source="assignee.username")
+
+    def validate_assignee_username(self, value):
+        if re.match(USERNAME_PATTERN, value):
+            return value
+        raise serializers.ValidationError('plz use letters with (if want) digits to create username')
+
+    def save(self, **kwargs):
+        user = None
+        request = self.context.get("request")
+
+        # get request user to set owner of the task
+        if request and hasattr(request, "user"):
+            user = request.user
+        if not user:
+            raise ValueError("No request user present")
+
+        kwargs['owner'] = user
+
+        # try get assignee user of the task if has
+        assignee = None
+        assignee_username = request.data.get('assignee_username', None)
+
+        if assignee_username:
+            assignee = User.objects.filter(username=assignee_username).first()
+
+        kwargs['assignee'] = assignee
+
+        super().save(**kwargs)
+
+    def create(self, validated_data):
+        try:
+            owner = validated_data['owner']
+            title = validated_data['title']
+            description = validated_data['description']
+            assignee = validated_data['assignee']
+            status = validated_data['status']
+            # creation_date = validated_data['creation_date']
+        except KeyError as e:
+            raise KeyError(e)
+
+        try:
+            task = TaskModel.objects.create(owner=owner, title=title, description=description, assignee=assignee,
+                                            status=status)
+        except ValueError as e:
+            raise ValueError(e)
+
+        return task
 
     class Meta:
         model = TaskModel
-        fields = ("id", "title", "description", "owner", "assignee", "creation_date")
+        fields = ("id", "title", "description", "owner", "assignee_username", "status", "creation_date")
 
 
 class MessageSerializer(serializers.ModelSerializer):
