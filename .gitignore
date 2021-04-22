@@ -12,3 +12,4 @@ images.jpeg
 /media/*
 /tracker-venv/*
 .coverage
+trackerapp/tests/test_api/__pycache__/*

@@ -3,10 +3,11 @@ import re
 from coreschema.formats import validate_email
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from trackerapp.models import TaskModel, Message, UserProfile, Attachment, PROFILE_IMG_UPLOAD_TO
+from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from trackerapp.resize_img import resize
 
 USERNAME_PATTERN = '^(?=[a-zA-Z0-9._]{8,20}$)(?!.*[_.]{2})[^_.].*[^_.]$'
@@ -42,11 +43,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def save(self, **kwargs):
         user = None
-        request = self.context.get("request")
+        request = self.context.get("request", None)
 
         # get request user to set owner of the task
         if request and hasattr(request, "user"):
             user = request.user
+
         if not user:
             raise ValueError("No request user present")
 
@@ -140,6 +142,36 @@ class ProfileSerializer(serializers.ModelSerializer):
             return resize(new_picture)
         return new_picture
 
+    def save(self, **kwargs):
+        request = self.context.get('request')
+        if request:
+            kwargs['first_name'] = request.data.get('first_name', None)
+            kwargs['last_name'] = request.data.get('last_name', None)
+
+        super(ProfileSerializer, self).save(**kwargs)
+
+    def update(self, instance, validated_data):
+        first_name = validated_data['first_name']
+        last_name = validated_data['last_name']
+        picture = validated_data.get('picture', None)
+        previous_owner_value = instance.owner
+
+        if first_name:
+            instance.owner.first_name = first_name
+        if last_name:
+            instance.owner.last_name = last_name
+        if picture:
+            instance.picture = picture
+
+        instance.owner.save()
+        try:
+            instance.save()
+        except:
+            instance.owner = previous_owner_value
+            instance.save()
+
+        return instance
+
     class Meta:
         model = UserProfile
         fields = (
@@ -156,23 +188,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
     email = serializers.CharField(
         validators=[UniqueValidator(queryset=User.objects.all(), message='email already taken')], source="owner.email")
-    picture = serializers.ImageField(required=False, allow_null=True, use_url=PROFILE_IMG_UPLOAD_TO)
 
     def validate_email(self, value):
         validate_email(value)
+        if User.objects.filter(email__exact=value).first():
+            raise ValidationError("this email already taken")
         return value
-
-    def validate_username(self, value):
-        if re.match(USERNAME_PATTERN, value):
-            return value
-        raise serializers.ValidationError('plz use letters with (if want) digits to create username')
-
-    def validate_picture(self, new_picture):
-        previous_picture = UserProfile.objects.get(id=self.instance.id).picture
-
-        if new_picture and (not previous_picture or new_picture.name != previous_picture.name):
-            return resize(new_picture)
-        return new_picture
 
     def create(self, validated_data):
         password1 = validated_data.get('password1', '')
@@ -188,6 +209,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             email=validated_data['owner']['email'],
             password=validated_data['password1'],
         )
+
+        user.save()
+
         try:
             profile = UserProfile.objects.create(owner=user)
         except Exception as e:
@@ -199,4 +223,4 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         # Tuple of serialized model fields (see link [2])
-        fields = ("username", "password1", "password2", "email", "picture")
+        fields = ("username", "password1", "password2", "email")
