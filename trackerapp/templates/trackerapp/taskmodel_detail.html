@@ -62,6 +62,7 @@
         <p><a class="btn btn-primary" role="button" href="{% url 'message-create' pk=taskmodel.pk %}">Add comment</a>
         </p>
         <p><a class="btn btn-primary" role="button" href="{% url 'comment-list' pk=taskmodel.pk %}">Comments</a></p>
+        <p><a class="btn btn-primary" role="button" href="{% url 'history-list' pk=taskmodel.pk %}">History</a></p>
 
     {% else %}
         <h2>There is no such task in your list</h2>

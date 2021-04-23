@@ -267,3 +267,28 @@ def sign_up(request):
     else:
         form = UserSignUpForm()
     return render(request, "trackerapp/sign_up.html", {"form": form})
+
+
+class TaskHistoryListView(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedFormListView):
+    model = TaskModel
+    permission_class_model = TaskModel
+    form_class = DateSortingForm
+    paginate_by = ITEMS_ON_PAGE
+    template_name = "trackerapp/task_history.html"
+
+    def get_context_data(self, **kwargs):
+        context_data = super(TaskHistoryListView, self).get_context_data()
+        events_list = []
+        for item in context_data['object_list']:
+            previous_item_state = item.get_previous_by_history_date()
+            delta = item.diff_against(previous_item_state)
+            # TODO add changes to context as diff_match_patch
+            for change in delta.changes:
+                events_list.append((change.field,))
+        return context_data
+
+        return context_data
+
+    def get_queryset(self, **kwargs):
+        history_list = TaskModel.history.filter(id=self.kwargs['pk']).order_by("-history_date")
+        return date_filter(self, history_list)

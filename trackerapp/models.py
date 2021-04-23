@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
 from django.urls import reverse
+from simple_history.models import HistoricalRecords
 
 TASK_TITLE_MAX_LENGTH = 200
 DESCRIPTION_MAX_LENGTH = 1000
@@ -72,7 +73,7 @@ class TaskModel(models.Model):
         help_text="Current task status",
     )
 
-    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
 
     owner = models.ForeignKey(
         User,
@@ -90,6 +91,8 @@ class TaskModel(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    history = HistoricalRecords()
 
     def __str__(self):
         """
@@ -163,7 +166,9 @@ class Attachment(models.Model):
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
 
-    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
+
+    history = HistoricalRecords()
 
     def get_absolute_url(self):
         """
