@@ -2,30 +2,44 @@
 
 {% block content %}
 
-    {% comment %} Filter form {% endcomment %}
-    <form class="col-md-10" class=".navbar-left" action="" method="post">
-        {% csrf_token %}
-        <table class="btn btn-default">
-            {{ form }}
-        </table>
-        <input class="btn btn-success" type="submit" value="Submit"/>
-    </form>
+    <h1>History of the task: {{ related_task_title }}</h1>
 
-    <h1>History:</h1>
-
-    {% if historicaltaskmodel_list %}
+    {% if historicaltaskmodel_list and event_list %}
 
         <ul class="col-md-10">
-            {% for event in historicaltaskmodel_list %}
-
-                <li>
+            <li>
+                <p>{% for event in event_list %}
                     <div>
-                        <a class="btn btn-default" href="{{ event.get_absolute_url }}">{{ event.body }};
-                            created: {{ event.history_date }}</a>
-                        <p>changed by: {{ event.history_user }}</p>
+                    <p><strong><i>created</i>: {{ event.datetime }}</strong></p>
+                    <p><i>changed by</i>: {{ event.changed_by }}</p>
+                    <p>
+                        {% for change in event.changes %}
+                            field: {{ change.field }}
+                            <p>
+                                {% for v in change.value %}
+
+                                    {% ifequal v.0 0 %}
+                                        {{ v.1 }}
+                                    {% endifequal %}
+
+                                    {% ifequal v.0 1 %}
+                                        <strong>{{ v.1 }}</strong>
+                                    {% endifequal %}
+
+                                    {% ifequal v.0 -1 %}
+                                        <strike>{{ v.1 }}</strike>
+                                    {% endifequal %}
+
+                                {% endfor %}
+                            </p>
+                        {% endfor %}
+                    </p>
+                    </p>
+                    <p><strong>-------------------------------------</strong></p>
+
                     </div>
-                </li>
-            {% endfor %}
+                    </li>
+                {% endfor %}
         </ul>
     {% else %}
         <p>No events detected...</p>

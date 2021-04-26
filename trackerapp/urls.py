@@ -28,7 +28,7 @@ urlpatterns = [
                 path("", views.AttachmentList.as_view(), name="attach-list"),
                 path("create/", views.AttachmentCreate.as_view(), name="attach-create")
             ])),
-            path("history/", views.TaskHistoryListView.as_view(), name="history-list")
+            path("history/", views.TaskHistoryListView.as_view(), name="task-history-list")
         ]))
     ])),
 

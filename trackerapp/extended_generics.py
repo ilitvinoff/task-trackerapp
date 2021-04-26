@@ -1,9 +1,10 @@
+from diff_match_patch import diff_match_patch
 from django.http.response import Http404
 from django.utils.translation import ugettext as _
 from django.views import generic
 from django.views.generic.edit import FormMixin
 
-from trackerapp.models import UserProfile, Message
+from trackerapp.models import UserProfile, Message, TaskModel
 
 
 def add_extra_context(user_id, context_data):
@@ -82,4 +83,52 @@ class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
     def get_context_data(self, **kwargs):
         object_list = self.defaultModel.objects.filter(task=self.get_object())
         context_data = super().get_context_data(object_list=object_list, **kwargs)
+        return add_extra_context(self.request.user.id, context_data)
+
+
+class ExtendedTaskHistoryListView(generic.ListView):
+
+    def diff_semantic(self, text1, text2):
+        dmp = diff_match_patch()
+        d = dmp.diff_main(text1, text2)
+        dmp.diff_cleanupSemantic(d)
+        return d
+
+    def get_queryset(self, **kwargs):
+        history_list = TaskModel.history.filter(id=self.kwargs['pk']).order_by("-history_date")
+        return history_list
+        # return date_filter(self, history_list)
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)  # get the default context data
+        try:
+            context_data['related_task_id'] = self.kwargs['pk']
+            context_data['related_task_title'] = TaskModel.objects.get(id=self.kwargs['pk']).title
+        except:
+            pass
+
+        event_list = []
+        for item in context_data['object_list']:
+
+            try:
+                previous_item_state = item.get_previous_by_history_date()
+            except:
+                previous_item_state = None
+
+            if previous_item_state == None:
+                context_data['event_list'] = [
+                    [{'field': 'Task created', 'datetime': item.creation_date, 'changed_by': item.owner}], ]
+
+            else:
+                delta = item.diff_against(previous_item_state)
+                result = {'datetime': item.history_date, 'changed_by': item.history_user, 'changes': []}
+                for change in delta.changes:
+                    result['changes'].append({'field': str(change.field),
+                                              'value': self.diff_semantic(str(change.new), str(change.old)),
+                                              })
+
+                event_list.append(result)
+
+            context_data['event_list'] = event_list
+
         return add_extra_context(self.request.user.id, context_data)

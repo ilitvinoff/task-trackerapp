@@ -104,9 +104,9 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
                 raise NotImplemented("invalid permission class model")
 
             if not (request.user == owner or request.user == assigned_user):
-                return self.handle_no_permission()
+                return self.handle_no_permission("U r not assignee/owner of wanted object")
 
             return super().dispatch(request, *args, **kwargs)
 
         except Exception:
-            raise PermissionDenied("Bad request. Have no permission. No assigned user/owner found.")
+            raise PermissionDenied("Bad request.")

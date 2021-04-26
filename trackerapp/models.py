@@ -188,6 +188,9 @@ class Attachment(models.Model):
     def get_assignee(self):
         return self.task.assignee
 
+    def __str__(self):
+        return self.file.name
+
     class Meta:
         ordering = [
             "creation_date"

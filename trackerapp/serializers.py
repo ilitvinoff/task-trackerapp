@@ -1,5 +1,3 @@
-import re
-
 from coreschema.formats import validate_email
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import User, Group
@@ -9,6 +7,13 @@ from rest_framework.validators import UniqueValidator
 
 from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from trackerapp.resize_img import resize
+
+
+class HistoricalRecordField(serializers.ListField):
+    child = serializers.DictField()
+
+    def to_representation(self, data):
+        return super().to_representation(data.values().order_by('history_date'))
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,6 +35,16 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
+class TaskHistorySerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source="owner.username")
+    assignee_username = serializers.ReadOnlyField(source="assignee.username")
+    history = HistoricalRecordField(read_only=True)
+
+    class Meta:
+        model = TaskModel
+        fields = ("owner", "assignee_username", "history")
+
+
 class TaskSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
     assignee_username = serializers.ReadOnlyField(source="assignee.username")
@@ -37,7 +52,6 @@ class TaskSerializer(serializers.ModelSerializer):
     def save(self, **kwargs):
         user = None
         request = self.context.get("request", None)
-
 
         # get request user to set owner of the task
         if request and hasattr(request, "user"):

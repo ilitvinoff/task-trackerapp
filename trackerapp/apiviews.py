@@ -11,7 +11,7 @@ from .serializers import (
     UserSerializer,
     GroupSerializer,
     TaskSerializer,
-    MessageSerializer, ProfileSerializer, AttachmentSerializer, UserRegisterSerializer,
+    MessageSerializer, ProfileSerializer, AttachmentSerializer, UserRegisterSerializer, TaskHistorySerializer,
 )
 
 
@@ -101,9 +101,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         pk = self.kwargs.get('pk', None)
+
         if not pk:
-            raise ValueError("pk not present in request to identifier task"
-                             "")
+            raise ValueError("pk not present in request to identifier task")
+
         obj = TaskModel.objects.get(id=pk)
         self.check_object_permissions(self.request, obj)
         return obj
@@ -112,6 +113,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskModel.objects.all().filter(
             Q(owner__exact=self.request.user) | Q(assignee__exact=self.request.user)
         )
+
+
+class TaskHistoryViewSet(viewsets.ModelViewSet):
+    queryset = TaskModel.objects.all()
+    serializer_class = TaskHistorySerializer
+    permission_classes = [IsTaskOwnerOrAssignee]
 
 
 class UserViewSet(
