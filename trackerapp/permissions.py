@@ -25,6 +25,18 @@ class IsOwnerREST(permissions.BasePermission):
         return obj.get_owner() == request.user
 
 
+class IsTaskOwnerOrAssigneeREST(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return True
+        raise PermissionDenied()
+
+    def has_object_permission(self, request, view, obj):
+        if view.action == 'retrieve' or view.action == 'partial_update':
+            return obj and (obj.get_owner() == request.user or obj.get_assignee() == request.user)
+        return obj and obj.get_owner() == request.user
+
+
 class IsOwnerOrAssigneeREST(permissions.BasePermission):
     """
     Custom permission to instance's list in one case(watch below 'if ...', and edit/delete/create if current user is -
@@ -37,23 +49,32 @@ class IsOwnerOrAssigneeREST(permissions.BasePermission):
         raise PermissionDenied()
 
     def has_object_permission(self, request, view, obj):
-        if view.action == 'retrieve':
-            return obj and (
-                    obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user)
-        return obj and (obj.get_owner() == request.user)
+        return obj and (
+                obj.get_owner() == request.user or obj.get_assignee() == request.user or obj.get_related_obj_owner() == request.user)
 
 
-class IsTaskOwnerOrAssignee(permissions.BasePermission):
+class IsTaskOwnerOrAssignee(PermissionRequiredMixin):
 
-    def has_permission(self, request, view):
-        if request.user.is_authenticated:
-            return True
-        raise PermissionDenied()
+    def has_permission(self):
+        return self.request.user.is_authenticated
 
-    def has_object_permission(self, request, view, obj):
-        if view.action == 'retrieve':
-            return obj and (obj.get_owner() == request.user or obj.get_assignee() == request.user)
-        return obj and (obj.get_owner() == request.user)
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            pk = kwargs["pk"]
+
+            if self.permission_class_model:
+                assigned_user = self.permission_class_model.objects.get(pk=pk).get_assignee()
+                owner = self.permission_class_model.objects.get(pk=pk).get_owner()
+            else:
+                raise NotImplemented("invalid permission class model")
+
+            if not (request.user == owner or request.user == assigned_user):
+                return self.handle_no_permission()
+
+            return super().dispatch(request, *args, **kwargs)
+
+        except Exception:
+            raise PermissionDenied("Bad request.")
 
 
 class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):
@@ -62,9 +83,6 @@ class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):
     """
 
     def has_permission(self):
-        """
-        Override this method to customize the way permissions are checked.
-        """
         return self.request.user.is_authenticated
 
     def dispatch(self, request, *args, **kwargs):
@@ -100,11 +118,12 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
             if self.permission_class_model:
                 assigned_user = self.permission_class_model.objects.get(pk=pk).get_assignee()
                 owner = self.permission_class_model.objects.get(pk=pk).get_owner()
+                related_obj_owner = self.permission_class_model.objects.get(pk=pk).get_related_obj_owner()
             else:
                 raise NotImplemented("invalid permission class model")
 
-            if not (request.user == owner or request.user == assigned_user):
-                return self.handle_no_permission("U r not assignee/owner of wanted object")
+            if not (request.user == owner or request.user == assigned_user or request.user == related_obj_owner):
+                return self.handle_no_permission()
 
             return super().dispatch(request, *args, **kwargs)
 

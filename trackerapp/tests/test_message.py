@@ -32,7 +32,7 @@ class MessageListView(TestCase):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Message)
         response = self.client.get(reverse_lazy('comment-list', kwargs={'pk': self.task1.id}), follow=True)
         self.assertEqual(response.redirect_chain[0],
-                         ("/accounts/login/?next=/task/{}/message/".format(self.task1.id), 302))
+                         ('/accounts/login/?next=/task/{}/message/'.format(self.task1.id), 302))
 
     def test_pagination(self):
         initiators.create_lists_for_different_users(self, page_count=initiators.PAGE_COUNT, model_class=Message)
@@ -85,7 +85,8 @@ class MessageDetailTestCase(TestCase):
 
     def test_unauthorized_user(self):
         response = self.client.get(self.get_url(), follow=True)
-        self.assertEqual(response.redirect_chain[0], ('/accounts/login/?next=/message/{}/'.format(self.pk), 302))
+        self.assertEqual(response.redirect_chain[0],
+                         ('/accounts/login/?next=' + str(reverse_lazy('comment-detail', kwargs={'pk': self.pk})), 302))
 
     def test_bad_user_try_get_message(self):
         self.client.login(username=initiators.HACKER_CREDENTIALS[0], password=initiators.HACKER_CREDENTIALS[1])

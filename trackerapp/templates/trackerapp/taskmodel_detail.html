@@ -2,87 +2,88 @@
 
 {% block content %}
     {% comment %} Task body {% endcomment %}
-    {% if taskmodel %}
-        <div class="col-md-10">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h2 class="panel-title">{{ taskmodel.title }}</h2>
-                </div>
-                <div class="panel-body">
-                    {{ taskmodel.description }}
+    <div class="row">
+        {% if taskmodel %}
+            <div class="col-md-10">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">{{ taskmodel.title }}</h2>
+                    </div>
+                    <div class="panel-body">
+                        {{ taskmodel.description }}
+                    </div>
+
+                    <div class="panel-footer">
+                        <p><strong>Creation date:</strong> {{ taskmodel.creation_date }} </p>
+                        <p><strong>Status:</strong> {{ taskmodel.status }}</p>
+                        <p><strong>Owner:</strong> {{ taskmodel.owner.username }}</p>
+
+                        {% if taskmodel.assignee %}
+                            <p><strong>Assignee: </strong>{{ taskmodel.assignee }}</p>
+                        {% endif %}
+                    </div>
+
                 </div>
 
-                <ul class="list-group">
-                    <li class="list-group-item"><strong>Creation date:</strong> {{ taskmodel.creation_date }} </li>
-                    <li class="list-group-item"><strong>Status:</strong> {{ taskmodel.status }}</li>
-                    <li class="list-group-item"><strong>Owner:</strong> {{ taskmodel.owner.username }}</li>
-                </ul>
-
-                {% if taskmodel.assignee %}
-                    <li><strong>Assignee:</strong></li>
+                {% if attachment_list %}
+                    <h3><strong>Attachments:</strong></h3>
                     <ul class="list-group">
-                        <li class="list-group-item">
-                            {{ taskmodel.assignee }}
-                        </li>
+                        {% for attachment in attachment_list %}
+                            <li class="list-group-item">
+                                <a href="{% url 'attach-detail' pk=attachment.pk %}">{{ attachment.get_title_from_description }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if object_list %}
+                    <h3><strong>Comments:</strong></h3>
+                    <ul class="list-group">
+                        {% for message in object_list %}
+                            <li class="list-group-item"><a
+                                    href="{% url 'comment-detail' pk=message.pk %}">{{ message.get_title_from_description }}</a>
+                            </li>
+                        {% endfor %}
                     </ul>
                 {% endif %}
 
             </div>
 
-            {% if attachment_list %}
-                <h3><strong>Attachments:</strong></h3>
-                <ul class="list-group">
-                    {% for attachment in attachment_list %}
-                        <li class="list-group-item">
-                            <a href="{% url 'attach-detail' pk=attachment.pk %}">{{ attachment.get_title_from_description }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-
-            {% if object_list %}
-                <h3><strong>Comments:</strong></h3>
-                <ul class="list-group">
-                    {% for message in object_list %}
-                        <li class="list-group-item"><a
-                                href="{% url 'comment-detail' pk=message.pk %}">{{ message.get_title_from_description }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-
-        </div>
 
 
+            {% comment %} If current user owner, then let him edit task  {% endcomment %}
+            <div class="col-md-2">
+                <div class="btn-group-vertical" role="group" aria-label="...">
 
-        {% comment %} If current user owner, then let him edit task  {% endcomment %}
-        <div class="btn-group-vertical" role="group" aria-label="...">
+                    {% if user == taskmodel.owner %}
+                        <button type="button" class="btn btn-default"><a href="{% url 'update-task' pk=taskmodel.pk %}">Edit
+                            task</a></button>
+                    {% endif %}
 
-            {% if user == taskmodel.owner %}
-                <button type="button" class="btn btn-default"><a href="{% url 'update-task' pk=taskmodel.pk %}">Edit
-                    task</a></button>
-            {% endif %}
+                    <button type="button" class="btn btn-default"><a
+                            href="{% url 'update-task-status' pk=taskmodel.pk %}">Update
+                        task's status</a></button>
 
-            <button type="button" class="btn btn-default"><a href="{% url 'update-task-status' pk=taskmodel.pk %}">Update
-                task's status</a></button>
+                    <button type="button" class="btn btn-default"><a
+                            href="{% url 'attach-list' pk=taskmodel.pk %}">Attachments</a></button>
 
-            <button type="button" class="btn btn-default"><a
-                    href="{% url 'attach-list' pk=taskmodel.pk %}">Attachments</a></button>
+                    <button type="button" class="btn btn-default"><a href="{% url 'attach-create' pk=taskmodel.pk %}">Add
+                        attachment</a></button>
 
-            <button type="button" class="btn btn-default"><a href="{% url 'attach-create' pk=taskmodel.pk %}">Add
-                attachment</a></button>
+                    <button type="button" class="btn btn-default"><a
+                            href="{% url 'comment-list' pk=taskmodel.pk %}">Comments</a></button>
 
-            <button type="button" class="btn btn-default"><a
-                    href="{% url 'comment-list' pk=taskmodel.pk %}">Comments</a></button>
+                    <button type="button" class="btn btn-default"><a href="{% url 'message-create' pk=taskmodel.pk %}">Add
+                        comment</a></button>
 
-            <button type="button" class="btn btn-default"><a href="{% url 'message-create' pk=taskmodel.pk %}">Add
-                comment</a></button>
+                    <button type="button" class="btn btn-default"><a
+                            href="{% url 'task-history-list' pk=taskmodel.pk %}">History</a>
+                    </button>
+                </div>
+            </div>
 
-            <button type="button" class="btn btn-default"><a href="{% url 'task-history-list' pk=taskmodel.pk %}">History</a>
-            </button>
-        </div>
-
-    {% else %}
-        <h2>There is no such task in your list</h2>
-    {% endif %}
+        {% else %}
+            <h2>There is no such task in your list</h2>
+        {% endif %}
+    </div>
 {% endblock content %}

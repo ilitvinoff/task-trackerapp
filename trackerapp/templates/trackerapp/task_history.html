@@ -2,54 +2,87 @@
 
 {% block content %}
 
-    <h1>History of the task: {{ related_task_title }}</h1>
+    <div class="row">
+        <h1>History of the task: {{ related_task_title }}</h1>
 
-    {% if historicaltaskmodel_list and event_list %}
+        {% if historicaltaskmodel_list and event_list %}
 
-        <ul class="col-md-10">
-            <li>
-                <p>{% for event in event_list %}
-                    <div>
-                    <p><strong><i>created</i>: {{ event.datetime }}</strong></p>
-                    <p><i>changed by</i>: {{ event.changed_by }}</p>
-                    <p>
+            <div class="col-md-10">
+                {% for event in event_list %}
+
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><strong><i>event date: </i></strong>{{ event.datetime }}</h3>
+                        </div>
                         {% for change in event.changes %}
-                            field: {{ change.field }}
-                            <p>
-                                {% for v in change.value %}
 
-                                    {% ifequal v.0 0 %}
-                                        {{ v.1 }}
-                                    {% endifequal %}
+                            <div class="panel-body">
 
-                                    {% ifequal v.0 1 %}
-                                        <strong>{{ v.1 }}</strong>
-                                    {% endifequal %}
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title"><strong><i>edited field: </i></strong>{{ change.field }}
+                                        </h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        {% for v in change.value %}
 
-                                    {% ifequal v.0 -1 %}
-                                        <strike>{{ v.1 }}</strike>
-                                    {% endifequal %}
+                                            {% ifequal v.0 0 %}
+                                                {{ v.1 }}
+                                            {% endifequal %}
 
-                                {% endfor %}
-                            </p>
+                                            {% ifequal v.0 1 %}
+                                                <span style="color: green">{{ v.1 }}</span>
+                                            {% endifequal %}
+
+                                            {% ifequal v.0 -1 %}
+                                                <del>{{ v.1 }}</del>
+                                            {% endifequal %}
+                                        {% endfor %}
+
+                                    </div>
+                                </div>
+
+                            </div>
+
                         {% endfor %}
-                    </p>
-                    </p>
-                    <p><strong>-------------------------------------</strong></p>
-
+                        <div class="panel-footer">
+                            <ul>
+                                <li><strong><i>created: </i></strong>{{ event.datetime }}
+                                </li>
+                                <li><strong><i>changed
+                                    by: </i></strong>{{ event.changed_by }}</li>
+                            </ul>
+                        </div>
                     </div>
-                    </li>
-                {% endfor %}
-        </ul>
-    {% else %}
-        <p>No events detected...</p>
-    {% endif %}
 
-    <div class="col-md-4">
-        <p><a class="btn btn-primary" role="button" href="{% url 'task-detail' pk=related_task_id %}">Related to the
-            event task</a></p>
-        <p><a class="btn btn-primary" role="button" href="{% url 'index' %}">Tasks</a></p>
-        <p><a class="btn btn-primary" role="button" href="{% url 'assigned-tasks' %}">Assigned to me</a></p>
+                {% endfor %}
+            </div>
+
+
+        {% else %}
+            <p>No events detected...</p>
+        {% endif %}
+
+        <div class="col-md-2">
+
+            <div class="btn-group-vertical" role="group" aria-label="...">
+                {#            <a href="{% url 'task-detail' pk=related_task_id %}"><button type="button" class="btn btn-default">Related to the#}
+                {#                event task#}
+                {#            </button></a>#}
+                {#            <a href="{% url 'assigned-tasks' %}"><button type="button" class="btn btn-default">Assigned to me</button></a>#}
+                {#            <a href=href="{% url 'index' %}"><button type="button" class="btn btn-default">Tasks</button></a>#}
+
+                <button type="button" class="btn btn-default"><a href="{% url 'task-detail' pk=related_task_id %}">Related
+                    to the
+                    event task</a>
+                </button>
+                <button type="button" class="btn btn-default"><a href="{% url 'assigned-tasks' %}">Assigned to me</a>
+                </button>
+                <button type="button" class="btn btn-default"><a href=href="{% url 'index' %}">Tasks</a></button>
+            </div>
+
+        </div>
+
     </div>
 
 {% endblock content %}

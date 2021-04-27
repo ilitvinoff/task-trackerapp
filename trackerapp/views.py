@@ -22,7 +22,7 @@ from .forms import (
 from .models import TaskModel, Message, UserProfile, Attachment
 from .permissions import (
     IsOwnerOrAssigneePermissionRequiredMixin,
-    IsOwnerPermissionRequiredMixin,
+    IsOwnerPermissionRequiredMixin, IsTaskOwnerOrAssignee,
 )
 
 ITEMS_ON_PAGE = 5
@@ -58,7 +58,7 @@ class AssigneeTaskListView(LoginRequiredMixin, ExtendedFormListView):
         return task_filter(self, tasklist)
 
 
-class TaskDetail(IsOwnerOrAssigneePermissionRequiredMixin, ListInDetailView):
+class TaskDetail(IsTaskOwnerOrAssignee, ListInDetailView):
     model = permission_class_model = TaskModel
     defaultModel = Message
 
@@ -101,7 +101,7 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
         return reverse_lazy("task-detail", args=(self.object.id,))
 
 
-class TaskStatusUpdate(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedUpdateView):
+class TaskStatusUpdate(IsTaskOwnerOrAssignee, ExtendedUpdateView):
     """
     Form to edit task status (for assignee...)
     """
@@ -121,7 +121,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     success_url = reverse_lazy("index")
 
 
-class MessageListView(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedFormListView):
+class MessageListView(IsTaskOwnerOrAssignee, ExtendedFormListView):
     model = Message
     form_class = DateSortingForm
     paginate_by = ITEMS_ON_PAGE
@@ -182,7 +182,7 @@ class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailV
     model = permission_class_model = Attachment
 
 
-class AttachmentList(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedFormListView):
+class AttachmentList(IsTaskOwnerOrAssignee, ExtendedFormListView):
     model = Attachment
     permission_class_model = TaskModel
     form_class = DateSortingForm

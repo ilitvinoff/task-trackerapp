@@ -2,40 +2,74 @@
 
 {% block content %}
 
-    {% comment %} Filter form {% endcomment %}
-    <form class="col-md-10" class=".navbar-left" action="" method="post">
-        {% csrf_token %}
-        <table class="btn btn-default">
-            {{ form }}
-        </table>
-        <input class="btn btn-success" type="submit" value="Submit"/>
-    </form>
+    <div class="row">
 
-    <h1>Comments:</h1>
-    {% comment %} Message list {% endcomment %}
-    {% if message_list %}
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>Comments:</h1>
+            </div>
+        </div>
 
-        <ul class="col-md-10">
-            {% for message in message_list %}
+        {% comment %} Filter form {% endcomment %}
+        <form class="col-md-10" class=".navbar-left" action="" method="post">
+            {% csrf_token %}
 
-                <li>
-                    <div>
-                        <a class="btn btn-default" href="{{ message.get_absolute_url }}">{{ message.body }};
-                            created: {{ message.creation_date }}</a>
-                        <p>Owner: {{ message.owner }}</p>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No comments detected...</p>
-    {% endif %}
+            <div class="well well-lg">
+                <table>
+                    {{ form }}
+                </table>
+                <input class="btn btn-success" type="submit" value="Submit"/>
+            </div>
 
-    <div class="col-md-4">
-        <p><a class="btn btn-primary" role="button" href="{% url 'task-detail' pk=related_task_id %}">Related to the
-            message task</a></p>
-        <p><a class="btn btn-primary" role="button" href="{% url 'index' %}">Tasks</a></p>
-        <p><a class="btn btn-primary" role="button" href="{% url 'assigned-tasks' %}">Assigned to me</a></p>
+        </form>
+
+        <div class="col-md-2">
+
+            <div class="btn-group-vertical" role="group" aria-label="...">
+                <button type="button" class="btn btn-default"><a href="{% url 'task-detail' pk=related_task_id %}">Related
+                    to the
+                    message task</a>
+                </button>
+                <button type="button" class="btn btn-default"><a href="{% url 'index' %}">Tasks</a></a>
+                </button>
+                <button type="button" class="btn btn-default"><a href="{% url 'assigned-tasks' %}">Assigned to me</a>
+                </button>
+            </div>
+
+        </div>
+
+
+        {% comment %} Message list {% endcomment %}
+        {% if message_list %}
+
+            <div class="col-md-10">
+                {% for message in message_list %}
+                    <a href="{{ message.get_absolute_url }}">
+                        <div class="well">
+
+                            <h3>{{ message.body }}</h3>
+
+                            <p><strong><i>owner: </i></strong> {{ message.get_owner }}</p>
+                            <p><strong><i>created: </i></strong> {{ message.creation_date }}</p>
+
+                            <div class="btn-group" role="group" aria-label="...">
+                                <button type="button" class="btn btn-default"><a
+                                        href="{% url 'message-update' pk=message.pk %}">update</a>
+                                </button>
+                                <button type="button" class="btn btn-default"><a
+                                        href="{% url 'message-delete' pk=message.pk %}">delete</a>
+                                </button>
+                            </div>
+
+                        </div>
+                    </a>
+
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <p>No comments detected...</p>
+        {% endif %}
+
     </div>
-
 {% endblock content %}

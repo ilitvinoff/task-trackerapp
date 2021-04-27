@@ -36,7 +36,7 @@ class AttachmentListView(TestCase):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Attachment)
         response = self.client.get(reverse_lazy('attach-list', kwargs={'pk': self.task1.id}), follow=True)
         self.assertEqual(response.redirect_chain[0],
-                         ("/accounts/login/?next=/task/{}/attachment/".format(self.task1.id), 302))
+                         ('/accounts/login/?next=/task/{}/attachment/'.format(self.task1.id), 302))
 
     def test_pagination(self):
         initiators.create_lists_for_different_users(self, page_count=initiators.PAGE_COUNT, model_class=Attachment)

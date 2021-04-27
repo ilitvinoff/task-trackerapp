@@ -5,7 +5,7 @@ from rest_framework import viewsets, mixins, permissions, status, response
 
 from .models import Message, TaskModel, UserProfile, Attachment
 from .permissions import (
-    IsOwnerOrAssigneeREST, FullPermissionDenied, IsOwnerREST, IsTaskOwnerOrAssignee,
+    IsOwnerOrAssigneeREST, FullPermissionDenied, IsOwnerREST, IsTaskOwnerOrAssigneeREST,
 )
 from .serializers import (
     UserSerializer,
@@ -97,7 +97,7 @@ class MessageViewSet(RelatedModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsTaskOwnerOrAssignee]
+    permission_classes = [IsTaskOwnerOrAssigneeREST]
 
     def get_object(self):
         pk = self.kwargs.get('pk', None)
@@ -118,7 +118,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 class TaskHistoryViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskHistorySerializer
-    permission_classes = [IsTaskOwnerOrAssignee]
+    permission_classes = [IsTaskOwnerOrAssigneeREST]
 
 
 class UserViewSet(

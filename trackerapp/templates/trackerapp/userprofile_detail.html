@@ -1,26 +1,35 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-    {% if userprofile %}
-        <div class="col-md-12">
-            <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
-            {% if userprofile.picture %}
-                <img src="{{ userprofile.picture.url }}">
-            {% endif %}
-            <ul class="col-md-10">
-                <li><strong>name:</strong> {{ userprofile.owner.first_name }}</li>
-                <li><strong>last name:</strong> {{ userprofile.owner.last_name }}</li>
-                <li><strong>email:</strong> {{ userprofile.owner.email }}</li>
-            </ul>
+    <div class="row">
+        {% if userprofile %}
+            <div class="col-md-10">
+                {% if userprofile.picture %}
+                    <div class="col-lg-6">
+                        <div class="thumbnail">
+                            <img src="{{ userprofile.picture.url }}">
+                            <div class="caption">
+                                <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
 
-            <h2>
-                <a class="right" href="{% url 'user-profile-update' pk=userprofile.id %}"><strong>Update</strong></a>
-            </h2>
+                                <ul>
+                                    <li><strong>name:</strong> {{ userprofile.owner.first_name }}</li>
+                                    <li><strong>last name:</strong> {{ userprofile.owner.last_name }}</li>
+                                    <li><strong>email:</strong> {{ userprofile.owner.email }}</li>
+                                </ul>
 
-        </div>
+                                <p><a href="{% url 'user-profile-update' pk=userprofile.id %}" class="btn btn-primary"
+                                      role="button"><strong>Update</strong></a>
 
-    {% else %}
-        <h1 class="col-md-10"> OLOLO. No such user profile... </h1>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
 
-    {% endif %}
+            </div>
+
+        {% else %}
+            <h1 class="col-md-10"> OLOLO. No such user profile... </h1>
+        {% endif %}
+    </div>
+
 {% endblock %}

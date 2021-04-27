@@ -1,37 +1,49 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-    {% if message %}
-        <div class="col-md-10">
-            <h1><strong>From: </strong> {{ message.owner }}</h1>
-            <h2><strong>Description:</strong></h2>
-            <p>{{ message.body }}</p>
-            <ul>
-                <li><strong>Creation date:</strong> {{ message.creation_date }} </li>
-
-                {% comment %} If assigned to somebody {% endcomment %}
-                {% if message.taskmodel.assignee %}
-                    <li><strong>Assignee:</strong></li>
-                    <div class="col-md-4">
-                        <p>
-                            {{ message.taskmodel.assignee }}
-                        </p>
+    <div class="row">
+        {% if message %}
+            <div class="col-md-10">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h2 class="panel-title"><strong>From: </strong> {{ message.get_owner }}</h2>
+                    </div>
+                    <div class="panel-body">
+                        {{ message.body }}
                     </div>
 
-                {% endif %}
-            </ul>
-        </div>
+                    <div class="panel-footer">
+                        <p><strong>Creation date:</strong> {{ message.creation_date }} </p>
+                    </div>
 
-        {% comment %} If current user owner, then let him edit task  {% endcomment %}
-        {% if user == message.owner %}
-            <p><a class="btn btn-success" href="{% url 'message-update' pk=message.pk %}">Edit comment</a></p>
-            <p><a class="btn btn-primary" role="button" href="{% url 'message-delete' pk=message.pk %}">delete</a></p>
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="btn-group-vertical" role="group" aria-label="...">
+
+                    {% if user == message.get_owner %}
+                        <button type="button" class="btn btn-default"><a
+                                href="{% url 'message-update' pk=message.id %}">Edit
+                            message</a></button>
+                        <button type="button" class="btn btn-default"><a
+                                href="{% url 'message-delete' pk=message.id %}">Delete
+                            message</a></button>
+                    {% endif %}
+
+                    {% if user == message.get_owner or user == message.get_assignee %}
+                        <button type="button" class="btn btn-default"><a
+                                href="{% url 'comment-list' pk=message.task_id %}">Comments to task
+                            "{{ message.task.title }}"
+                        </a></button>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        {% else %}
+            <h2 class="col-md-10">There is no such message in your list</h2>
         {% endif %}
 
-        <p><a class="btn btn-primary" role="button" href="{% url 'comment-list' pk=message.task_id %}">Comments
-            for {{ message.task.title }}</a></p>
-
-    {% else %}
-        <h2>There is no such task in your list</h2>
-    {% endif %}
+    </div>
 {% endblock %}

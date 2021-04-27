@@ -1,29 +1,52 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-    <h1>Assigned tasks:</h1>
+
+    <div class="col-md-12">
+        <div class="page-header">
+            <h1>Assigned tasks:</h1>
+        </div>
+    </div>
+
     {% comment %} Filter form {% endcomment %}
     <form class="col-md-10" class=".navbar-left" action="" method="post">
         {% csrf_token %}
-        <table class="btn btn-default">
-            {{ form }}
-        </table>
-        <input class="btn btn-success" type="submit" value="Submit"/>
+
+        <div class="well well-lg">
+            <table>
+                {{ form }}
+            </table>
+            <input class="btn btn-success" type="submit" value="Submit"/>
+        </div>
+
     </form>
+
+    <div class="col-md-2">
+        <a class="btn btn-primary" href="{% url 'index' %}">My tasks</a>
+    </div>
 
     {% comment %} If list exist, then printout it {% endcomment %}
     {% if assigned_tasks %}
-        <ul class="col-md-4">
+        <div class="col-md-10">
             {% for task in assigned_tasks %}
 
-                <li><a class="btn btn-default" role="button" href="{{ task.get_absolute_url }}">{{ task.title }}</a>
-                    <a class="btn btn-primary" role="button"
-                       href="{% url 'update-task-status' pk=task.pk %}">Update task's status</a></li>
+                <div class="panel panel-default">
+
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><a href="{{ task.get_absolute_url }}">{{ task.title }}</a></h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <a class="btn btn-primary" role="button" href="{% url 'update-task-status' pk=task.pk %}">Update
+                            task's status</a>
+                    </div>
+
+                </div>
             {% endfor %}
-        </ul>
+
+        </div>
     {% else %}
         <p>No tasks assigned to you...</p>
     {% endif %}
 
-    <a class="btn btn-primary" href="{% url 'index' %}">My tasks</a>
 {% endblock content %}

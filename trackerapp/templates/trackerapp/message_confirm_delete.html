@@ -1,16 +1,23 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-    <div class="col-md-4">
-        <h1>Delete message</h1>
-        <p>Are you sure you want to delete the comment: </p>
-        <p>{{ message.description }}</p>
-        <p>?</p>
+    <div class="col-md-12">
+        <div class="page-header">
+            <h2>Delete message<small><p>Are you sure you want to delete the message? </p></small></h2>
+        </div>
     </div>
 
-    <form action="" method="POST">
-        {% csrf_token %}
-        <input class="btn btn-success" type="submit" value="Yes, delete."/>
-    </form>
+    <div class="col-md-10">
+
+        <div class="well well-lg">
+            <p>{{ message.body }}</p>
+        </div>
+
+
+        <form action="" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-success" type="submit" value="Yes, delete."/>
+        </form>
+    </div>
 
 {% endblock %}
