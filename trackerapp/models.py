@@ -114,7 +114,7 @@ class TaskModel(models.Model):
 
     class Meta:
         ordering = [
-            "creation_date", "title"
+            "-creation_date", "title"
         ]
 
 

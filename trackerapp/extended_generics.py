@@ -96,9 +96,11 @@ def diff_semantic(text1, text2):
 class ExtendedTaskHistoryListView(generic.ListView):
 
     def get_queryset(self, **kwargs):
-        history_list = TaskModel.history.filter(id=self.kwargs['pk']).order_by("-history_date")
+        task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
+        history_list = []
+        if task:
+            history_list = TaskModel.history.filter().order_by("-history_date")
         return history_list
-        # return date_filter(self, history_list)
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)  # get the default context data

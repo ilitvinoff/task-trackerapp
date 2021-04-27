@@ -66,19 +66,12 @@
         <div class="col-md-2">
 
             <div class="btn-group-vertical" role="group" aria-label="...">
-                {#            <a href="{% url 'task-detail' pk=related_task_id %}"><button type="button" class="btn btn-default">Related to the#}
-                {#                event task#}
-                {#            </button></a>#}
-                {#            <a href="{% url 'assigned-tasks' %}"><button type="button" class="btn btn-default">Assigned to me</button></a>#}
-                {#            <a href=href="{% url 'index' %}"><button type="button" class="btn btn-default">Tasks</button></a>#}
-
                 <button type="button" class="btn btn-default"><a href="{% url 'task-detail' pk=related_task_id %}">Related
-                    to the
-                    event task</a>
+                    to the event task</a>
                 </button>
                 <button type="button" class="btn btn-default"><a href="{% url 'assigned-tasks' %}">Assigned to me</a>
                 </button>
-                <button type="button" class="btn btn-default"><a href=href="{% url 'index' %}">Tasks</a></button>
+                <button type="button" class="btn btn-default"><a href="{% url 'index' %}">Tasks</a></button>
             </div>
 
         </div>
