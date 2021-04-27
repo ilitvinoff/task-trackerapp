@@ -49,52 +49,10 @@ class TaskSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
     assignee_username = serializers.ReadOnlyField(source="assignee.username")
 
-    def save(self, **kwargs):
-        user = None
-        request = self.context.get("request", None)
-
-        # get request user to set owner of the task
-        if request and hasattr(request, "user"):
-            user = request.user
-
-        if not user:
-            raise ValueError("No request user present")
-
-        kwargs['owner'] = user
-
-        # try get assignee user of the task if has
-        assignee = None
-        assignee_username = request.data.get('assignee_username', None)
-
-        if assignee_username:
-            assignee = User.objects.filter(username=assignee_username).first()
-
-        kwargs['assignee'] = assignee
-
-        super().save(**kwargs)
-
-    def create(self, validated_data):
-        try:
-            owner = validated_data['owner']
-            title = validated_data['title']
-            description = validated_data['description']
-            assignee = validated_data['assignee']
-            status = validated_data['status']
-            # creation_date = validated_data['creation_date']
-        except KeyError as e:
-            raise KeyError(e)
-
-        try:
-            task = TaskModel.objects.create(owner=owner, title=title, description=description, assignee=assignee,
-                                            status=status)
-        except ValueError as e:
-            raise ValueError(e)
-
-        return task
-
     class Meta:
         model = TaskModel
-        fields = ("id", "title", "description", "owner", "assignee_username", "status", "creation_date")
+        fields = ("id", "title", "description", "owner", "assignee_username", "assignee", "status", "creation_date")
+        extra_kwargs = {'assignee': {'write_only': True}}
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -139,7 +97,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    userprofile_owner = serializers.ReadOnlyField(source="owner.username")
+    profile_owner_id = serializers.ReadOnlyField(source="owner.id")
     profile_id = serializers.ReadOnlyField(source="id")
     queryset = UserProfile.objects.all()
 
@@ -152,15 +110,22 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def save(self, **kwargs):
         request = self.context.get('request')
+
         if request:
-            kwargs['first_name'] = request.data.get('first_name', None)
-            kwargs['last_name'] = request.data.get('last_name', None)
+
+            first_name = request.data.get('first_name', None)
+            if first_name:
+                kwargs['first_name'] = first_name
+
+            last_name = request.data.get('last_name', None)
+            if last_name:
+                kwargs['last_name'] = last_name
 
         super(ProfileSerializer, self).save(**kwargs)
 
     def update(self, instance, validated_data):
-        first_name = validated_data['first_name']
-        last_name = validated_data['last_name']
+        first_name = validated_data.get('first_name', None)
+        last_name = validated_data.get('last_name', None)
         picture = validated_data.get('picture', None)
         previous_owner_value = instance.owner
 
@@ -184,7 +149,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = (
             "profile_id",
-            "userprofile_owner",
+            "profile_owner_id",
             "picture",
         )
 

@@ -99,6 +99,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsTaskOwnerOrAssigneeREST]
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
     def get_object(self):
         pk = self.kwargs.get('pk', None)
 

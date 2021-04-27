@@ -10,7 +10,7 @@ from trackerapp.models import UserProfile, Message, TaskModel
 def add_extra_context(user_id, context_data):
     try:
         context_data["userprofile_id"] = UserProfile.objects.get(owner_id=user_id).id  # add extra context
-    except UserProfile.DoesNotExist as e:
+    except UserProfile.DoesNotExist:
         context_data["userprofile_id"] = None
     return context_data
 
@@ -86,13 +86,14 @@ class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
         return add_extra_context(self.request.user.id, context_data)
 
 
-class ExtendedTaskHistoryListView(generic.ListView):
+def diff_semantic(text1, text2):
+    dmp = diff_match_patch()
+    d = dmp.diff_main(text1, text2)
+    dmp.diff_cleanupSemantic(d)
+    return d
 
-    def diff_semantic(self, text1, text2):
-        dmp = diff_match_patch()
-        d = dmp.diff_main(text1, text2)
-        dmp.diff_cleanupSemantic(d)
-        return d
+
+class ExtendedTaskHistoryListView(generic.ListView):
 
     def get_queryset(self, **kwargs):
         history_list = TaskModel.history.filter(id=self.kwargs['pk']).order_by("-history_date")
@@ -115,7 +116,7 @@ class ExtendedTaskHistoryListView(generic.ListView):
             except:
                 previous_item_state = None
 
-            if previous_item_state == None:
+            if previous_item_state is None:
                 context_data['event_list'] = [
                     [{'field': 'Task created', 'datetime': item.creation_date, 'changed_by': item.owner}], ]
 
@@ -124,7 +125,7 @@ class ExtendedTaskHistoryListView(generic.ListView):
                 result = {'datetime': item.history_date, 'changed_by': item.history_user, 'changes': []}
                 for change in delta.changes:
                     result['changes'].append({'field': str(change.field),
-                                              'value': self.diff_semantic(str(change.new), str(change.old)),
+                                              'value': diff_semantic(str(change.old), str(change.new)),
                                               })
 
                 event_list.append(result)

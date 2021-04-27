@@ -269,7 +269,7 @@ def sign_up(request):
     return render(request, "trackerapp/sign_up.html", {"form": form})
 
 
-class TaskHistoryListView(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedTaskHistoryListView):
+class TaskHistoryListView(IsTaskOwnerOrAssignee, ExtendedTaskHistoryListView):
     model = TaskModel
     permission_class_model = TaskModel
     paginate_by = ITEMS_ON_PAGE
