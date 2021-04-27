@@ -20,13 +20,17 @@
 
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
-                                        {% ifequal change.value "" %}
+
+                                        {% ifequal change.value "-1" %}
                                             <h3 class="panel-title"><strong><i>event: </i></strong>{{ change.field }}
                                         </h3>
+
                                         {% else %}
                                             <h3 class="panel-title"><strong><i>edited field: </i></strong>{{ change.field }}
                                         </h3>
+
                                         {% endifequal %}
+
                                     </div>
                                     <div class="panel-body">
                                         {% for v in change.value %}

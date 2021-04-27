@@ -94,12 +94,13 @@ def diff_semantic(text1, text2):
 
 
 class ExtendedTaskHistoryListView(generic.ListView):
+    VALUE_MARKER = "-1"
 
     def get_queryset(self, **kwargs):
         task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
         history_list = []
         if task:
-            history_list = task.history.filter(id=task.id).order_by("-history_date")
+            history_list = task.history.all().order_by("-history_date")
         return history_list
 
     def get_context_data(self, **kwargs):
@@ -112,15 +113,11 @@ class ExtendedTaskHistoryListView(generic.ListView):
 
         event_list = []
         for item in context_data['object_list']:
+            previous_item_state = item.prev_record
 
-            try:
-                previous_item_state = item.get_previous_by_history_date()
-            except:
-                previous_item_state = None
-
-            if previous_item_state is None or previous_item_state.id != item.id:
+            if previous_item_state is None:
                 result = {'datetime': item.creation_date, 'changed_by': item.owner,
-                          'changes': [{'field': 'Task created', 'value': ''}]}
+                          'changes': [{'field': 'Task created', 'value': self.VALUE_MARKER}]}
 
             else:
                 delta = item.diff_against(previous_item_state)
@@ -132,6 +129,6 @@ class ExtendedTaskHistoryListView(generic.ListView):
 
             event_list.append(result)
 
-            context_data['event_list'] = event_list
+        context_data['event_list'] = event_list
 
         return add_extra_context(self.request.user.id, context_data)
