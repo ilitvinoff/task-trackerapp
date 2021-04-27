@@ -99,7 +99,7 @@ class ExtendedTaskHistoryListView(generic.ListView):
         task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
         history_list = []
         if task:
-            history_list = TaskModel.history.filter().order_by("-history_date")
+            history_list = task.history.all().order_by("-history_date")
         return history_list
 
     def get_context_data(self, **kwargs):
