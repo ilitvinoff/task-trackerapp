@@ -99,7 +99,7 @@ class ExtendedTaskHistoryListView(generic.ListView):
         task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
         history_list = []
         if task:
-            history_list = task.history.all().order_by("-history_date")
+            history_list = task.history.filter(id=task.id).order_by("-history_date")
         return history_list
 
     def get_context_data(self, **kwargs):
@@ -118,9 +118,9 @@ class ExtendedTaskHistoryListView(generic.ListView):
             except:
                 previous_item_state = None
 
-            if previous_item_state is None:
-                context_data['event_list'] = [
-                    [{'field': 'Task created', 'datetime': item.creation_date, 'changed_by': item.owner}], ]
+            if previous_item_state is None or previous_item_state.id != item.id:
+                result = {'datetime': item.creation_date, 'changed_by': item.owner,
+                          'changes': [{'field': 'Task created', 'value': ''}]}
 
             else:
                 delta = item.diff_against(previous_item_state)
@@ -130,7 +130,7 @@ class ExtendedTaskHistoryListView(generic.ListView):
                                               'value': diff_semantic(str(change.old), str(change.new)),
                                               })
 
-                event_list.append(result)
+            event_list.append(result)
 
             context_data['event_list'] = event_list
 
