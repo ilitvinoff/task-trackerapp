@@ -10,31 +10,16 @@
 /*}*/
 
 .body-color {
-    background-color: #d6dcd6;
+    background-color: #b3a985;
 }
 
 .panel-primary{
-    background-color: #d9f5d9;
-    border-color: #effae7;
-}
-
-.panel-primary>.panel-body{
-    background-color: #d9f5d9;
-    border-color: #effae7;
-}
-
-.panel-primary>.panel-footer{
-    background-color: #8bbf8b;
-    border-color: #effae7;
+    background-color: #eed78c;
+    border-color: #6c6434;
 }
 
 .panel-primary>.panel-heading{
-    background-color: #8bbf8b;
-    border-color: #effae7;
-}
-
-.panel-primary>.panel-{
-    background-color: #8bbf8b;
-    border-color: #effae7;
+    background-color: #3e381d;
+    border-color: #6c6434;
 }
 
