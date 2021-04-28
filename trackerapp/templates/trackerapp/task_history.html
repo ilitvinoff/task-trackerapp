@@ -5,14 +5,14 @@
     <div class="row">
         <h1>History of the task: {{ related_task_title }}</h1>
 
-        {% if historicaltaskmodel_list and event_list %}
+        {% if event_list %}
 
             <div class="col-md-10">
                 {% for event in event_list %}
 
                     <div class="panel panel-primary">
                         <div class="panel-heading">
-                            <h3 class="panel-title"><strong><i>event date: </i></strong>{{ event.datetime }}</h3>
+                            <h3 class="panel-title"><strong>{{ event.model_name }}</strong></h3>
                         </div>
                         {% for change in event.changes %}
 
@@ -22,12 +22,15 @@
                                     <div class="panel-heading">
 
                                         {% ifequal change.value "-1" %}
-                                            <h3 class="panel-title"><strong><i>event: </i></strong>{{ change.field }}
-                                        </h3>
+                                            <h3 class="panel-title">
+                                                <strong><i>event: </i></strong>{{ event.model_name }} created.
+                                            </h3>
 
                                         {% else %}
-                                            <h3 class="panel-title"><strong><i>edited field: </i></strong>{{ change.field }}
-                                        </h3>
+                                            <h3 class="panel-title">
+                                                <strong><i>edited
+                                                    field: </i></strong>"{{ change.field }}"
+                                            </h3>
 
                                         {% endifequal %}
 

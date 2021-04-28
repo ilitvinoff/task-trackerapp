@@ -1,10 +1,12 @@
+import os
+
 from diff_match_patch import diff_match_patch
 from django.http.response import Http404
 from django.utils.translation import ugettext as _
 from django.views import generic
 from django.views.generic.edit import FormMixin
 
-from trackerapp.models import UserProfile, Message, TaskModel
+from trackerapp.models import UserProfile, Message, TaskModel, Attachment
 
 
 def add_extra_context(user_id, context_data):
@@ -97,10 +99,17 @@ class ExtendedTaskHistoryListView(generic.ListView):
     VALUE_MARKER = "-1"
 
     def get_queryset(self, **kwargs):
-        task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
         history_list = []
+        task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
+        attachments = Attachment.objects.filter(task=task)
+
+        for attachment in attachments:
+            history_list.extend(attachment.history.all().order_by("-history_date"))
+
         if task:
-            history_list = task.history.all().order_by("-history_date")
+            history_list.extend(task.history.all().order_by("-history_date"))
+
+        history_list.sort(key=lambda a: a.history_date)
         return history_list
 
     def get_context_data(self, **kwargs):
@@ -114,13 +123,17 @@ class ExtendedTaskHistoryListView(generic.ListView):
         event_list = []
         for item in context_data['object_list']:
 
+            model_name = 'task' if item.instance_type == TaskModel else 'attachment "{}"'.format(
+                os.path.split(item.instance.file.name)[1])
+
             if item.prev_record is None:
-                result = {'datetime': item.creation_date, 'changed_by': item.owner,
-                          'changes': [{'field': 'Task created', 'value': self.VALUE_MARKER}]}
+                result = {'model_name': model_name, 'datetime': item.creation_date, 'changed_by': item.owner,
+                          'changes': [{'field': '', 'value': self.VALUE_MARKER}]}
 
             else:
                 delta = item.diff_against(item.prev_record)
-                result = {'datetime': item.history_date, 'changed_by': item.history_user, 'changes': []}
+                result = {'model_name': model_name, 'datetime': item.history_date, 'changed_by': item.history_user,
+                          'changes': []}
 
                 for change in delta.changes:
                     result['changes'].append({'field': str(change.field),

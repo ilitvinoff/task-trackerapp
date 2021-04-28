@@ -73,8 +73,8 @@ class IsTaskOwnerOrAssignee(PermissionRequiredMixin):
 
             return super().dispatch(request, *args, **kwargs)
 
-        except Exception:
-            raise PermissionDenied("Bad request.")
+        except Exception as e:
+            raise PermissionDenied("Bad request." + e.__str__())
 
 
 class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):

@@ -55,6 +55,8 @@ class TaskModel(models.Model):
     class Meta:
         ordering = ["-creation_date"]
 
+    history = HistoricalRecords()
+
     # status choices
     LOAN_STATUS = (
         ("waiting to start", "waiting to start"),
@@ -95,8 +97,6 @@ class TaskModel(models.Model):
         null=True,
     )
 
-    history = HistoricalRecords()
-
     def __str__(self):
         """
         String for representing the Model object (in Admin site etc.)
@@ -116,45 +116,12 @@ class TaskModel(models.Model):
         return self.assignee
 
 
-class Message(models.Model):
-    body = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, help_text="enter message body")
-
-    owner = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
-    )
-
-    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
-
-    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
-
-    def get_title_from_description(self):
-        return self.body[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
-
-    def get_absolute_url(self):
-        """
-        Returns the url to access a particular instance of the model.
-        """
-        return reverse("comment-detail", args=[str(self.id)])
-
-    def get_owner(self):
-        return self.owner
-
-    def get_related_obj_owner(self):
-        return self.task.owner
-
-    def get_assignee(self):
-        return self.task.assignee
-
-    def __str__(self):
-        return self.body
-
+class Attachment(models.Model):
     class Meta:
         ordering = [
-            "creation_date"
+            "-creation_date"
         ]
 
-
-class Attachment(models.Model):
     owner = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
     )
@@ -188,6 +155,39 @@ class Attachment(models.Model):
 
     def __str__(self):
         return self.file.name
+
+
+class Message(models.Model):
+    body = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, help_text="enter message body")
+
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
+    )
+
+    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
+
+    def get_title_from_description(self):
+        return self.body[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a particular instance of the model.
+        """
+        return reverse("comment-detail", args=[str(self.id)])
+
+    def get_owner(self):
+        return self.owner
+
+    def get_related_obj_owner(self):
+        return self.task.owner
+
+    def get_assignee(self):
+        return self.task.assignee
+
+    def __str__(self):
+        return self.body
 
     class Meta:
         ordering = [
