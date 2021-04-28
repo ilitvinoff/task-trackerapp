@@ -22,7 +22,7 @@
     </form>
 
     <div class="col-md-2">
-        <a class="btn btn-primary" href="{% url 'index' %}">My tasks</a>
+        <a class="btn btn-default" href="{% url 'index' %}">My tasks</a>
     </div>
 
     {% comment %} If list exist, then printout it {% endcomment %}
@@ -37,7 +37,7 @@
                     </div>
 
                     <div class="panel-body">
-                        <a class="btn btn-primary" role="button" href="{% url 'update-task-status' pk=task.pk %}">Update
+                        <a class="btn btn-default" role="button" href="{% url 'update-task-status' pk=task.pk %}">Update
                             task's status</a>
                     </div>
 
