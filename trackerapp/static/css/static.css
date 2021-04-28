@@ -15,11 +15,47 @@
 
 .panel-primary{
     background-color: #eed78c;
-    border-color: #6c6434;
+    border-color: #3e381d;
+    box-shadow: 5px 5px 10px #3e381d;
 }
 
 .panel-primary>.panel-heading{
     background-color: #3e381d;
-    border-color: #6c6434;
+    border-color: #3e381d;
 }
 
+.panel-primary>.panel-footer{
+    background-color: #8b825e;
+    border-color: #3e381d;
+}
+
+.btn-group-vertical{
+    box-shadow: 5px 5px 10px #3e381d;
+}
+
+.btn-default{
+    background-color: #8b825e;
+    text-decoration-color: #000000;
+    font-weight: bold;
+    border-color: #3e381d;
+}
+
+a {
+    cursor: pointer;
+    text-decoration: none;
+    color: #18130a;
+    font-weight: bold;
+}
+
+.well{
+    background-color: #bdb395;
+    border-color: #3e381d;
+    box-shadow: 5px 5px 10px #3e381d;
+}
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    background-color: #eed78c;
+}
