@@ -113,15 +113,15 @@ class ExtendedTaskHistoryListView(generic.ListView):
 
         event_list = []
         for item in context_data['object_list']:
-            previous_item_state = item.prev_record
 
-            if previous_item_state is None:
+            if item.prev_record is None:
                 result = {'datetime': item.creation_date, 'changed_by': item.owner,
                           'changes': [{'field': 'Task created', 'value': self.VALUE_MARKER}]}
 
             else:
-                delta = item.diff_against(previous_item_state)
+                delta = item.diff_against(item.prev_record)
                 result = {'datetime': item.history_date, 'changed_by': item.history_user, 'changes': []}
+
                 for change in delta.changes:
                     result['changes'].append({'field': str(change.field),
                                               'value': diff_semantic(str(change.old), str(change.new)),

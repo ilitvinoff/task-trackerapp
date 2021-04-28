@@ -52,6 +52,9 @@ class TaskModel(models.Model):
     Model describes task properties
     """
 
+    class Meta:
+        ordering = ["-creation_date"]
+
     # status choices
     LOAN_STATUS = (
         ("waiting to start", "waiting to start"),
@@ -111,11 +114,6 @@ class TaskModel(models.Model):
 
     def get_assignee(self):
         return self.assignee
-
-    class Meta:
-        ordering = [
-            "-creation_date", "title"
-        ]
 
 
 class Message(models.Model):

@@ -38,7 +38,7 @@ class TaskListView(LoginRequiredMixin, ExtendedFormListView):
     paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self):
-        tasklist = TaskModel.objects.filter(owner=self.request.user).order_by("creation_date")
+        tasklist = TaskModel.objects.filter(owner=self.request.user)
         return task_filter(self, tasklist)
 
 
