@@ -105,7 +105,7 @@ class TaskViewSetCreateTestCase(APITestCase):
     def test_valid_request_to_create(self):
         self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
         data = {'title': 'test title', 'description': 'test_description', 'status': 'waiting to start',
-                'assignee_username': self.user2.username}
+                'assignee': self.user2.id}
         response = self.client.post(reverse_lazy('task-api-list'), data=data)
 
         self.assertEqual(response.status_code, 201)

@@ -96,9 +96,16 @@ def diff_semantic(text1, text2):
 
 
 class ExtendedTaskHistoryListView(generic.ListView):
-    VALUE_MARKER = "-1"
+    """
+    To view list of events in history for task and related to it attachments
+    """
+    VALUE_MARKER = "-1"  # mark history instance when it's the earliest exemplar
 
     def get_queryset(self, **kwargs):
+        """
+        Here form queryset, which consists of the task's history and
+        of the related to the task attachment's history
+        """
         history_list = []
         task = TaskModel.objects.filter(id=self.kwargs['pk']).first()
         attachments = Attachment.objects.filter(task=task)
@@ -113,6 +120,11 @@ class ExtendedTaskHistoryListView(generic.ListView):
         return history_list
 
     def get_context_data(self, **kwargs):
+        """
+        Here form event list, which consists of the task's history and
+        of the related to the task attachment's history, ordered by history date and
+        put it to context_data
+        """
         context_data = super().get_context_data(**kwargs)  # get the default context data
         try:
             context_data['related_task_id'] = self.kwargs['pk']

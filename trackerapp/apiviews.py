@@ -2,7 +2,6 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from rest_framework import viewsets, mixins, permissions, status, response, generics
-from rest_framework.utils.serializer_helpers import ReturnList
 
 from .models import Message, TaskModel, UserProfile, Attachment
 from .permissions import (
@@ -18,19 +17,31 @@ from .serializers import (
 
 
 class RelatedModelViewSet(viewsets.ModelViewSet):
-    related_model = None
-    base_model = None
+    """
+    Class define functionality of related to some objects objects.
+    For example attachment is relate to task, message is relate to task, etc
+    """
+    related_model = None  # for example TaskModel
+    base_model = None  # for example if related model is TaskModel than base_model - is Attachment or Message
     permission_classes = [IsOwnerOrAssigneeREST]
 
     def get_related_instance(self):
         return self.related_model.objects.filter(id__exact=self.kwargs['pk']).first()
 
     def get_object(self):
+        """
+        get base model instance
+        :return:
+        """
         obj = self.base_model.objects.filter(id=self.kwargs['pk']).first()
         self.check_object_permissions(self.request, obj)
         return obj
 
     def get_queryset(self):
+        """
+        get queryset of base_model instances related to related_model
+        :return:
+        """
         related_model_instance = None
         request_user = self.request.user
 
@@ -60,6 +71,12 @@ class AttachmentViewSet(RelatedModelViewSet):
     serializer_class = AttachmentSerializer
 
     def perform_create(self, serializer):
+        """
+                Check if request user has corresponding permissions. If has set him as attachment owner, and
+                set related task directly
+                :param serializer:
+                :return:
+                """
         try:
             related_task = TaskModel.objects.get(id=serializer.initial_data["task_id"])
         except:
@@ -83,6 +100,12 @@ class MessageViewSet(RelatedModelViewSet):
     serializer_class = MessageSerializer
 
     def perform_create(self, serializer):
+        """
+        Check if request user has corresponding permissions. If has set him as message owner, and
+        set related task directly
+        :param serializer:
+        :return:
+        """
         try:
             related_task = TaskModel.objects.get(id=serializer.initial_data["task_id"])
         except:
@@ -102,9 +125,19 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [IsTaskOwnerOrAssigneeREST]
 
     def perform_create(self, serializer):
+        """
+        To set owner as request user (when task is creating) directly
+        :param serializer:
+        :return:
+        """
         serializer.save(owner=self.request.user)
 
     def get_object(self):
+        """
+        Check if incorrect pk value, than raise error.
+        super().get_object - return 404 status code
+        :return:
+        """
         pk = self.kwargs.get('pk', None)
 
         if not pk:
@@ -115,13 +148,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         return obj
 
     def get_queryset(self):
+        """Get owned by / assigned to user tasks"""
         return TaskModel.objects.all().filter(
             Q(owner__exact=self.request.user) | Q(assignee__exact=self.request.user)
         )
 
 
 class TaskHistoryListAPIView(generics.ListAPIView):
-    # queryset = TaskModel.objects.all()
+    """
+    To view list of events in history for task and related to it attachments
+    """
     task_serializer_class = TaskHistorySerializer
     attachment_serializer_class = AttachmentHistorySerializer
     permission_classes = [IsTaskOwnerOrAssigneeREST]
@@ -133,6 +169,10 @@ class TaskHistoryListAPIView(generics.ListAPIView):
         return Attachment.objects.filter(task_id__exact=TaskModel.objects.filter(id=self.kwargs['pk']).first().id)
 
     def list(self, request, *args, **kwargs):
+        """
+        Here form result list, which consists of the task's history and
+        of the related to the task attachment's history, ordered by history date
+        """
         history_list = []
         tasks = self.task_serializer_class(self.get_queryset_task(), many=True)
         attachments = self.attachment_serializer_class(self.get_queryset_attachment(), many=True)
@@ -145,7 +185,7 @@ class TaskHistoryListAPIView(generics.ListAPIView):
 
         history_list.sort(key=lambda a: a['history_date'], reverse=True)
         print(history_list)
-        return response.Response({'history':history_list})
+        return response.Response({'history': history_list})
 
 
 class UserViewSet(
@@ -179,18 +219,21 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Override for 'create action' so that anyone(not authenticated) can register a new profile
+        Override for 'create action' so that anyone(not authenticated) can register a new profile.
+        For retrieve - if authenticated...
         :return: list of rest_framework.permissions.BasePermission
         """
+        if self.action == 'retrieve':
+            # tried to just return [rest_framework.permissions.IsAuthenticated]
+            # but error was given
+            if bool(self.request.user and self.request.user.is_authenticated):
+                return []
+            else:
+                raise PermissionDenied("Authenticate first...")
+
         if self.action == 'create':
             return []
         return super().get_permissions()
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return response.Response(serializer.data)
-
 
     def create(self, request, *args, **kwargs):
         """

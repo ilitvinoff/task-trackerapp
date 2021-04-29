@@ -66,6 +66,7 @@ class AttachmentHistorySerializer(serializers.ModelSerializer):
     def get_history(self, obj):
         return init_history(obj)
 
+
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskModel

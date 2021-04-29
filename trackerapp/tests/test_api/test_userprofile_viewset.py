@@ -44,10 +44,10 @@ class UserViewSetProfileDetailView(APITestCase):
         response = self.client.get(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}))
         self.assertEqual(response.status_code, 403)
 
-    def test_get_wrong_profile(self):
+    def test_get_another_profile(self):
         self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
         response = self.client.get(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
     def test_get_owned_profile(self):
         self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
