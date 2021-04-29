@@ -9,24 +9,27 @@ from trackerapp.models import TaskModel, Message, UserProfile, Attachment
 from trackerapp.resize_img import resize
 
 
-class HistoricalRecordField(serializers.ListField):
-    child = serializers.DictField()
+class HistorySerializer(serializers.ModelSerializer):
+    def __init__(self, model, *args, fields='__all__', **kwargs):
+        self.Meta.model = model
+        self.Meta.fields = fields
+        super().__init__()
 
-    def to_representation(self, data):
-        return super().to_representation(data.values().order_by('history_date'))
+    class Meta:
+        pass
 
 
 class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username", "groups", "owned_tasks", "assigned_tasks")
+
     owned_tasks = serializers.PrimaryKeyRelatedField(
         many=True, queryset=TaskModel.objects.all()
     )
     assigned_tasks = serializers.PrimaryKeyRelatedField(
         many=True, queryset=TaskModel.objects.all()
     )
-
-    class Meta:
-        model = User
-        fields = ("id", "username", "groups", "owned_tasks", "assigned_tasks")
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -35,32 +38,45 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
-class TaskHistorySerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
-    assignee_username = serializers.ReadOnlyField(source="assignee.username")
-    history = HistoricalRecordField(read_only=True)
+def init_history(obj):
+    model = obj.history.__dict__['model']
+    serializer = HistorySerializer(model, obj.history.all().order_by('-history_date'), fields='__all__', many=True)
+    serializer.is_valid()
+    return serializer.data
 
+
+class TaskHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskModel
-        fields = ("owner", "assignee_username", "history")
+        fields = '__all__'
 
+    history = serializers.SerializerMethodField()
+
+    def get_history(self, obj):
+        return init_history(obj)
+
+
+class AttachmentHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = '__all__'
+
+    history = serializers.SerializerMethodField()
+
+    def get_history(self, obj):
+        return init_history(obj)
 
 class TaskSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
-    assignee_username = serializers.ReadOnlyField(source="assignee.username")
-
     class Meta:
         model = TaskModel
         fields = ("id", "title", "description", "owner", "assignee_username", "assignee", "status", "creation_date")
         extra_kwargs = {'assignee': {'write_only': True}}
 
+    owner = serializers.ReadOnlyField(source="owner.username")
+    assignee_username = serializers.ReadOnlyField(source="assignee.username")
+
 
 class MessageSerializer(serializers.ModelSerializer):
-    task_id = serializers.ReadOnlyField(source="task.id")
-    owner = serializers.ReadOnlyField(source="owner.username")
-    task_owner = serializers.ReadOnlyField(source="task.owner.username")
-    task_assigned_to = serializers.ReadOnlyField(source="task.assignee.username")
-
     class Meta:
         model = Message
         fields = (
@@ -73,14 +89,13 @@ class MessageSerializer(serializers.ModelSerializer):
             "creation_date",
         )
 
+    task_id = serializers.ReadOnlyField(source="task.id")
+    owner = serializers.ReadOnlyField(source="owner.username")
+    task_owner = serializers.ReadOnlyField(source="task.owner.username")
+    task_assigned_to = serializers.ReadOnlyField(source="task.assignee.username")
+
 
 class AttachmentSerializer(serializers.ModelSerializer):
-    task_id = serializers.ReadOnlyField(source="task.id")
-    owner_username = serializers.ReadOnlyField(source="owner.username")
-    owner_id = serializers.ReadOnlyField(source="owner.id")
-    related_task_assignee = serializers.ReadOnlyField(source="task.assignee.username")
-    related_task_assignee_id = serializers.ReadOnlyField(source="task.assignee.id")
-
     class Meta:
         model = Attachment
         fields = (
@@ -95,8 +110,22 @@ class AttachmentSerializer(serializers.ModelSerializer):
             "file",
         )
 
+    task_id = serializers.ReadOnlyField(source="task.id")
+    owner_username = serializers.ReadOnlyField(source="owner.username")
+    owner_id = serializers.ReadOnlyField(source="owner.id")
+    related_task_assignee = serializers.ReadOnlyField(source="task.assignee.username")
+    related_task_assignee_id = serializers.ReadOnlyField(source="task.assignee.id")
+
 
 class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = (
+            "profile_id",
+            "profile_owner_id",
+            "picture",
+        )
+
     profile_owner_id = serializers.ReadOnlyField(source="owner.id")
     profile_id = serializers.ReadOnlyField(source="id")
     queryset = UserProfile.objects.all()
@@ -145,16 +174,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
-    class Meta:
-        model = UserProfile
-        fields = (
-            "profile_id",
-            "profile_owner_id",
-            "picture",
-        )
-
 
 class UserRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        # Tuple of serialized model fields (see link [2])
+        fields = ("username", "password1", "password2", "email")
+
     username = serializers.CharField(max_length=30, min_length=6, allow_blank=False, trim_whitespace=True,
                                      source="owner.username")
     password1 = serializers.CharField(write_only=True)
@@ -192,8 +218,3 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise Exception(e)
 
         return profile
-
-    class Meta:
-        model = UserProfile
-        # Tuple of serialized model fields (see link [2])
-        fields = ("username", "password1", "password2", "email")

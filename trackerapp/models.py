@@ -126,6 +126,7 @@ class Attachment(models.Model):
         User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
     )
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+
     file = models.FileField(upload_to=ATTACHMENT_UPLOAD_TO, blank=True, null=True)
     description = models.fields.TextField(
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."

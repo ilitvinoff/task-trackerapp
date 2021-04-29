@@ -104,12 +104,12 @@ class ExtendedTaskHistoryListView(generic.ListView):
         attachments = Attachment.objects.filter(task=task)
 
         for attachment in attachments:
-            history_list.extend(attachment.history.all().order_by("-history_date"))
+            history_list.extend(attachment.history.all())
 
         if task:
-            history_list.extend(task.history.all().order_by("-history_date"))
+            history_list.extend(task.history.all())
 
-        history_list.sort(key=lambda a: a.history_date)
+        history_list.sort(key=lambda a: a.history_date, reverse=True)
         return history_list
 
     def get_context_data(self, **kwargs):

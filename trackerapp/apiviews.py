@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from rest_framework import viewsets, mixins, permissions, status, response
+from rest_framework import viewsets, mixins, permissions, status, response, generics
+from rest_framework.utils.serializer_helpers import ReturnList
 
 from .models import Message, TaskModel, UserProfile, Attachment
 from .permissions import (
@@ -12,6 +13,7 @@ from .serializers import (
     GroupSerializer,
     TaskSerializer,
     MessageSerializer, ProfileSerializer, AttachmentSerializer, UserRegisterSerializer, TaskHistorySerializer,
+    AttachmentHistorySerializer,
 )
 
 
@@ -118,10 +120,32 @@ class TaskViewSet(viewsets.ModelViewSet):
         )
 
 
-class TaskHistoryViewSet(viewsets.ModelViewSet):
-    queryset = TaskModel.objects.all()
-    serializer_class = TaskHistorySerializer
+class TaskHistoryListAPIView(generics.ListAPIView):
+    # queryset = TaskModel.objects.all()
+    task_serializer_class = TaskHistorySerializer
+    attachment_serializer_class = AttachmentHistorySerializer
     permission_classes = [IsTaskOwnerOrAssigneeREST]
+
+    def get_queryset_task(self):
+        return TaskModel.objects.filter(id=self.kwargs['pk'])
+
+    def get_queryset_attachment(self):
+        return Attachment.objects.filter(task_id__exact=TaskModel.objects.filter(id=self.kwargs['pk']).first().id)
+
+    def list(self, request, *args, **kwargs):
+        history_list = []
+        tasks = self.task_serializer_class(self.get_queryset_task(), many=True)
+        attachments = self.attachment_serializer_class(self.get_queryset_attachment(), many=True)
+
+        # Get the history of tasks and attachments from the corresponding query sets
+        # type(task.data) = rest_framework.utils.serializers_helpers.ReturnList
+        # type(tasks.data[0]) = collections.OrderedDict
+        history_list.extend(list(list(tasks.data)[0]['history']))
+        history_list.extend(list(list(attachments.data)[0]['history']))
+
+        history_list.sort(key=lambda a: a['history_date'], reverse=True)
+        print(history_list)
+        return response.Response({'history':history_list})
 
 
 class UserViewSet(
@@ -153,20 +177,27 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [IsOwnerREST]
 
-    def get_object(self):
-        obj = UserProfile.objects.get(id=self.kwargs['pk'])
-        self.check_object_permissions(self.request, obj)
-        return obj
-
-    def get_queryset(self):
-        return UserProfile.objects.all()
-
     def get_permissions(self):
+        """
+        Override for 'create action' so that anyone(not authenticated) can register a new profile
+        :return: list of rest_framework.permissions.BasePermission
+        """
         if self.action == 'create':
             return []
         return super().get_permissions()
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return response.Response(serializer.data)
+
+
     def create(self, request, *args, **kwargs):
+        """
+        Override super create to use another then self.serializer_class,
+        but UserRegisterSerializer
+        :return rest_framework.response.Response
+        """
         serializer = UserRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
