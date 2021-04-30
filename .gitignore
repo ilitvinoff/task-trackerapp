@@ -13,3 +13,5 @@ images.jpeg
 /tracker-venv/*
 .coverage
 trackerapp/tests/test_api/__pycache__/*
+chat/__pycache__/*
+chat/migrations/__pycache__/*

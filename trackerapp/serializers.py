@@ -40,7 +40,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 def init_history(obj):
     model = obj.history.__dict__['model']
-    serializer = HistorySerializer(model, obj.history.all().order_by('-history_date'), fields='__all__', many=True)
+    serializer = HistorySerializer(model, obj.history.all().order_by('-history_date'), many=True)
     serializer.is_valid()
     return serializer.data
 
@@ -48,7 +48,7 @@ def init_history(obj):
 class TaskHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskModel
-        fields = '__all__'
+        exclude = []
 
     history = serializers.SerializerMethodField()
 
@@ -59,7 +59,7 @@ class TaskHistorySerializer(serializers.ModelSerializer):
 class AttachmentHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
-        fields = '__all__'
+        exclude = []
 
     history = serializers.SerializerMethodField()
 

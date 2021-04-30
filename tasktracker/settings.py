@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "coverage",
-    'simple_history',
+    "simple_history",
+    "chat.apps.ChatConfig",
+    "channels"
 ]
 
 MIDDLEWARE = [
@@ -146,3 +148,5 @@ DATETIME_INPUT_FORMATS = [
 DATE_INPUT_FORMATS = [
     '%m/%d/%Y'  # '10/25/2006'
 ]
+
+ASGI_APPLICATION = "tasktracker.asgi.application"
