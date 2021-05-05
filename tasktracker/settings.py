@@ -149,4 +149,13 @@ DATE_INPUT_FORMATS = [
     '%m/%d/%Y'  # '10/25/2006'
 ]
 
+# Channels
 ASGI_APPLICATION = "tasktracker.asgi.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}

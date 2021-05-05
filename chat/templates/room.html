@@ -13,7 +13,7 @@
     </div>
 
     <script>
-        document.title = "Chat Room";
+        document.title = "Chat Room: " + "\"" + JSON.parse(document.getElementById('room-name').textContent) + "\"";
 
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
@@ -28,6 +28,8 @@
         chatSocket.onmessage = function (e) {
             const data = JSON.parse(e.data);
             document.querySelector('#chat-log').value += (data.message + '\n');
+            textarea_obj = document.getElementById('chat-log');
+            textarea_obj.scrollTop = textarea_obj.scrollHeight;
         };
 
         chatSocket.onclose = function (e) {
@@ -49,6 +51,7 @@
             }));
             messageInputDom.value = '';
         };
+
     </script>
 
 {% endblock %}

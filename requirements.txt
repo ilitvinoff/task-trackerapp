@@ -13,3 +13,4 @@ freezegun==1.1.0
 django-simple-history==3.0.0
 diff-match-patch==20200713
 channels==3.0.3
+channels-redis==3.2.0
