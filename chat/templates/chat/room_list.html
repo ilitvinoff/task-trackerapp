@@ -1,0 +1,74 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>Rooms:</h1>
+            </div>
+        </div>
+
+        {% comment %} Filter form {% endcomment %}
+        <form class="col-md-10" class=".navbar-left" action="" method="post">
+            {% csrf_token %}
+
+            <div class="well well-lg">
+                <table>
+                    {{ form }}
+                </table>
+                <input class="btn btn-default" type="submit" value="Submit"/>
+            </div>
+
+        </form>
+
+        <div class="col-md-2">
+
+            <div class="btn-group-vertical" role="group" aria-label="...">
+                <button type="button" class="btn btn-default"><a href="{% url 'create-room' %}">Create room</a>
+                </button>
+                {#                <button type="button" class="btn btn-default"><a href="{% url 'assigned-tasks' %}">Assigned to me</a>#}
+                {#                </button>#}
+            </div>
+
+        </div>
+
+
+        {% comment %} Message list {% endcomment %}
+        {% if chatroommodel_list %}
+
+            <div class="col-md-10">
+                {% for room in chatroommodel_list %}
+                    <a href="{{ room.get_absolute_url }}">
+                        <div class="well">
+
+                            <h3>{{ room.name }}</h3>
+
+                            <p><strong><i>owner: </i></strong> {{ room.get_owner }}</p>
+                            {% if room.is_private %}
+                                <p><strong><i>private room</i></strong></p>
+                            {% else %}
+                                <p><strong><i>free chat room</i></strong></p>
+                            {% endif %}
+                            <div class="btn-group" role="group" aria-label="...">
+                                <button type="button" class="btn btn-default"><a
+                                        href="{% url 'update-room' pk=room.pk %}">update</a>
+                                </button>
+                                <button type="button" class="btn btn-default"><a
+                                        href="{% url 'delete-room' pk=room.id %}">delete</a>
+                                </button>
+                            </div>
+
+                        </div>
+                    </a>
+
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <p>No rooms detected...</p>
+        {% endif %}
+
+    </div>
+{% endblock content %}

@@ -1,0 +1,23 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <div class="col-md-12">
+        <div class="page-header">
+            <h2>Delete room<small><p>Are you sure you want to delete the room? </p></small></h2>
+        </div>
+    </div>
+
+    <div class="col-md-10">
+
+        <div class="well well-lg">
+            <h3><strong>{{ chatroommodel.name }}</strong></h3>
+        </div>
+
+
+        <form action="" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-default" type="submit" value="Yes, delete."/>
+        </form>
+    </div>
+
+{% endblock %}

@@ -3,31 +3,45 @@
 {% block content %}
     <div class="col-md-12">
 
-        <div class="well">
-            <textarea aria-label="messages" id="chat-log" cols="100" rows="20" disabled></textarea><br>
+        <div class="well" style="overflow: scroll" id="chat-log">
+
+            {% for message in message_history %}
+                <div class="well" style="background-color: #ecdb98" aria-label="messages" id="chat-message" cols="100"
+                     rows="20" disabled>
+
+                    <strong>{{ message.owner }}: </strong>{{ message.body }}
+
+                </div>
+            {% endfor %}
+
+            <br>
             <input aria-label="message input" id="chat-message-input" type="text" size="100">
             <input class="btn btn-default" id="chat-message-submit" type="button" value="Send">
-            {{ room_name|json_script:"room-name" }}
+            {{ pk |json_script:"pk" }}
+            {{ room_name |json_script:"room-name" }}
         </div>
 
     </div>
 
+    {#TODO: HISTORRY and chat log visualization#}
+
     <script>
         document.title = "Chat Room: " + "\"" + JSON.parse(document.getElementById('room-name').textContent) + "\"";
 
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+
+        const room_pk = JSON.parse(document.getElementById('pk').textContent);
 
         const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
             + '/ws/chat/'
-            + roomName
+            + room_pk
             + '/'
         );
 
         chatSocket.onmessage = function (e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
+            document.querySelector('#chat-message').value += (data.message + '\n');
             textarea_obj = document.getElementById('chat-log');
             textarea_obj.scrollTop = textarea_obj.scrollHeight;
         };
@@ -47,6 +61,7 @@
             const messageInputDom = document.querySelector('#chat-message-input');
             const message = messageInputDom.value;
             chatSocket.send(JSON.stringify({
+                'pk': room_pk,
                 'message': message
             }));
             messageInputDom.value = '';

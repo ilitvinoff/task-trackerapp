@@ -3,9 +3,15 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='chat-index'),
-    path('<str:room_name>/', views.room, name='chat-room'),
-    path('room/',include(
-        [path('create/',views.CreateChatRoomView.as_view(),name='create-room')]
+
+    path('room/', include([
+        path('', views.ListChatRoomView.as_view(), name='room-list'),
+        path('create/', views.CreateChatRoomView.as_view(), name='create-room'),
+        path('<pk>/', include([
+            path('', views.room, name='chat-room'),
+            path('delete/', views.DeleteChatRoomView.as_view(), name='delete-room'),
+            path('update/', views.UpdateChatRoomView.as_view(), name='update-room'),
+        ])),
+    ]
     ))
 ]
