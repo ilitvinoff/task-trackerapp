@@ -1,6 +1,6 @@
 import json
 
-from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import PermissionDenied
 
@@ -14,7 +14,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except KeyError as e:
             raise KeyError(e)
 
-            # Join room group
+        if self.scope["user"].is_anonymous:
+            # Reject the connection
+            await self.close()
+
+        # Join room group
         await self.channel_layer.group_add(
             self.room_group_pk,
             self.channel_name
@@ -41,24 +45,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
             raise KeyError(e)
 
         try:
-            room = await sync_to_async(ChatRoomModel.objects.get)(pk=pk)
-            room_members = await sync_to_async(room.member.all)()
-            room_owner = await sync_to_async(room.get_owner)()
+            room = await database_sync_to_async(ChatRoomModel.objects.get)(pk=pk)
+            room_members = await database_sync_to_async(room.member.all)()
+            room_owner = await database_sync_to_async(room.get_owner)()
 
         except ChatRoomModel.DoesNotExist as e:
             raise ChatRoomModel.DoesNotExist(e)
 
-        if not (message_owner == room_owner or message_owner not in room_members):
+        if message == '':
+            return
+
+        if not (message_owner == room_owner or message_owner in room_members):
             raise PermissionDenied(f"User: \"{message_owner}\" has no permission to write in room: \"{room.name}\"")
 
-        await sync_to_async(ChatMessageModel(body=message, owner=message_owner, room=room).save)()
+        await database_sync_to_async(ChatMessageModel(body=message, owner=message_owner, room=room).save)()
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_pk,
             {
                 'type': 'chat_message',
-                'message': message
+                'message': {'body': message, 'owner': message_owner.username},
             }
         )
 

@@ -37,12 +37,8 @@ def room(request, pk):
 
     userprofile_id = UserProfile.objects.get(owner_id=user.id).id
 
-    message_history_model_list = ChatMessageModel.history.filter(room=room).order_by('history_date')[
-                                 :HISTORY_MESSAGE_COUNT]
-    message_history_list = []
-
-    for history_message in message_history_model_list:
-        message_history_list.append({'body': history_message.body, 'owner': history_message.owner})
+    message_history_list = ChatMessageModel.objects.filter(room=room).order_by('creation_date')[
+                           :HISTORY_MESSAGE_COUNT]
 
     return render(request, 'room.html', {
         'pk': pk, 'room_name': room_name,

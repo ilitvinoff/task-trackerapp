@@ -2,7 +2,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
-from simple_history.models import HistoricalRecords
 
 ROOM_NAME_MAX_LENGTH = 30
 MESSAGE_BODY_MAX_LENGTH = 1500
@@ -37,7 +36,7 @@ class ChatMessageModel(models.Model):
     body = models.CharField(max_length=MESSAGE_BODY_MAX_LENGTH, help_text="message")
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     room = models.ForeignKey(ChatRoomModel, on_delete=models.SET_NULL, null=True)
-    history = HistoricalRecords()
+    creation_date = models.DateTimeField(auto_created=True, auto_now_add=True, null=True)
 
     def __str__(self):
         return (f'body:\n"{self.body}"\nowner: {self.owner}')

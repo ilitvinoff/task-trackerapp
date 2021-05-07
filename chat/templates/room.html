@@ -3,20 +3,28 @@
 {% block content %}
     <div class="col-md-12">
 
-        <div class="well" style="overflow: scroll" id="chat-log">
+        <div class="well" style="overflow-y:auto;overflow-x: hidden; height: 65%" id="chat-log">
 
             {% for message in message_history %}
-                <div class="well" style="background-color: #ecdb98" aria-label="messages" id="chat-message" cols="100"
-                     rows="20" disabled>
+
+                <div class="well"
+                     style="border-width:2px;border-color: #655f42 ;background-color: #ecdb98;padding-top: 5px;box-shadow: none;margin-bottom: 5px"
+                     aria-label="messages">
 
                     <strong>{{ message.owner }}: </strong>{{ message.body }}
 
                 </div>
+
             {% endfor %}
 
             <br>
-            <input aria-label="message input" id="chat-message-input" type="text" size="100">
-            <input class="btn btn-default" id="chat-message-submit" type="button" value="Send">
+        </div>
+
+        <div class="well" style="background-color: #4c4a40">
+            <input aria-label="message input" id="chat-message-input" type="text" size="400"
+                   style="background-color: #8b825e;margin-bottom: 10px"><br>
+            <input class="btn btn-default" id="chat-message-submit" type="button" value="Send"
+                   style="background-color: #bbaf72">
             {{ pk |json_script:"pk" }}
             {{ room_name |json_script:"room-name" }}
         </div>
@@ -31,6 +39,9 @@
 
         const room_pk = JSON.parse(document.getElementById('pk').textContent);
 
+        var objDiv = document.getElementById("chat-log");
+        objDiv.scrollTop = objDiv.scrollHeight;
+
         const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
@@ -39,15 +50,21 @@
             + '/'
         );
 
-        chatSocket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            document.querySelector('#chat-message').value += (data.message + '\n');
-            textarea_obj = document.getElementById('chat-log');
-            textarea_obj.scrollTop = textarea_obj.scrollHeight;
+        chatSocket.onmessage = function (package) {
+            const data = JSON.parse(package.data);
+            const message_item = `<div class="well"
+                                     style="border-width:2px;border-color: #655f42 ;background-color: #ecdb98;padding-top: 5px;box-shadow: none;margin-bottom: 5px"
+                                     aria-label="messages">
+                        <strong>${data.message.owner}: </strong>${data.message.body}
+                            </div>`;
+            $(message_item).appendTo('#chat-log');
+            {#document.querySelector('#chat-log').value += (data.message);#}
+            chat_area_obj = document.getElementById('chat-log');
+            chat_area_obj.scrollTop = chat_area_obj.scrollHeight;
         };
 
         chatSocket.onclose = function (e) {
-            console.error('Chat socket closed unexpectedly');
+            console.log('Chat socket closed unexpectedly');
         };
 
         document.querySelector('#chat-message-input').focus();

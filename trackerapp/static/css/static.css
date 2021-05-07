@@ -51,6 +51,7 @@ a {
     background-color: #bdb395;
     border-color: #3e381d;
     box-shadow: 5px 5px 10px #3e381d;
+    word-wrap: break-word
 }
 
 input, select {
@@ -59,6 +60,11 @@ input, select {
     line-height: inherit;
     background-color: #eed78c;
     border-color: #3e381d;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    width: 100%;
 }
 
 .navbar-inverse .navbar-collapse, .navbar-inverse .navbar-form {
@@ -94,7 +100,7 @@ input[type=submit] {
     border-color: #3e381d;
 }
 
-textarea{
+textarea {
     background-color: #ecdb98;
     border-color: #3e381d;
     border-top-left-radius: 4px;
@@ -103,6 +109,30 @@ textarea{
     border-bottom-left-radius: 4px;
 }
 
-.navbar-nav>li>a{
+.navbar-nav > li > a {
     color: #eed78c;
+}
+
+/* width */
+::-webkit-scrollbar {
+    border-radius: 4px;
+    width: 20px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    border-radius: 4px;
+    background: #bdb395;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: #8b825e;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+
+    background: #3e381d;
 }
