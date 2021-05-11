@@ -15,3 +15,4 @@ images.jpeg
 trackerapp/tests/test_api/__pycache__/*
 chat/__pycache__/*
 chat/migrations/__pycache__/*
+trackerapp/api/__pycache__/*

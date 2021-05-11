@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.test import override_settings
 
 from tasktracker import settings
-from ..models import UserProfile, TaskModel, Message, Attachment
+from trackerapp.models import UserProfile, TaskModel, Message, Attachment
 
 TEST_MEDIA_PATH = os.path.join(settings.BASE_DIR, "test-media")
 TEST_PICTURE_PATH = "assets/legion_thumbnail.jpeg"

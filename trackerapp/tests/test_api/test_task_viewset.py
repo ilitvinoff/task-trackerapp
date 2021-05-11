@@ -1,8 +1,8 @@
 from django.urls import reverse_lazy
 from rest_framework.test import APITestCase
 
+from trackerapp.api.serializers import TaskSerializer
 from trackerapp.models import TaskModel
-from trackerapp.serializers import TaskSerializer
 from trackerapp.tests import initiators
 
 
@@ -14,7 +14,7 @@ class TaskViewSetListTestCase(APITestCase):
 
     def test_valid_user_get_list(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=TaskModel)
-        self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
         self.user1_item_set.update(self.user2_item_set)
         initial_list = initiators.get_initial_list(TaskSerializer(), self.user1_item_set)
 
@@ -30,7 +30,7 @@ class TaskViewSetListTestCase(APITestCase):
 
         # assigned to the task user
         self.client.logout()
-        self.client.login(username=self.user2.username, password=initiators.USER2_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER2_CREDENTIALS)
 
         response = self.client.get(reverse_lazy('task-api-list'))
         self.assertEqual(response.status_code, 200)
@@ -46,7 +46,7 @@ class TaskViewSetListTestCase(APITestCase):
         self.user1_item_set.update(self.user2_item_set)
         initial_list = initiators.get_initial_list(TaskSerializer(), self.user1_item_set)
 
-        self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
         page_count = 1
         expected_page_count = len(initial_list) / initiators.ITEMS_ON_PAGE
 
@@ -69,7 +69,7 @@ class TaskViewSetListTestCase(APITestCase):
     def test_unauthorized_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=TaskModel)
         response = self.client.get(reverse_lazy('task-api-list'))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
 
 class TaskViewSetDetailTestCase(APITestCase):
@@ -82,16 +82,16 @@ class TaskViewSetDetailTestCase(APITestCase):
 
     def test_unauthorized_user(self):
         response = self.client.get(self.get_url())
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_bad_user_try_get_task(self):
-        self.client.login(username=self.hacker.username, password=initiators.HACKER_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.HACKER_CREDENTIALS)
 
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 403)
 
     def test_valid_user_get_task(self):
-        self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
 
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -103,7 +103,8 @@ class TaskViewSetCreateTestCase(APITestCase):
         initiators.initial_test_conditions(self)
 
     def test_valid_request_to_create(self):
-        self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
+
         data = {'title': 'test title', 'description': 'test_description', 'status': 'waiting to start',
                 'assignee': self.user2.id}
         response = self.client.post(reverse_lazy('task-api-list'), data=data)
@@ -120,7 +121,7 @@ class TaskViewSetCreateTestCase(APITestCase):
                 'assignee_username': self.user2.username}
         response = self.client.post(reverse_lazy('task-api-list'), data=data)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
 
 class TaskViewSetUpdateDeleteTestCase(APITestCase):
@@ -139,13 +140,13 @@ class TaskViewSetUpdateDeleteTestCase(APITestCase):
 
     def test_unauthorized_request(self):
         response = self.get_update_response()
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         response = self.get_delete_response()
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_bad_user_request(self):
-        self.client.login(username=self.hacker.username, password=initiators.HACKER_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.HACKER_CREDENTIALS)
 
         response = self.get_update_response()
         self.assertEqual(response.status_code, 403)
@@ -154,7 +155,7 @@ class TaskViewSetUpdateDeleteTestCase(APITestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_valid_user_request(self):
-        self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
 
         response = self.get_update_response()
         self.assertEqual(response.status_code, 200)
@@ -163,7 +164,7 @@ class TaskViewSetUpdateDeleteTestCase(APITestCase):
         self.assertEqual(response.status_code, 204)
 
     def test_assignee_try_update_delete(self):
-        self.client.login(username=self.user2.username, password=initiators.USER2_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER2_CREDENTIALS)
 
         response = self.get_update_response()
         self.assertEqual(response.status_code, 403)

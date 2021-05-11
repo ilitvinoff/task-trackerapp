@@ -5,9 +5,9 @@ from django.test import override_settings
 from rest_framework.reverse import reverse_lazy
 from rest_framework.test import APITestCase
 
+from trackerapp.api.serializers import AttachmentSerializer
 from .. import initiators
 from ...models import Attachment
-from ...serializers import AttachmentSerializer
 
 
 class AttachmentListViewSetTestCase(APITestCase):
@@ -19,7 +19,7 @@ class AttachmentListViewSetTestCase(APITestCase):
 
     def test_valid_user_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Attachment)
-        self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
         initial_list = initiators.get_initial_list(AttachmentSerializer(), self.user1_item_set)
 
         # owner of the related to attachment task
@@ -38,7 +38,7 @@ class AttachmentListViewSetTestCase(APITestCase):
 
     def test_bad_user_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Attachment)
-        self.client.login(username=initiators.HACKER_CREDENTIALS[0], password=initiators.HACKER_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.HACKER_CREDENTIALS)
 
         response = self.client.get(reverse_lazy('task-attachment-list-api', kwargs={'pk': self.task1.id}))
         self.assertEqual(response.status_code, 403)
@@ -46,11 +46,12 @@ class AttachmentListViewSetTestCase(APITestCase):
     def test_unauthorized_request(self):
         initiators.create_lists_for_different_users(self, page_count=1, model_class=Attachment)
         response = self.client.get(reverse_lazy('task-attachment-list-api', kwargs={'pk': self.task1.id}))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_pagination(self):
         initiators.create_lists_for_different_users(self, page_count=initiators.PAGE_COUNT, model_class=Attachment)
-        self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
+
         page_count = 1
         initial_list = initiators.get_initial_list(AttachmentSerializer(), self.user1_item_set)
 
@@ -93,16 +94,16 @@ class AttachmentDetailViewSetTestCase(APITestCase):
 
     def test_unauthorized_user(self):
         response = self.client.get(self.get_url())
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_bad_user_try_get_attachment(self):
-        self.client.login(username=initiators.HACKER_CREDENTIALS[0], password=initiators.HACKER_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.HACKER_CREDENTIALS)
 
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 403)
 
     def test_valid_user_get_attachment(self):
-        self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
 
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -118,7 +119,8 @@ class AttachmentCreateViewSetTestCase(APITestCase):
 
     @override_settings(MEDIA_ROOT=initiators.TEST_MEDIA_PATH)
     def test_owner_and_task_assign_set_into_attachment_automatically(self):
-        self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
+
         with open(initiators.TEST_FILE_PATH, 'rb') as file:
             data = {'description': 'test attachment create', 'file': file, 'task_id': self.task1.id}
 
@@ -134,7 +136,7 @@ class AttachmentCreateViewSetTestCase(APITestCase):
             data = {'description': 'test attachment create', 'file': file, 'task_id': self.task1.id}
 
             response = self.client.post(reverse_lazy('attachment-api-list'), data=data)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
 
 
 class AttachmentUpdateDeleteTestCase(APITestCase):
@@ -171,14 +173,14 @@ class AttachmentUpdateDeleteTestCase(APITestCase):
     @override_settings(MEDIA_ROOT=initiators.TEST_MEDIA_PATH)
     def test_unauthorized_request(self):
         response = self.get_update_response()
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         response = self.get_delete_response()
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     @override_settings(MEDIA_ROOT=initiators.TEST_MEDIA_PATH)
     def test_bad_user_request(self):
-        self.client.login(username=initiators.HACKER_CREDENTIALS[0], password=initiators.HACKER_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.HACKER_CREDENTIALS)
 
         response = self.get_update_response()
         self.assertEqual(response.status_code, 403)
@@ -188,7 +190,7 @@ class AttachmentUpdateDeleteTestCase(APITestCase):
 
     @override_settings(MEDIA_ROOT=initiators.TEST_MEDIA_PATH)
     def test_valid_user_request(self):
-        self.client.login(username=initiators.USER1_CREDENTIALS[0], password=initiators.USER1_CREDENTIALS[1])
+        initiators.set_credentials(self, initiators.USER1_CREDENTIALS)
 
         response = self.get_update_response()
         self.assertEqual(response.status_code, 200)

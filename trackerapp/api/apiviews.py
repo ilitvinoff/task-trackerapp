@@ -2,18 +2,19 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from rest_framework import viewsets, mixins, permissions, status, response, generics
+from rest_framework.permissions import IsAuthenticated
 
-from .models import Message, TaskModel, UserProfile, Attachment
-from .permissions import (
+from trackerapp.api.permissions import (
     IsOwnerOrAssigneeREST, FullPermissionDenied, IsOwnerREST, IsTaskOwnerOrAssigneeREST,
 )
-from .serializers import (
+from trackerapp.api.serializers import (
     UserSerializer,
     GroupSerializer,
     TaskSerializer,
     MessageSerializer, ProfileSerializer, AttachmentSerializer, UserRegisterSerializer, TaskHistorySerializer,
     AttachmentHistorySerializer,
 )
+from trackerapp.models import Message, TaskModel, UserProfile, Attachment
 
 
 class RelatedModelViewSet(viewsets.ModelViewSet):
@@ -23,7 +24,7 @@ class RelatedModelViewSet(viewsets.ModelViewSet):
     """
     related_model = None  # for example TaskModel
     base_model = None  # for example if related model is TaskModel than base_model - is Attachment or Message
-    permission_classes = [IsOwnerOrAssigneeREST]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAssigneeREST]
 
     def get_related_instance(self):
         return self.related_model.objects.filter(id__exact=self.kwargs['pk']).first()
@@ -122,7 +123,7 @@ class MessageViewSet(RelatedModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = TaskModel.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsTaskOwnerOrAssigneeREST]
+    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrAssigneeREST]
 
     def perform_create(self, serializer):
         """
@@ -160,7 +161,7 @@ class TaskHistoryListAPIView(generics.ListAPIView):
     """
     task_serializer_class = TaskHistorySerializer
     attachment_serializer_class = AttachmentHistorySerializer
-    permission_classes = [IsTaskOwnerOrAssigneeREST]
+    permission_classes = [permissions.IsAuthenticated, IsTaskOwnerOrAssigneeREST]
 
     def get_queryset_task(self):
         return TaskModel.objects.filter(id=self.kwargs['pk'])
@@ -215,7 +216,7 @@ class GroupViewSet(
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [IsOwnerREST]
+    permission_classes = [IsAuthenticated, IsOwnerREST]
 
     def get_permissions(self):
         """
@@ -224,12 +225,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         :return: list of rest_framework.permissions.BasePermission
         """
         if self.action == 'retrieve':
-            # tried to just return [rest_framework.permissions.IsAuthenticated]
-            # but error was given
-            if bool(self.request.user and self.request.user.is_authenticated):
-                return []
-            else:
-                raise PermissionDenied("Authenticate first...")
+            return [permissions.IsAuthenticated(), ]
 
         if self.action == 'create':
             return []

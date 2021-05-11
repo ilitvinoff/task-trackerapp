@@ -133,8 +133,6 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 5,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
     ),
 }
 
@@ -158,4 +156,14 @@ CHANNEL_LAYERS = {
             "hosts": [('127.0.0.1', 6379)],
         },
     },
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "api_key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+    }
 }

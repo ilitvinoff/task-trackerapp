@@ -36,21 +36,31 @@ def profile_initial_conditions(self):
     self.hacker.save()
 
 
+def set_credentials(self, user_credentials):
+    self.client.login(username=user_credentials[0], password=user_credentials[1])
+    # obtain JWT token.
+    url = reverse_lazy('token_obtain_pair')
+    data = {'username': user_credentials[0], 'password': user_credentials[1]}
+    response = self.client.post(url, data, format='json')
+    self.token = response.data['access']
+    self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
+
+
 class UserViewSetProfileDetailView(APITestCase):
     def setUp(self) -> None:
         profile_initial_conditions(self)
 
     def test_unauthorized_user(self):
         response = self.client.get(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     def test_get_another_profile(self):
-        self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
+        set_credentials(self, HACKER_CREDENTIALS)
         response = self.client.get(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_get_owned_profile(self):
-        self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
+        set_credentials(self, OWNER_CREDENTIALS)
         response = self.client.get(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}))
         self.assertEqual(response.status_code, 200)
 
@@ -67,7 +77,7 @@ class UserProfileUpdateTest(APITestCase):
                 print("ERR: CAN'T REMOVE TEST_MEDIA_DIR AFTER TEST END \n {}".format(a))
 
     def test_edit_profile_valid_user(self):
-        self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
+        set_credentials(self, OWNER_CREDENTIALS)
         data = {'first_name': 'new name', 'last_name': 'new last name'}
 
         response = self.client.put(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}), data=data)
@@ -78,7 +88,7 @@ class UserProfileUpdateTest(APITestCase):
         self.assertEqual(self.test_profile.owner.last_name, data['last_name'])
 
     def test_edit_profile_invalid_user(self):
-        self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
+        set_credentials(self, HACKER_CREDENTIALS)
         data = {'first_name': 'hacker name'}
         # response = self.client.post("/my/form/", data, content_type="application/x-www-form-urlencoded")
         response = self.client.put(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}), data=data)
@@ -87,11 +97,11 @@ class UserProfileUpdateTest(APITestCase):
     def test_not_authenticated_try_get_or_edit_profile(self):
         data = {'first_name': 'hacker name'}
         response = self.client.put(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}), data=data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
     @override_settings(MEDIA_ROOT=TEST_MEDIA_PATH)
     def test_picture_resized(self):
-        self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
+        set_credentials(self, OWNER_CREDENTIALS)
         with open('assets/1920x1080_legion.jpg', 'rb') as img:
             data = {'first_name': 'new name', 'last_name': 'new last name', 'picture': img}
             response = self.client.put(reverse_lazy("profile-api-detail", kwargs={'pk': self.test_profile.id}),
@@ -108,7 +118,7 @@ class UserProfileUpdateTest(APITestCase):
 
     @override_settings(MEDIA_ROOT=TEST_MEDIA_PATH)
     def test_fake_image_upload(self):
-        self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
+        set_credentials(self, OWNER_CREDENTIALS)
         with open('assets/just_text_with_img_extension.jpeg', 'rb') as img:
             previous_profile_picture_name = UserProfile.objects.get(
                 owner__email__exact=OWNER_CREDENTIALS[2]).picture.name

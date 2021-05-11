@@ -3,7 +3,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse_lazy
 
 from trackerapp.models import Attachment
-from . import initiators
+from trackerapp.tests import initiators
 
 
 class AttachmentListView(TestCase):

@@ -6,6 +6,7 @@ from django.core.files import File
 from django.test import override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+from rest_framework.reverse import reverse_lazy
 
 from tasktracker import settings
 from trackerapp.models import TaskModel, Attachment, Message
@@ -56,6 +57,16 @@ def get_item(model_class, task, msg, owner, assignee, f, status):
         return model_class.objects.create(task=task, body=msg, owner=owner)
     elif model_class == TaskModel:
         return model_class.objects.create(title=msg, description=msg, owner=owner, assignee=assignee, status=status)
+
+
+def set_credentials(self, user_credentials):
+    self.client.login(username=user_credentials[0], password=user_credentials[1])
+    # obtain JWT token.
+    url = reverse_lazy('token_obtain_pair')
+    data = {'username': user_credentials[0], 'password': user_credentials[1]}
+    response = self.client.post(url, data, format='json')
+    self.token = response.data['access']
+    self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
 
 
 def create_lists_for_different_users(self, page_count, model_class):

@@ -17,12 +17,10 @@ ITEMS_ON_PAGE = 10
 HISTORY_MESSAGE_COUNT = 100
 
 
-def index(request):
-    userprofile_id = UserProfile.objects.get(owner_id=request.user.id).id
-    return render(request, 'chat/index.html', context={'userprofile_id': userprofile_id})
-
-
-def room(request, pk):
+def room_detail(request, pk):
+    """
+    Detail room's view
+    """
     user = request.user
     room = ChatRoomModel.objects.filter(pk=pk).first()
     room_name = None
@@ -40,11 +38,13 @@ def room(request, pk):
     message_history_list = ChatMessageModel.objects.filter(room=room).order_by('creation_date')[
                            :HISTORY_MESSAGE_COUNT]
 
-    return render(request, 'room.html', {
+    extra_data = {
         'pk': pk, 'room_name': room_name,
         'userprofile_id': userprofile_id,
         'message_history': message_history_list,
-    })
+    }
+
+    return render(request, 'room.html', extra_data)
 
 
 class CreateChatRoomView(LoginRequiredMixin, ExtendedCreateView):

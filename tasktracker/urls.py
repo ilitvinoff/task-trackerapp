@@ -24,8 +24,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from trackerapp import apiviews
-from trackerapp.apiviews import AttachmentViewSet, MessageViewSet, TaskHistoryListAPIView
+from trackerapp.api import apiviews
+from trackerapp.api.apiviews import AttachmentViewSet, MessageViewSet, TaskHistoryListAPIView
 from .yasg import urlpatterns as yasg_urls
 
 router = routers.DefaultRouter()

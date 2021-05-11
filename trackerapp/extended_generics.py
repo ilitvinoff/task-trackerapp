@@ -20,8 +20,8 @@ def add_extra_context(user_id, context_data):
 class ExtendedFormListView(FormMixin, generic.ListView):  # pylint: disable=too-many-ancestors
     """
     Pra-class to may create form in list view.
-    Overriding get and post methods, extended with extra context
-    in overridden get_context_date method.
+    Overriding get and post methods. Extended with extra context
+    in overridden get_context_data method.
     """
 
     # add extra-context and task-related to message/attachment list
@@ -79,6 +79,9 @@ class ExtendedDeleteView(generic.DeleteView):
 
 
 class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
+    """
+    To view list of related obj on detail view page of master obj
+    """
     paginate_by = 5
     defaultModel = Message
 
