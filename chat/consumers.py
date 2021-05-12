@@ -55,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if message == '':
             return
 
-        if not (message_owner == room_owner or message_owner in room_members):
+        if room and room.is_private and not (message_owner == room_owner or message_owner in room_members):
             raise PermissionDenied(f"User: \"{message_owner}\" has no permission to write in room: \"{room.name}\"")
 
         await database_sync_to_async(ChatMessageModel(body=message, owner=message_owner, room=room).save)()

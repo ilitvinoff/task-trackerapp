@@ -27,7 +27,7 @@ SECRET_KEY = "z6k!6c_z+42r^96pn!b+eit+lh1etata4y#27)6fe623p5+ite"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.0.190']
 
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
 LOGIN_REDIRECT_URL = "/"

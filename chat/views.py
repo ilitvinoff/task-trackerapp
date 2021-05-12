@@ -30,7 +30,7 @@ def room_detail(request, pk):
     except:
         pass
 
-    if not room or not (room.get_owner() == user or user in room.member.all()):
+    if not room and room.is_private and not (room.get_owner() == user or user in room.member.all()):
         raise PermissionDenied("Permission denied. You have no permission to act with this room")
 
     userprofile_id = UserProfile.objects.get(owner_id=user.id).id

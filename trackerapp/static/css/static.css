@@ -31,6 +31,7 @@
 
 .btn-group-vertical {
     box-shadow: 5px 5px 10px #3e381d;
+    border-radius: 4px;
 }
 
 .btn-default {

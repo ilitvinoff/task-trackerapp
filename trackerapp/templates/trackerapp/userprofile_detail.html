@@ -2,28 +2,33 @@
 
 {% block content %}
     <div class="row">
+
         {% if userprofile %}
             <div class="col-md-10">
-                {% if userprofile.picture %}
-                    <div class="col-lg-6">
-                        <div class="thumbnail">
+
+                <div class="col-lg-6">
+                    <div class="thumbnail" style="background-color: #eed78c;border-color: #3e381d">
+
+                        {% if userprofile.picture %}
                             <img src="{{ userprofile.picture.url }}">
-                            <div class="caption">
-                                <h2><strong>username:</strong> {{ userprofile.owner.username }}</h2>
+                        {% endif %}
 
-                                <ul>
-                                    <li><strong>name:</strong> {{ userprofile.owner.first_name }}</li>
-                                    <li><strong>last name:</strong> {{ userprofile.owner.last_name }}</li>
-                                    <li><strong>email:</strong> {{ userprofile.owner.email }}</li>
-                                </ul>
+                        <div class="caption">
+                            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ?autoplay=1"><h2>
+                                <strong>username:</strong> {{ userprofile.owner.username }}</h2></a>
 
-                                <p><a href="{% url 'user-profile-update' pk=userprofile.id %}" class="btn btn-default"
-                                      role="button"><strong>Update</strong></a>
+                            <ul>
+                                <li><strong>name:</strong> {{ userprofile.owner.first_name }}</li>
+                                <li><strong>last name:</strong> {{ userprofile.owner.last_name }}</li>
+                                <li><strong>email:</strong> {{ userprofile.owner.email }}</li>
+                            </ul>
 
-                            </div>
+                            <p><a href="{% url 'user-profile-update' pk=userprofile.id %}" class="btn btn-default"
+                                  role="button"><strong>Update</strong></a>
+
                         </div>
                     </div>
-                {% endif %}
+                </div>
 
             </div>
 

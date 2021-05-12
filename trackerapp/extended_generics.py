@@ -8,6 +8,8 @@ from django.views.generic.edit import FormMixin
 
 from trackerapp.models import UserProfile, Message, TaskModel, Attachment
 
+ITEMS_ON_PAGE = 5
+
 
 def add_extra_context(user_id, context_data):
     try:
@@ -35,12 +37,12 @@ class ExtendedFormListView(FormMixin, generic.ListView):  # pylint: disable=too-
 
     def get(self, request, *args, **kwargs):
         # From FormMixin
-        form_class = self.get_form_class()
-        self.form = self.get_form(form_class)
+        self.form = self.get_form()
 
         # From ListView
         self.object_list = self.get_queryset()
         allow_empty = self.get_allow_empty()
+
         if not allow_empty and len(self.object_list) == 0:
             raise Http404(
                 _(u"Empty list and '%(class_name)s.allow_empty' is False.")
@@ -82,7 +84,7 @@ class ListInDetailView(ExtendedDetailView, generic.list.MultipleObjectMixin):
     """
     To view list of related obj on detail view page of master obj
     """
-    paginate_by = 5
+    paginate_by = ITEMS_ON_PAGE
     defaultModel = Message
 
     def get_context_data(self, **kwargs):
