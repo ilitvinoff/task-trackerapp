@@ -6,7 +6,6 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="/favicon.ico">
     <link rel="canonical" href="https://getbootstrap.com/docs/3.3/examples/jumbotron/">
 
     <title>Task tracker</title>
@@ -38,7 +37,7 @@
                 </ul>
 
                 <ul class="navbar-brand navbar-right">
-                    <li><a href="{% url 'user-profile-detail' pk=userprofile_id %}">{{ user.username }}</a></li>
+                    <li><a href="{% url 'user-profile-detail' %}">{{ user.username }}</a></li>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                 </ul>
             {% else %}
@@ -68,17 +67,20 @@
     <div class="col-sm-10 ">
         {% block content %}{% endblock %}
         {% block pagination %}
+
+            {% load my_tags %}
+
             {% if is_paginated %}
                 <div class="pagination">
           <span class="page-links">
             {% if page_obj.has_previous %}
-                <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">&lt&lt previous</a>
+                <a href="?{% param_replace page=page_obj.previous_page_number %}">&lt&lt previous</a>
             {% endif %}
               <span class="page-current">
               Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
             </span>
               {% if page_obj.has_next %}
-                  <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next &gt&gt</a>
+                  <a href="?{% param_replace page=page_obj.next_page_number %}">next &gt&gt</a>
               {% endif %}
           </span>
                 </div>

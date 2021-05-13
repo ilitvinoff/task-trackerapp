@@ -1,48 +1,55 @@
-from trackerapp.forms import DateSortingForm, TaskSortingForm
+import django_filters
+from django import forms
+from django_filters.fields import DateTimeRangeField
+from django_filters.widgets import SuffixedMultiWidget
+
+from trackerapp import models
 
 
-def date_filter(obj, list_to_sort):
-    """
-    date_filter - to filter list of messages by values from form
-    """
-    if obj.request.method == "POST":
-        sorting_form = DateSortingForm(obj.request.POST)
-
-        if sorting_form.is_valid():
-            date_from = sorting_form.cleaned_data["from_date"]
-            date_till = sorting_form.cleaned_data["till_date"]
-
-            if date_from:
-                list_to_sort = list_to_sort.filter(creation_date__gte=date_from)
-
-            if date_till:
-                list_to_sort = list_to_sort.filter(creation_date__lte=date_till)
-
-        else:
-            DateSortingForm()
-    return list_to_sort
+class DateInput(forms.DateTimeInput):
+    input_type = "date"
 
 
-def task_filter(obj, tasklist):
-    """
-    task_filter - to filter list of task by values from form
-    """
-    if obj.request.method == "POST":
-        sorting_form = TaskSortingForm(obj.request.POST)
+class DatePickerRangeDateField(DateTimeRangeField):
+    widget = DateInput
 
-        if sorting_form.is_valid():
-            date_from = sorting_form.cleaned_data["from_date"]
-            date_till = sorting_form.cleaned_data["till_date"]
-            choose_status = sorting_form.cleaned_data["choose_status"]
 
-            if date_from:
-                tasklist = tasklist.filter(creation_date__gte=date_from)
+class DatePickerRangeDateFilter(django_filters.DateTimeFromToRangeFilter):
+    field_class = DatePickerRangeDateField
 
-            if date_till:
-                tasklist = tasklist.filter(creation_date__lte=date_till)
 
-            if choose_status:
-                tasklist = tasklist.filter(status__exact=choose_status)
-        else:
-            TaskSortingForm()
-    return tasklist
+class CustomDateRangeWidget(SuffixedMultiWidget):
+    suffixes = ['after', 'before']
+
+    def decompress(self, value):
+        if value:
+            return [value.start, value.stop]
+        return [None, None]
+
+    def __init__(self, attrs=None):
+        widgets = (DateInput, DateInput)
+        super().__init__(widgets, attrs)
+
+
+class DateFilter(django_filters.FilterSet):
+    creation_date = django_filters.DateTimeFromToRangeFilter(widget=CustomDateRangeWidget)
+
+
+class MessageDateFilter(DateFilter):
+    class Meta:
+        model = models.Message
+        fields = ['creation_date', ]
+
+
+class AttachmentDateFilter(DateFilter):
+    class Meta:
+        model = models.Attachment
+        fields = ['creation_date', ]
+
+
+class TaskFilter(DateFilter):
+    status = django_filters.ChoiceFilter(choices=models.LOAN_STATUS)
+
+    class Meta:
+        model = models.TaskModel
+        fields = ['creation_date', 'status']

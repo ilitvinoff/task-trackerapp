@@ -3,61 +3,9 @@ from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.forms.fields import ChoiceField, DateTimeField
-from django.utils import timezone
 
-from .models import TaskModel, UserProfile
-from .resize_img import resize
-
-
-class DateInput(forms.DateTimeInput):
-    input_type = "date"
-
-
-class DateSortingForm(forms.Form):
-    """
-    Form to filter message by date(from-till)
-    """
-
-    from_date = DateTimeField(
-        label="date from:",
-        widget=DateInput,
-        help_text="Format like 03.17.1979",
-        required=False,
-    )
-    till_date = DateTimeField(
-        label="date to:",
-        widget=DateInput,
-        help_text="Format like 03.17.1979",
-        required=False,
-    )
-
-    def clean(self):
-        data = super().clean()
-        from_date = data.get("from_date")
-        till_date = data.get("till_date")
-        today = timezone.now()
-
-        if from_date:
-            if from_date > today:
-                raise ValidationError('"date from" must be before today')
-            if from_date and till_date:
-                if from_date > till_date:
-                    raise ValidationError('"date from" must be before "till date"')
-        return data
-
-
-class TaskSortingForm(DateSortingForm):
-    """
-    Form to filter task by date(from-till) and by status
-    """
-
-    STATUS_CHOICE_LIST = list(TaskModel.LOAN_STATUS)
-    STATUS_CHOICE_LIST.append(("", "-----"))
-
-    choose_status = ChoiceField(
-        label="choose status", choices=STATUS_CHOICE_LIST, required=False
-    )
+from .models import UserProfile
+from .utils import resize
 
 
 class UserProfileUpdateForm(forms.ModelForm):

@@ -1,14 +1,16 @@
 # Create your views here.
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy
 
 from chat.filter import room_list_filter
 from chat.forms import RoomSortingForm
 from chat.models import ChatRoomModel, ChatMessageModel
-from trackerapp.extended_generics import ExtendedCreateView, ExtendedFormListView, ExtendedDeleteView, \
+from trackerapp.extended_generics import ExtendedCreateView, ExtendedFilterListView, ExtendedDeleteView, \
     ExtendedUpdateView
 from trackerapp.models import UserProfile
 from trackerapp.permissions import IsOwnerPermissionRequiredMixin
@@ -16,21 +18,21 @@ from trackerapp.permissions import IsOwnerPermissionRequiredMixin
 ITEMS_ON_PAGE = 10
 HISTORY_MESSAGE_COUNT = 100
 
-
+# TODO customize filter for the room's list. Ask if static needs to be included into git...
+@login_required
 def room_detail(request, pk):
     """
     Detail room's view
     """
     user = request.user
     room = ChatRoomModel.objects.filter(pk=pk).first()
-    room_name = None
 
-    try:
-        room_name = ChatRoomModel.objects.get(id=pk).name
-    except:
-        pass
+    if not room:
+        raise Http404("Room not found. ID={} does not exists".format(pk))
 
-    if not room and room.is_private and not (room.get_owner() == user or user in room.member.all()):
+    room_name = ChatRoomModel.objects.get(id=pk).name
+
+    if room and room.is_private and not (room.get_owner() == user or user in room.member.all()):
         raise PermissionDenied("Permission denied. You have no permission to act with this room")
 
     userprofile_id = UserProfile.objects.get(owner_id=user.id).id
@@ -61,7 +63,7 @@ class CreateChatRoomView(LoginRequiredMixin, ExtendedCreateView):
         return super(CreateChatRoomView, self).form_valid(form)
 
 
-class ListChatRoomView(LoginRequiredMixin, ExtendedFormListView):
+class ListChatRoomView(LoginRequiredMixin, ExtendedFilterListView):
     model = ChatRoomModel
     form_class = RoomSortingForm
     paginate_by = ITEMS_ON_PAGE

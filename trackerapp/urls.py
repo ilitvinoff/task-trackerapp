@@ -33,10 +33,8 @@ urlpatterns = [
     ])),
 
     path("user-profile/", include([
-        path("<pk>/", include([
-            path('', views.UserProfileDetail.as_view(), name="user-profile-detail"),
-            path('update/', views.UserProfileUpdate.as_view(), name="user-profile-update"),
-        ]))
+        path('', views.UserProfileDetail.as_view(), name="user-profile-detail"),
+        path('update/', views.UserProfileUpdate.as_view(), name="user-profile-update"),
     ])),
 
     path("message/", include([

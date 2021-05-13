@@ -4,18 +4,15 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.urls.base import reverse_lazy
 
+from trackerapp import filters
 from .extended_generics import (
-    ExtendedFormListView,
     ExtendedDetailView,
     ExtendedCreateView,
     ExtendedUpdateView,
     ExtendedDeleteView,
-    ListInDetailView, ExtendedTaskHistoryListView,
+    ListInDetailView, ExtendedTaskHistoryListView, ExtendedFilterListView,
 )
-from .filters import task_filter, date_filter
 from .forms import (
-    TaskSortingForm,
-    DateSortingForm,
     UserProfileUpdateForm,
     UserSignUpForm,
 )
@@ -28,34 +25,37 @@ from .permissions import (
 ITEMS_ON_PAGE = 5
 
 
-class TaskListView(LoginRequiredMixin, ExtendedFormListView):
+class TaskListView(LoginRequiredMixin, ExtendedFilterListView):
     """
     ListView of created by user tasks, contains form to filter tasks
     """
 
     model = TaskModel
-    form_class = TaskSortingForm
+    filterset_class = filters.TaskFilter
     paginate_by = ITEMS_ON_PAGE
+    template_name = "trackerapp/taskmodel_list.html"
 
     def get_queryset(self):
-        tasklist = TaskModel.objects.filter(owner=self.request.user)
-        return task_filter(self, tasklist)
+        tasklist = self.model.objects.filter(owner=self.request.user)
+        filtered_list = filters.TaskFilter(self.request.GET, queryset=tasklist)
+        return filtered_list.qs
 
 
-class AssigneeTaskListView(LoginRequiredMixin, ExtendedFormListView):
+class AssigneeTaskListView(LoginRequiredMixin, ExtendedFilterListView):
     """
     ListView of assigned to user tasks, contains form to filter tasks
     """
 
     model = TaskModel
-    form_class = TaskSortingForm
+    filterset_class = filters.TaskFilter
     context_object_name = "assigned_tasks"
     template_name = "trackerapp/assigned_list.html"
     paginate_by = ITEMS_ON_PAGE
 
     def get_queryset(self):
-        tasklist = TaskModel.objects.filter(assignee=self.request.user)
-        return task_filter(self, tasklist)
+        tasklist = self.model.objects.filter(assignee=self.request.user)
+        filtered_list = filters.TaskFilter(self.request.GET, queryset=tasklist)
+        return filtered_list.qs
 
 
 class TaskDetail(IsTaskOwnerOrAssignee, ListInDetailView):
@@ -121,12 +121,12 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     success_url = reverse_lazy("index")
 
 
-class MessageListView(IsTaskOwnerOrAssignee, ExtendedFormListView):
+class MessageListView(IsTaskOwnerOrAssignee, ExtendedFilterListView):
     model = Message
-    form_class = DateSortingForm
+    filterset_class = filters.MessageDateFilter
     paginate_by = ITEMS_ON_PAGE
     permission_class_model = TaskModel
-    has_assignee = True
+    template_name = "trackerapp/message_list.html"
 
     def get_queryset(self, **kwargs):
         message_list = Message.objects.filter(
@@ -134,7 +134,9 @@ class MessageListView(IsTaskOwnerOrAssignee, ExtendedFormListView):
             Q(task__owner__exact=self.request.user)
             | Q(task__assignee__exact=self.request.user),
         ).order_by("creation_date")
-        return date_filter(self, message_list)
+
+        filtered_list = filters.MessageDateFilter(self.request.GET, queryset=message_list)
+        return filtered_list.qs
 
 
 class MessageCreate(LoginRequiredMixin, ExtendedCreateView):
@@ -182,11 +184,12 @@ class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailV
     model = permission_class_model = Attachment
 
 
-class AttachmentList(IsTaskOwnerOrAssignee, ExtendedFormListView):
+class AttachmentList(IsTaskOwnerOrAssignee, ExtendedFilterListView):
     model = Attachment
     permission_class_model = TaskModel
-    form_class = DateSortingForm
+    filterset_class = filters.AttachmentDateFilter
     paginate_by = ITEMS_ON_PAGE
+    template_name = "trackerapp/attachment_list.html"
 
     def get_queryset(self, **kwargs):
         attachment_list = Attachment.objects.filter(
@@ -194,7 +197,9 @@ class AttachmentList(IsTaskOwnerOrAssignee, ExtendedFormListView):
             Q(task__owner__exact=self.request.user)
             | Q(task__assignee__exact=self.request.user),
         ).order_by("creation_date")
-        return date_filter(self, attachment_list)
+
+        filtered_list = filters.AttachmentDateFilter(self.request.GET, queryset=attachment_list)
+        return filtered_list.qs
 
 
 class AttachmentCreate(LoginRequiredMixin, ExtendedCreateView):
@@ -226,22 +231,25 @@ class AttachmentDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
         return reverse_lazy("attach-list", kwargs={"pk": self.object.task_id})
 
 
-class UserProfileDetail(IsOwnerPermissionRequiredMixin, ExtendedDetailView):
+class UserProfileDetail(LoginRequiredMixin, ExtendedDetailView):
     model = permission_class_model = UserProfile
     queryset = UserProfile.objects.all()
 
+    def get_object(self, queryset=None):
+        return UserProfile.objects.get(owner_id=self.request.user.id)
 
-class UserProfileUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
+
+class UserProfileUpdate(LoginRequiredMixin, ExtendedUpdateView):
     permission_class_model = UserProfile
     template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
     form_class = UserProfileUpdateForm
 
     def get_success_url(self):
-        return reverse_lazy("user-profile-detail", args=(self.object.id,))
+        return reverse_lazy("user-profile-detail")
 
-    def get_object(self, **kwargs):
-        return UserProfile.objects.get(pk=self.kwargs["pk"])
+    def get_object(self, queryset=None):
+        return UserProfile.objects.get(owner_id=self.request.user.id)
 
     # to init first_name/last_name fields (OneToOne field in updateview do not init by default)
     def get_initial(self):

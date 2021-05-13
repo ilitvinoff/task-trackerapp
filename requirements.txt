@@ -14,3 +14,4 @@ django-simple-history==3.0.0
 diff-match-patch==20200713
 channels==3.0.3
 channels-redis==3.2.0
+django-filter==2.4.0

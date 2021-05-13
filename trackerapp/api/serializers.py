@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from trackerapp.models import TaskModel, Message, UserProfile, Attachment
-from trackerapp.resize_img import resize
+from trackerapp.utils import resize
 
 
 class HistorySerializer(serializers.ModelSerializer):

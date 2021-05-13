@@ -10,6 +10,12 @@ DESCRIPTION_AS_TITLE_LENGTH = 40
 PROFILE_IMG_UPLOAD_TO = "uploads/userprofile/"
 ATTACHMENT_UPLOAD_TO = "attachments/"
 
+LOAN_STATUS = (
+    ("waiting to start", "waiting to start"),
+    ("in work", "in work"),
+    ("completed", "completed"),
+)
+
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
@@ -56,13 +62,6 @@ class TaskModel(models.Model):
         ordering = ["-creation_date"]
 
     history = HistoricalRecords()
-
-    # status choices
-    LOAN_STATUS = (
-        ("waiting to start", "waiting to start"),
-        ("in work", "in work"),
-        ("completed", "completed"),
-    )
 
     title = models.CharField(max_length=TASK_TITLE_MAX_LENGTH, help_text="Enter title of your task)")
 

@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     "coverage",
     "simple_history",
     "chat.apps.ChatConfig",
-    "channels"
+    "channels",
+    "django_filters"
 ]
 
 MIDDLEWARE = [
@@ -126,6 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # REST API conf
 REST_FRAMEWORK = {

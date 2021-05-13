@@ -11,13 +11,10 @@
         </div>
 
         {% comment %} Filter form {% endcomment %}
-        <form class="col-md-10" class=".navbar-left" action="" method="post">
-            {% csrf_token %}
+        <form class="col-md-10" method="GET">
 
             <div class="well well-lg">
-                <table>
-                    {{ form }}
-                </table>
+                {{ filter.form.as_p }}
                 <input class="btn btn-default" type="submit" value="Submit"/>
             </div>
 
@@ -30,7 +27,7 @@
                     to the
                     attachment task</a>
                 </button>
-                <button type="button" class="btn btn-default"><a href="{% url 'index' %}">Tasks</a></a>
+                <button type="button" class="btn btn-default"><a href="{% url 'index' %}">Tasks</a>
                 </button>
                 <button type="button" class="btn btn-default"><a href="{% url 'assigned-tasks' %}">Assigned to me</a>
                 </button>

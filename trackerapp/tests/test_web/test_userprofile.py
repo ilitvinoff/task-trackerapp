@@ -131,8 +131,7 @@ class UserProfileUpdateTest(TestCase):
             previous_profile_picture_name = UserProfile.objects.get(
                 owner__email__exact=OWNER_CREDENTIALS[2]).picture.name
             data = {'first_name': 'new name', 'last_name': 'new last name', 'picture': img}
-            response = self.client.post(reverse_lazy("user-profile-update", kwargs={
-                'pk': UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id}), data=data, follow=True)
+            response = self.client.post(reverse_lazy("user-profile-update", data=data, follow=True))
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(previous_profile_picture_name,
