@@ -7,16 +7,17 @@ from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy
 
-from chat.filter import room_list_filter
 from chat.forms import RoomSortingForm
 from chat.models import ChatRoomModel, ChatMessageModel
 from trackerapp.extended_generics import ExtendedCreateView, ExtendedFilterListView, ExtendedDeleteView, \
     ExtendedUpdateView
+from trackerapp.filters import ChatRoomFilter
 from trackerapp.models import UserProfile
 from trackerapp.permissions import IsOwnerPermissionRequiredMixin
 
-ITEMS_ON_PAGE = 10
+ITEMS_ON_PAGE = 5
 HISTORY_MESSAGE_COUNT = 100
+
 
 # TODO customize filter for the room's list. Ask if static needs to be included into git...
 @login_required
@@ -68,12 +69,15 @@ class ListChatRoomView(LoginRequiredMixin, ExtendedFilterListView):
     form_class = RoomSortingForm
     paginate_by = ITEMS_ON_PAGE
     template_name = "chat/room_list.html"
+    filterset_class = ChatRoomFilter
 
     def get_queryset(self):
         room_list = ChatRoomModel.objects.filter(
             Q(is_private=False) | Q(Q(is_private=True),
                                     Q(Q(member=self.request.user) | Q(owner=self.request.user))))
-        return room_list_filter(self, room_list)
+
+        filtered_list = ChatRoomFilter(self.request.GET, queryset=room_list)
+        return filtered_list.qs
 
 
 class DeleteChatRoomView(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):

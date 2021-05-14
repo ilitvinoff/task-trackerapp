@@ -37,7 +37,7 @@
 
         const room_pk = JSON.parse(document.getElementById('pk').textContent);
 
-        var objDiv = document.getElementById("chat-log");
+        let objDiv = document.getElementById("chat-log");
         objDiv.scrollTop = objDiv.scrollHeight;
 
         const chatSocket = new WebSocket(
@@ -48,8 +48,8 @@
             + '/'
         );
 
-        chatSocket.onmessage = function (package) {
-            const data = JSON.parse(package.data);
+        chatSocket.onmessage = function (m) {
+            const data = JSON.parse(m.data);
             const message_item = `<div class="well"
                                      style="border-width:2px;border-color: #655f42 ;background-color: #ecdb98;padding-top: 5px;box-shadow: none;margin-bottom: 5px"
                                      aria-label="messages">
@@ -61,7 +61,7 @@
             chat_area_obj.scrollTop = chat_area_obj.scrollHeight;
         };
 
-        chatSocket.onclose = function (e) {
+        chatSocket.onclose = function () {
             console.log('Chat socket closed unexpectedly');
         };
 

@@ -8,7 +8,7 @@ from .models import UserProfile
 from .utils import resize
 
 
-class UserProfileUpdateForm(forms.ModelForm):
+class UserProfileEditionForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, label="first name", required=False)
     last_name = forms.CharField(max_length=100, label="last name", required=False)
 
@@ -33,7 +33,7 @@ class UserProfileUpdateForm(forms.ModelForm):
         if self.errors:
             raise ValueError(self.errors)
 
-        profile = super(UserProfileUpdateForm, self).save(commit=commit)
+        profile = super(UserProfileEditionForm, self).save(commit=commit)
         data = self.cleaned_data
 
         owner = profile.owner

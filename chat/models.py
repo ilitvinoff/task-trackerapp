@@ -11,7 +11,7 @@ class ChatRoomModel(models.Model):
     name = models.CharField(max_length=ROOM_NAME_MAX_LENGTH, help_text="room name", unique=True)
     is_private = models.BooleanField(default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
-    member = models.ManyToManyField(User, related_name="member")
+    member = models.ManyToManyField(User, related_name="member", blank=True)
 
     class Meta:
         ordering = ["-is_private", "name"]

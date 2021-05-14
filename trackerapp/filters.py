@@ -3,6 +3,7 @@ from django import forms
 from django_filters.fields import DateTimeRangeField
 from django_filters.widgets import SuffixedMultiWidget
 
+from chat import models as chat_models
 from trackerapp import models
 
 
@@ -53,3 +54,9 @@ class TaskFilter(DateFilter):
     class Meta:
         model = models.TaskModel
         fields = ['creation_date', 'status']
+
+
+class ChatRoomFilter(django_filters.FilterSet):
+    class Meta:
+        model = chat_models.ChatRoomModel
+        fields = ['name', 'is_private', 'owner', 'member']

@@ -47,7 +47,8 @@ class TaskListTestCase(TestCase):
         from_date = initiators.INITIAL_CREATION_DATE[1]
         till_date = initiators.INITIAL_CREATION_DATE[-2]
 
-        response = self.client.post(reverse_lazy("index"), data={'from_date': from_date, 'till_date': till_date})
+        response = self.client.get(reverse_lazy("index"),
+                                   data={'creation_date_after': from_date, 'creation_date_before': till_date})
         query_list = set(response.context_data['object_list'])
 
         self.assertEqual(len(query_list), len(initiators.INITIAL_CREATION_DATE) - 2)
@@ -60,8 +61,8 @@ class TaskListTestCase(TestCase):
         self.client.login(username=self.user1.username, password=initiators.USER1_CREDENTIALS[1])
 
         for current_status in range(0, len(initiators.INITIAL_STATUS)):
-            response = self.client.post(reverse_lazy('index'),
-                                        data={'choose_status': initiators.INITIAL_STATUS[current_status]})
+            response = self.client.get(reverse_lazy('index'),
+                                       data={'status': initiators.INITIAL_STATUS[current_status]})
             query_list = set(response.context_data['object_list'])
             self.assertEqual(len(query_list), self.status_count[initiators.INITIAL_STATUS[current_status]])
 

@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -13,7 +15,7 @@ from .extended_generics import (
     ListInDetailView, ExtendedTaskHistoryListView, ExtendedFilterListView,
 )
 from .forms import (
-    UserProfileUpdateForm,
+    UserProfileEditionForm,
     UserSignUpForm,
 )
 from .models import TaskModel, Message, UserProfile, Attachment
@@ -232,24 +234,63 @@ class AttachmentDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
 
 
 class UserProfileDetail(LoginRequiredMixin, ExtendedDetailView):
-    model = permission_class_model = UserProfile
+    model = UserProfile
     queryset = UserProfile.objects.all()
 
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if not self.object:
+            return redirect(reverse_lazy("user-profile-create"))
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
     def get_object(self, queryset=None):
-        return UserProfile.objects.get(owner_id=self.request.user.id)
+        profile = None
+        try:
+            profile = UserProfile.objects.get(owner_id=self.request.user.id)
+        except UserProfile.DoesNotExist as e:
+            logging.info(str(e))
+
+        return profile
+
+
+class UserProfileCreate(LoginRequiredMixin, ExtendedCreateView):
+    model = UserProfile
+    form_class = UserProfileEditionForm
+
+    # set profile owner directly from request
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super(UserProfileCreate, self).form_valid(form)
 
 
 class UserProfileUpdate(LoginRequiredMixin, ExtendedUpdateView):
     permission_class_model = UserProfile
     template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
-    form_class = UserProfileUpdateForm
+    form_class = UserProfileEditionForm
 
     def get_success_url(self):
         return reverse_lazy("user-profile-detail")
 
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if not self.object:
+            return redirect(reverse_lazy("user-profile-create"))
+
+        return super().get(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
-        return UserProfile.objects.get(owner_id=self.request.user.id)
+        profile = None
+        try:
+            profile = UserProfile.objects.get(owner_id=self.request.user.id)
+        except UserProfile.DoesNotExist as e:
+            logging.exception("User: {}, asked for not existing profile\n{}".format(self.request.user, e))
+
+        return profile
 
     # to init first_name/last_name fields (OneToOne field in updateview do not init by default)
     def get_initial(self):

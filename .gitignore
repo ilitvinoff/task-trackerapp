@@ -17,3 +17,4 @@ chat/__pycache__/*
 chat/migrations/__pycache__/*
 trackerapp/api/__pycache__/*
 static/*
+trackerapp/templatetags/__pycache__/*

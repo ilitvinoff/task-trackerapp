@@ -35,6 +35,7 @@ urlpatterns = [
     path("user-profile/", include([
         path('', views.UserProfileDetail.as_view(), name="user-profile-detail"),
         path('update/', views.UserProfileUpdate.as_view(), name="user-profile-update"),
+        path('create/', views.UserProfileCreate.as_view(), name="user-profile-create"),
     ])),
 
     path("message/", include([

@@ -61,8 +61,8 @@ class MessageListView(TestCase):
         from_date = initiators.INITIAL_CREATION_DATE[1]
         till_date = initiators.INITIAL_CREATION_DATE[-2]
 
-        response = self.client.post(reverse_lazy('comment-list', kwargs={'pk': self.task1.id}),
-                                    data={'from_date': from_date, 'till_date': till_date})
+        response = self.client.get(reverse_lazy('comment-list', kwargs={'pk': self.task1.id}),
+                                   data={'creation_date_after': from_date, 'creation_date_before': till_date})
         query_list = set(response.context_data['object_list'])
 
         self.assertEqual(len(query_list), len(initiators.INITIAL_CREATION_DATE) - 2)

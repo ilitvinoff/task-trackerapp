@@ -40,21 +40,17 @@ class UserProfileDetailView(TestCase):
         profile_initial_conditions(self)
 
     def test_unauthorized_user(self):
-        response = self.client.get(reverse_lazy("user-profile-detail", kwargs={
-            'pk': UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id}), follow=True)
-        self.assertEqual(response.redirect_chain[0], ("/accounts/login/?next=/user-profile/{}/".format(
-            UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id), 302))
+        response = self.client.get(reverse_lazy("user-profile-detail"), follow=True)
+        self.assertEqual(response.redirect_chain[0], ("/accounts/login/?next=/user-profile/", 302))
 
     def test_get_wrong_profile(self):
         self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
-        response = self.client.get(
-            "/user-profile/{}/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id))
-        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse_lazy("user-profile-detail"), follow=True)
+        self.assertEqual(response.redirect_chain[0], ("/user-profile/create/", 302))
 
     def test_get_owned_profile(self):
         self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
-        response = self.client.get(
-            "/user-profile/{}/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id))
+        response = self.client.get("/user-profile/")
         self.assertEqual(response.status_code, 200)
 
 
@@ -73,12 +69,9 @@ class UserProfileUpdateTest(TestCase):
         self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
         data = {'first_name': 'new name', 'last_name': 'new last name'}
 
-        response = self.client.post(
-            "/user-profile/{}/update/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id),
-            data=data, follow=True)
+        response = self.client.post(reverse_lazy("user-profile-update"), data=data, follow=True)
         self.assertEqual(response.redirect_chain[0],
-                         ("/user-profile/{}/".format(
-                             UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id), 302))
+                         ("/user-profile/", 302))
         self.assertEqual(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).owner.first_name,
                          data['first_name'])
         self.assertEqual(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).owner.last_name,
@@ -86,37 +79,24 @@ class UserProfileUpdateTest(TestCase):
 
     def test_edit_profile_invalid_user(self):
         self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
-        data = {'first_name': 'hacker name'}
-        # response = self.client.post("/my/form/", data, content_type="application/x-www-form-urlencoded")
-        response = self.client.post(
-            "/user-profile/{}/update/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id),
-            data=data)
-        self.assertEqual(response.status_code, 403)
+        response = self.client.get(reverse_lazy("user-profile-update"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/user-profile/create/")
 
     def test_not_authenticated_try_get_or_edit_profile(self):
-        response = self.client.get(
-            "/user-profile/{}/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id),
-            follow=True)
-        self.assertEqual(response.redirect_chain[0],
-                         ("/accounts/login/?next=/user-profile/{}/".format(
-                             UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id), 302))
-        response = self.client.put(
-            "/user-profile/{}/update/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id),
-            data={'first_name': 'noname'}, follow=True)
-        self.assertEqual(response.redirect_chain[0],
-                         ("/accounts/login/?next=/user-profile/{}/update/".format(
-                             UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id), 302))
+        response = self.client.get("/user-profile/", follow=True)
+        self.assertEqual(response.redirect_chain[0], ("/accounts/login/?next=/user-profile/", 302))
+        response = self.client.put("/user-profile/", data={'first_name': 'noname'}, follow=True)
+        self.assertEqual(response.redirect_chain[0], ("/accounts/login/?next=/user-profile/", 302))
 
     @override_settings(MEDIA_ROOT=TEST_MEDIA_PATH)
     def test_picture_resized(self):
         self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
         with open('assets/1920x1080_legion.jpg', 'rb') as img:
             data = {'first_name': 'new name', 'last_name': 'new last name', 'picture': img}
-            response = self.client.post(
-                "/user-profile/{}/update/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id),
-                data=data, follow=True)
-            self.assertEqual(response.redirect_chain[0], (
-                "/user-profile/{}/".format(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).id), 302))
+            response = self.client.post("/user-profile/update/", data=data, follow=True)
+            self.assertEqual(response.redirect_chain[0], ("/user-profile/", 302))
+
         updated_profile = UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2])
         self.assertTrue(updated_profile.picture.file, "picture is not stored to database")
         stored_img = Image.open(updated_profile.picture.file)
@@ -131,7 +111,7 @@ class UserProfileUpdateTest(TestCase):
             previous_profile_picture_name = UserProfile.objects.get(
                 owner__email__exact=OWNER_CREDENTIALS[2]).picture.name
             data = {'first_name': 'new name', 'last_name': 'new last name', 'picture': img}
-            response = self.client.post(reverse_lazy("user-profile-update", data=data, follow=True))
+            response = self.client.post(reverse_lazy("user-profile-update"), data=data, follow=True)
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(previous_profile_picture_name,
