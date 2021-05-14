@@ -19,7 +19,12 @@ class UserProfileEditionForm(forms.ModelForm):
     # Picture resizing before store it in DB
     def clean_picture(self):
         avatar = self.cleaned_data["picture"]
-        previous_avatar = UserProfile.objects.get(id=self.instance.id).picture
+        previous_avatar = None
+
+        try:
+            previous_avatar= UserProfile.objects.get(id=self.instance.id).picture
+        except self.Meta.model.DoesNotExist:
+            pass
 
         # check if has new avatar to resize (if avatar),
         # if profile has no old avatar (not previous_avatar) -> resize,

@@ -54,6 +54,47 @@ class UserProfileDetailView(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class UserProfileCreateTestCase(TestCase):
+    def setUp(self) -> None:
+        profile_initial_conditions(self)
+
+    def tearDown(self) -> None:
+        if os.path.exists(TEST_MEDIA_PATH):
+            try:
+                shutil.rmtree(TEST_MEDIA_PATH)
+            except Exception as a:
+                print("ERR: CAN'T REMOVE TEST_MEDIA_DIR AFTER TEST END \n {}".format(a))
+
+    def test_create_profile_valid_user(self):
+        self.client.login(username=HACKER_CREDENTIALS[0], password=HACKER_CREDENTIALS[1])
+        with open('assets/1920x1080_legion.jpg', 'rb') as img:
+            data = {'first_name': 'new name', 'last_name': 'new last name', 'picture': img}
+            response = self.client.post(reverse_lazy("user-profile-create"), data=data, follow=True)
+
+            self.assertEqual(response.redirect_chain[0], ("/user-profile/", 302))
+            self.assertEqual(UserProfile.objects.get(owner__email__exact=HACKER_CREDENTIALS[2]).owner.first_name,
+                             data['first_name'])
+            self.assertEqual(UserProfile.objects.get(owner__email__exact=HACKER_CREDENTIALS[2]).owner.last_name,
+                             data['last_name'])
+
+    def test_create_profile_invalid_user(self):
+        """
+        User already has profile and try to go to create url...
+        """
+        self.client.login(username=OWNER_CREDENTIALS[0], password=OWNER_CREDENTIALS[1])
+        response = self.client.get(reverse_lazy("user-profile-create"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/user-profile/update/")
+
+    def test_create_profile_unauthorized_user(self):
+        """
+        User already has profile and try to go to create url...
+        """
+        response = self.client.get(reverse_lazy("user-profile-create"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/accounts/login/?next=/user-profile/create/")
+
+
 class UserProfileUpdateTest(TestCase):
     def setUp(self) -> None:
         profile_initial_conditions(self)
@@ -70,8 +111,7 @@ class UserProfileUpdateTest(TestCase):
         data = {'first_name': 'new name', 'last_name': 'new last name'}
 
         response = self.client.post(reverse_lazy("user-profile-update"), data=data, follow=True)
-        self.assertEqual(response.redirect_chain[0],
-                         ("/user-profile/", 302))
+        self.assertEqual(response.redirect_chain[0], ("/user-profile/", 302))
         self.assertEqual(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).owner.first_name,
                          data['first_name'])
         self.assertEqual(UserProfile.objects.get(owner__email__exact=OWNER_CREDENTIALS[2]).owner.last_name,

@@ -59,4 +59,5 @@ class TaskFilter(DateFilter):
 class ChatRoomFilter(django_filters.FilterSet):
     class Meta:
         model = chat_models.ChatRoomModel
-        fields = ['name', 'is_private', 'owner', 'member']
+        fields = {'name': ['contains'], 'is_private': ['exact'], 'owner': ['exact'],
+                  'member': ['exact']}

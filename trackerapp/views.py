@@ -251,7 +251,7 @@ class UserProfileDetail(LoginRequiredMixin, ExtendedDetailView):
         try:
             profile = UserProfile.objects.get(owner_id=self.request.user.id)
         except UserProfile.DoesNotExist as e:
-            logging.info(str(e))
+            logging.warning(str(e)+"User: {}".format(self.request.user))
 
         return profile
 
@@ -259,6 +259,18 @@ class UserProfileDetail(LoginRequiredMixin, ExtendedDetailView):
 class UserProfileCreate(LoginRequiredMixin, ExtendedCreateView):
     model = UserProfile
     form_class = UserProfileEditionForm
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        try:
+            self.object = self.model.objects.get(owner_id=request.user.id)
+        except self.model.DoesNotExist:
+            pass
+
+        if self.object:
+            return redirect(reverse_lazy("user-profile-update"))
+
+        return super().get(request, *args, **kwargs)
 
     # set profile owner directly from request
     def form_valid(self, form):

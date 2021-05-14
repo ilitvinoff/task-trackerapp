@@ -19,11 +19,17 @@ class ChatRoomModel(models.Model):
     def __str__(self):
         return f'Room name: "{self.name}", is_private: "{self.is_private}"'
 
+    def get_id(self):
+        return self.id
+
     def get_name(self):
         return self.name
 
     def get_owner(self):
         return self.owner
+
+    def get_members(self):
+        return self.member.all()
 
     def get_absolute_url(self):
         """

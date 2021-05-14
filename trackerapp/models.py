@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from simple_history.models import HistoricalRecords
 
 TASK_TITLE_MAX_LENGTH = 200
@@ -27,6 +27,12 @@ class UserProfile(models.Model):
             validate_image_file_extension,
         ],
     )
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a particular instance of the model.
+        """
+        return reverse_lazy("user-profile-detail")
 
     def get_owner(self):
         return self.owner
@@ -106,7 +112,7 @@ class TaskModel(models.Model):
         """
         Returns the url to access a particular instance of the model.
         """
-        return reverse("task-detail", args=[str(self.id)])
+        return reverse_lazy("task-detail", args=[str(self.id)])
 
     def get_owner(self):
         return self.owner
@@ -139,7 +145,7 @@ class Attachment(models.Model):
         """
         Returns the url to access a particular instance of the model.
         """
-        return reverse("attach-detail", args=[str(self.id)])
+        return reverse_lazy("attach-detail", args=[str(self.id)])
 
     def get_title_from_description(self):
         return self.description[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
@@ -175,7 +181,7 @@ class Message(models.Model):
         """
         Returns the url to access a particular instance of the model.
         """
-        return reverse("comment-detail", args=[str(self.id)])
+        return reverse_lazy("comment-detail", args=[str(self.id)])
 
     def get_owner(self):
         return self.owner
