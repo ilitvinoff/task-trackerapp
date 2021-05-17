@@ -42,6 +42,7 @@ urlpatterns = [
     path("chat/", include("chat.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("backup/", include("backup.urls")),
 
     # REST API URLS
     path("api/", include([

@@ -52,7 +52,8 @@ class ListChatRoomViewTestCase(TestCase):
             if i % 2 == 0:
                 room = ChatRoomModel.objects.create(name=str(i), is_private=True, owner=self.user1)
                 room.save()
-                room.member.add(self.user2)
+                room.member.set((self.user2,))
+                room.save()
             else:
                 room = ChatRoomModel.objects.create(name=str(i), is_private=True, owner=self.user2)
                 room.save()
@@ -61,13 +62,22 @@ class ListChatRoomViewTestCase(TestCase):
         self.client.login(username=USER1_CREDENTIALS[0], password=USER1_CREDENTIALS[1])
         response = self.client.get(reverse_lazy("room-list"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['object_list']), ITEMS_COUNT_IN_LIST/2)
+        self.assertEqual(len(response.context['object_list']), ITEMS_COUNT_IN_LIST / 2)
 
         self.client.login(username=USER2_CREDENTIALS[0], password=USER2_CREDENTIALS[1])
+        i = 1
+        user2_room_list = []
+        while (True):
+            response = self.client.get(reverse_lazy("room-list") + "?page={}".format(i))
+            i += 1
+            if response.status_code == 404:
+                break
+            self.assertEqual(response.status_code, 200)
+            user2_room_list.extend(list(response.context['object_list']))
+
+        self.assertEqual(len(user2_room_list), ITEMS_COUNT_IN_LIST)
+
+    def test_unauthorized_user_request(self):
         response = self.client.get(reverse_lazy("room-list"))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['object_list']), ITEMS_COUNT_IN_LIST)
-
-        # TODO add manytomany value (member) for the room, backup
-
-
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse_lazy("login")+"?next=/chat/room/")

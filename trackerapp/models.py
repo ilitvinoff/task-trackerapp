@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
@@ -67,14 +69,11 @@ class TaskModel(models.Model):
     class Meta:
         ordering = ["-creation_date"]
 
-    history = HistoricalRecords()
-
+    history = HistoricalRecords(cascade_delete_history=True)
     title = models.CharField(max_length=TASK_TITLE_MAX_LENGTH, help_text="Enter title of your task)")
-
     description = models.fields.TextField(
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
-
     status = models.CharField(
         max_length=16,
         choices=LOAN_STATUS,
@@ -82,9 +81,7 @@ class TaskModel(models.Model):
         default="waiting to start",
         help_text="Current task status",
     )
-
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
-
     owner = models.ForeignKey(
         User,
         related_name="owned_tasks",
@@ -92,7 +89,6 @@ class TaskModel(models.Model):
         null=True,
         blank=False,
     )
-
     assignee = models.ForeignKey(
         User,
         help_text="Select a user who can watch / edit / complete the task",
@@ -101,6 +97,7 @@ class TaskModel(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def __str__(self):
         """
@@ -139,7 +136,9 @@ class Attachment(models.Model):
 
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
 
-    history = HistoricalRecords()
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    history = HistoricalRecords(cascade_delete_history=True)
 
     def get_absolute_url(self):
         """
@@ -165,14 +164,12 @@ class Attachment(models.Model):
 
 class Message(models.Model):
     body = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, help_text="enter message body")
-
     owner = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
     )
-
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
-
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def get_title_from_description(self):
         return self.body[:DESCRIPTION_AS_TITLE_LENGTH] + "..."

@@ -1,4 +1,6 @@
 # Create your models here.
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
@@ -12,6 +14,7 @@ class ChatRoomModel(models.Model):
     is_private = models.BooleanField(default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
     member = models.ManyToManyField(User, related_name="member", blank=True)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
     class Meta:
         ordering = ["-is_private", "name"]
@@ -43,6 +46,7 @@ class ChatMessageModel(models.Model):
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     room = models.ForeignKey(ChatRoomModel, on_delete=models.SET_NULL, null=True)
     creation_date = models.DateTimeField(auto_created=True, auto_now_add=True, null=True)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def __str__(self):
         return (f'body:\n"{self.body}"\nowner: {self.owner}')

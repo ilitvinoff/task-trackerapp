@@ -15,7 +15,7 @@ HISTORY_MESSAGE_COUNT = 100
 
 
 class ChatRoomDetail(ChatRoomPermission, ExtendedDetailView):
-    model = permission_class_model = ChatRoomModel
+    model = permission_model = ChatRoomModel
     template_name = "room.html"
 
     def get_context_data(self, **kwargs):
@@ -63,12 +63,12 @@ class ListChatRoomView(LoginRequiredMixin, ExtendedFilterListView):
 
 
 class DeleteChatRoomView(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
-    model = permission_class_model = ChatRoomModel
+    model = permission_model = ChatRoomModel
     success_url = reverse_lazy("room-list")
     template_name = "chat/room_confirm_delete.html"
 
 
 class UpdateChatRoomView(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
-    model = permission_class_model = ChatRoomModel
+    model = permission_model = ChatRoomModel
     fields = ["member", "name", "is_private"]
     template_name = "chat/room_form.html"

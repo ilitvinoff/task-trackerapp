@@ -61,7 +61,7 @@ class AssigneeTaskListView(LoginRequiredMixin, ExtendedFilterListView):
 
 
 class TaskDetail(IsTaskOwnerOrAssignee, ListInDetailView):
-    model = permission_class_model = TaskModel
+    model = permission_model = TaskModel
     defaultModel = Message
 
     # Add attachment list to context
@@ -95,7 +95,7 @@ class TaskUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     Edit task form
     """
 
-    model = permission_class_model = TaskModel
+    model = permission_model = TaskModel
     fields = ["title", "description", "status", "assignee"]
 
     # after successful edition redirects to the edited task page
@@ -108,7 +108,7 @@ class TaskStatusUpdate(IsTaskOwnerOrAssignee, ExtendedUpdateView):
     Form to edit task status (for assignee...)
     """
 
-    model = permission_class_model = TaskModel
+    model = permission_model = TaskModel
     fields = [
         "status",
     ]
@@ -119,7 +119,7 @@ class TaskDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
     Form to delete task
     """
 
-    model = permission_class_model = TaskModel
+    model = permission_model = TaskModel
     success_url = reverse_lazy("index")
 
 
@@ -127,7 +127,7 @@ class MessageListView(IsTaskOwnerOrAssignee, ExtendedFilterListView):
     model = Message
     filterset_class = filters.MessageDateFilter
     paginate_by = ITEMS_ON_PAGE
-    permission_class_model = TaskModel
+    permission_model = TaskModel
     template_name = "trackerapp/message_list.html"
 
     def get_queryset(self, **kwargs):
@@ -165,30 +165,30 @@ class MessageUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
     Form to update comments
     """
 
-    model = permission_class_model = Message
+    model = permission_model = Message
     fields = [
         "body",
     ]
 
 
 class MessageDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
-    model = permission_class_model = Message
+    model = permission_model = Message
 
     def get_success_url(self):
         return reverse_lazy("comment-list", kwargs={"pk": self.object.task_id})
 
 
 class MessageDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
-    model = permission_class_model = Message
+    model = permission_model = Message
 
 
 class AttachmentDetail(IsOwnerOrAssigneePermissionRequiredMixin, ExtendedDetailView):
-    model = permission_class_model = Attachment
+    model = permission_model = Attachment
 
 
 class AttachmentList(IsTaskOwnerOrAssignee, ExtendedFilterListView):
     model = Attachment
-    permission_class_model = TaskModel
+    permission_model = TaskModel
     filterset_class = filters.AttachmentDateFilter
     paginate_by = ITEMS_ON_PAGE
     template_name = "trackerapp/attachment_list.html"
@@ -222,12 +222,12 @@ class AttachmentCreate(LoginRequiredMixin, ExtendedCreateView):
 
 
 class AttachmentUpdate(IsOwnerPermissionRequiredMixin, ExtendedUpdateView):
-    model = permission_class_model = Attachment
+    model = permission_model = Attachment
     fields = ["description", "file"]
 
 
 class AttachmentDelete(IsOwnerPermissionRequiredMixin, ExtendedDeleteView):
-    model = permission_class_model = Attachment
+    model = permission_model = Attachment
 
     def get_success_url(self):
         return reverse_lazy("attach-list", kwargs={"pk": self.object.task_id})
@@ -279,7 +279,7 @@ class UserProfileCreate(LoginRequiredMixin, ExtendedCreateView):
 
 
 class UserProfileUpdate(LoginRequiredMixin, ExtendedUpdateView):
-    permission_class_model = UserProfile
+    permission_model = UserProfile
     template_name = "trackerapp/userprofile_form.html"
     queryset = UserProfile.objects.all()
     form_class = UserProfileEditionForm
@@ -332,6 +332,6 @@ def sign_up(request):
 
 class TaskHistoryListView(IsTaskOwnerOrAssignee, ExtendedTaskHistoryListView):
     model = TaskModel
-    permission_class_model = TaskModel
+    permission_model = TaskModel
     paginate_by = ITEMS_ON_PAGE
     template_name = "trackerapp/task_history.html"

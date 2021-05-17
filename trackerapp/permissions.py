@@ -12,9 +12,9 @@ class IsTaskOwnerOrAssignee(PermissionRequiredMixin):
         try:
             pk = kwargs["pk"]
 
-            if self.permission_class_model:
-                assigned_user = self.permission_class_model.objects.get(pk=pk).get_assignee()
-                owner = self.permission_class_model.objects.get(pk=pk).get_owner()
+            if self.permission_model:
+                assigned_user = self.permission_model.objects.get(pk=pk).get_assignee()
+                owner = self.permission_model.objects.get(pk=pk).get_owner()
             else:
                 raise NotImplemented("invalid permission class model")
 
@@ -39,8 +39,8 @@ class IsOwnerPermissionRequiredMixin(PermissionRequiredMixin):
         try:
             pk = kwargs["pk"]
 
-            if self.permission_class_model:
-                owner = self.permission_class_model.objects.get(pk=pk).get_owner()
+            if self.permission_model:
+                owner = self.permission_model.objects.get(pk=pk).get_owner()
             else:
                 raise NotImplemented("invalid permission class model")
 
@@ -65,10 +65,10 @@ class IsOwnerOrAssigneePermissionRequiredMixin(PermissionRequiredMixin):
         try:
             pk = kwargs["pk"]
 
-            if self.permission_class_model:
-                assigned_user = self.permission_class_model.objects.get(pk=pk).get_assignee()
-                owner = self.permission_class_model.objects.get(pk=pk).get_owner()
-                related_obj_owner = self.permission_class_model.objects.get(pk=pk).get_related_obj_owner()
+            if self.permission_model:
+                assigned_user = self.permission_model.objects.get(pk=pk).get_assignee()
+                owner = self.permission_model.objects.get(pk=pk).get_owner()
+                related_obj_owner = self.permission_model.objects.get(pk=pk).get_related_obj_owner()
             else:
                 raise NotImplemented("invalid permission class model")
 
@@ -89,8 +89,8 @@ class ChatRoomPermission(PermissionRequiredMixin):
         try:
             pk = kwargs["pk"]
 
-            if self.permission_class_model:
-                room = self.permission_class_model.objects.get(pk=pk)
+            if self.permission_model:
+                room = self.permission_model.objects.get(pk=pk)
                 owner = room.get_owner()
                 members = room.get_members()
             else:
