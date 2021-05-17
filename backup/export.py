@@ -39,11 +39,10 @@ def export(request):
         ),
     }
 
-    temp_dir_path = str(uuid.uuid4())
-    base_path = os.path.join(BASE_BACKUP_PATH, temp_dir_path)
+    temp_dir = tempfile.mkdtemp(dir=BASE_BACKUP_PATH)
 
     for k, v in models.items():
-        filepath = os.path.join(base_path, k)
+        filepath = os.path.join(temp_dir, k)
         write_to_file(filepath, v)
 
     return {}
