@@ -1,0 +1,2 @@
+class BadFileContent(Exception):
+    pass

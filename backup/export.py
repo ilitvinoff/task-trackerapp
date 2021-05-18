@@ -15,13 +15,16 @@ from backup.settings import (
     TASK_QS_NAME,
     TASK_MESSAGE_QS_NAME,
     TASK_ATTACHMENT_QS_NAME,
-    QS_DICT,MODEL_DICT
+    QS_DICT,
+    MODEL_DICT
 )
+from tasktracker.settings import MEDIA_ROOT
 
 
 def get_all_qs_as_dict(current_user):
     return {
-        CHATROOM_QS_NAME: MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user).values(*QS_DICT[CHATROOM_QS_NAME]),
+        CHATROOM_QS_NAME: MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user).values(
+            *QS_DICT[CHATROOM_QS_NAME]),
         CHAT_MESSAGE_QS_NAME: MODEL_DICT[CHAT_MESSAGE_QS_NAME].objects.filter(owner=current_user).values(
             *QS_DICT[CHAT_MESSAGE_QS_NAME]),
         TASK_QS_NAME: MODEL_DICT[TASK_QS_NAME].objects.filter(Q(owner=current_user) | Q(assignee=current_user)).values(
@@ -43,8 +46,20 @@ def write_to_file(filepath, queryset, qs_name):
         for model_instance in queryset:
             writer.writerow(model_instance)
 
+def get_attachment_filename_list(attachment_qs):
+    result = []
 
-def compress_all_from_dir(dirpath):
+    for attachment in attachment_qs:
+       result.append(attachment['file'])
+
+    return result
+
+def compress_attachmnet_files(zipper,attachment_filename_list):
+    for attachment in attachment_filename_list:
+        zipper.write(filename=os.path.join(MEDIA_ROOT, attachment.file), arcname=attachment.file)
+
+
+def compress(dirpath, attachment_filename_list):
     files = os.listdir(dirpath)
     zip_name = os.path.join(dirpath, time.strftime("%Y%m%d-%H%M%S") + '.zip')
 
@@ -53,6 +68,8 @@ def compress_all_from_dir(dirpath):
         # so we do not check if unit is file or not...
         for file in files:
             zipper.write(filename=os.path.join(dirpath, file), arcname=file)
+
+        compress_attachmnet_files(zipper,attachment_filename_list)
 
     return zip_name
 
@@ -69,6 +86,7 @@ def export(request):
 
     # get all query sets available for backup process
     all_qs = get_all_qs_as_dict(current_user)
+    attachment_filename_list = get_attachment_filename_list(all_qs[TASK_ATTACHMENT_QS_NAME])
 
     temp_dir = get_temp_dir()
 
@@ -78,7 +96,7 @@ def export(request):
         write_to_file(filepath=filepath, queryset=qs_value, qs_name=qs_name)
 
     # compress queryset's files to zip archive
-    zip_name = compress_all_from_dir(temp_dir)
+    zip_name = compress(temp_dir,attachment_filename_list)
 
     # send zip-file to user
     if os.path.exists(zip_name):

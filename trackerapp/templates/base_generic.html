@@ -16,6 +16,7 @@
     <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 
+
     <style>
         .navbar-fixed-top {
             position: relative;
@@ -27,20 +28,22 @@
 
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
-        <div id="navbar" class="navbar-collapse collapse">
 
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             {% if user.is_authenticated %}
 
                 <ul class="nav navbar-nav">
                     <li><a class="active" href="{% url 'index' %}">Tasks</a></li>
                     <li><a class="active" href="{% url 'room-list' %}">Chat</a></li>
                     <li><a class="active" href="{% url 'export-backup' %}">Export</a></li>
+                    <li><a class="active" href="{% url 'import-backup' %}">Import</a></li>
                 </ul>
 
                 <ul class="navbar-brand navbar-right">
                     <li><a href="{% url 'user-profile-detail' %}">{{ user.username }}</a></li>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                 </ul>
+
             {% else %}
 
                 <div class="navbar-form navbar-right">
@@ -59,6 +62,7 @@
                 </div>
 
             {% endif %}
+
         </div>
     </div>
 </nav>

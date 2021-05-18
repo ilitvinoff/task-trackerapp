@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "chat.apps.ChatConfig",
     "channels",
     "django_filters",
+    "backup.apps.BackUpConfig",
 ]
 
 MIDDLEWARE = [
