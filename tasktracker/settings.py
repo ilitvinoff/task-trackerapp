@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     "simple_history",
     "chat.apps.ChatConfig",
     "channels",
-    "django_filters"
+    "django_filters",
 ]
 
 MIDDLEWARE = [
