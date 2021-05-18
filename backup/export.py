@@ -1,5 +1,6 @@
 import csv
 import os
+import shutil
 import tempfile
 import time
 from zipfile import ZipFile
@@ -7,42 +8,28 @@ from zipfile import ZipFile
 from django.db.models import Q
 from django.http import HttpResponse, Http404
 
-from chat.models import (
-    ChatRoomModel, ChatMessageModel
+from backup.settings import (
+    BASE_BACKUP_PATH,
+    CHATROOM_QS_NAME,
+    CHAT_MESSAGE_QS_NAME,
+    TASK_QS_NAME,
+    TASK_MESSAGE_QS_NAME,
+    TASK_ATTACHMENT_QS_NAME,
+    QS_DICT,MODEL_DICT
 )
-from tasktracker.settings import MEDIA_ROOT
-from trackerapp.models import (
-    TaskModel, Attachment, Message,
-)
-
-BASE_BACKUP_PATH = os.path.join(MEDIA_ROOT, "backup")
-
-CHATROOM_QS_NAME = 'chatroom_qs'
-CHAT_MESSAGE_QS_NAME = 'chat_message_qs'
-TASK_QS_NAME = 'task_qs'
-TASK_MESSAGE_QS_NAME = 'task_message_qs'
-TASK_ATTACHMENT_QS_NAME = 'task_attachment_qs'
-
-QS_DICT = {
-    CHATROOM_QS_NAME: ('name', 'is_private', 'member__id', 'backup_id'),
-    CHAT_MESSAGE_QS_NAME: ('body', 'room__backup_id', 'creation_date', 'backup_id'),
-    TASK_QS_NAME: ('title', 'description', 'status', 'creation_date', 'owner__id', 'assignee__id', 'backup_id'),
-    TASK_MESSAGE_QS_NAME: ('body', 'owner__id', 'task__backup_id', 'creation_date', 'backup_id'),
-    TASK_ATTACHMENT_QS_NAME: ('owner__id', 'task__backup_id', 'file', 'description', 'creation_date', 'backup_id')
-}
 
 
-def get_all_qs(current_user):
+def get_all_qs_as_dict(current_user):
     return {
-        CHATROOM_QS_NAME: ChatRoomModel.objects.filter(owner=current_user).values(*QS_DICT[CHATROOM_QS_NAME]),
-        CHAT_MESSAGE_QS_NAME: ChatMessageModel.objects.filter(owner=current_user).values(
+        CHATROOM_QS_NAME: MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user).values(*QS_DICT[CHATROOM_QS_NAME]),
+        CHAT_MESSAGE_QS_NAME: MODEL_DICT[CHAT_MESSAGE_QS_NAME].objects.filter(owner=current_user).values(
             *QS_DICT[CHAT_MESSAGE_QS_NAME]),
-        TASK_QS_NAME: TaskModel.objects.filter(Q(owner=current_user) | Q(assignee=current_user)).values(
+        TASK_QS_NAME: MODEL_DICT[TASK_QS_NAME].objects.filter(Q(owner=current_user) | Q(assignee=current_user)).values(
             *QS_DICT[TASK_QS_NAME]),
-        TASK_MESSAGE_QS_NAME: Message.objects.filter(
+        TASK_MESSAGE_QS_NAME: MODEL_DICT[TASK_MESSAGE_QS_NAME].objects.filter(
             Q(task__owner=current_user) | Q(task__assignee=current_user)).values(
             *QS_DICT[TASK_MESSAGE_QS_NAME]),
-        TASK_ATTACHMENT_QS_NAME: Attachment.objects.filter(
+        TASK_ATTACHMENT_QS_NAME: MODEL_DICT[TASK_ATTACHMENT_QS_NAME].objects.filter(
             Q(task__owner=current_user) | Q(task__assignee=current_user)).values(*QS_DICT[TASK_ATTACHMENT_QS_NAME]),
     }
 
@@ -70,25 +57,40 @@ def compress_all_from_dir(dirpath):
     return zip_name
 
 
+def get_temp_dir():
+    if not os.path.exists(BASE_BACKUP_PATH):
+        os.mkdir(BASE_BACKUP_PATH)
+
+    return tempfile.mkdtemp(dir=BASE_BACKUP_PATH)
+
+
 def export(request):
     current_user = request.user
 
-    all_qs = get_all_qs(current_user)
+    # get all query sets available for backup process
+    all_qs = get_all_qs_as_dict(current_user)
 
-    temp_dir = tempfile.mkdtemp(dir=BASE_BACKUP_PATH)
+    temp_dir = get_temp_dir()
 
+    # each "queryset_obj" is written to its own file
     for qs_name, qs_value in all_qs.items():
         filepath = os.path.join(temp_dir, qs_name)
         write_to_file(filepath=filepath, queryset=qs_value, qs_name=qs_name)
 
+    # compress queryset's files to zip archive
     zip_name = compress_all_from_dir(temp_dir)
 
+    # send zip-file to user
     if os.path.exists(zip_name):
+
         try:
             with open(zip_name, 'rb') as fh:
                 response = HttpResponse(fh.read(), content_type="application/vnd.ms-excel")
                 response['Content-Disposition'] = 'inline; filename=' + os.path.basename(zip_name)
                 return response
+
+        # remove temp_dir after response is sent
         finally:
-            pass
+            shutil.rmtree(temp_dir)
+
     raise Http404
