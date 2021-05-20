@@ -1,9 +1,10 @@
 import os
 
-from chat.models import ChatMessageModel
+import pandas
+
+from chat.models import ChatMessageModel, ChatRoomModel
 from tasktracker.settings import MEDIA_ROOT
 from trackerapp.models import TaskModel, Message, Attachment
-from . import utils
 
 """
 Directory path for managing user's data to import/export backup of this data
@@ -35,43 +36,38 @@ ORDERED_QS_NAME_LIST_TO_UNPACK = (
 )
 
 """
-Dictionary that links queryset name and model's fields, that will be returned as result of qs
-Used to creat query set, for example :
-qs = MODEL_DICT[CHATROOM_QS_NAME].objects.all().values(*QS_DICT[CHATROOM_QS_NAME])
-"""
-QS_DICT = {
-    CHATROOM_QS_NAME: ('name', 'is_private', 'member', 'backup_id'),
-    CHAT_MESSAGE_QS_NAME: ('body', 'room__backup_id', 'creation_date', 'backup_id'),
-    TASK_QS_NAME: ('title', 'description', 'status', 'creation_date', 'owner__id', 'assignee__id', 'backup_id'),
-    TASK_MESSAGE_QS_NAME: ('body', 'owner__id', 'task__backup_id', 'creation_date', 'backup_id'),
-    TASK_ATTACHMENT_QS_NAME: ('owner__id', 'task__backup_id', 'file', 'description', 'creation_date', 'backup_id')
-}
-
-EXTERNAL_DEPENDENCIES_FIELD_VALUES = {
-    'member__id': utils.get_user_by_id,
-    'room__backup_id': utils.get_room_by_id,
-    'owner__id': utils.get_user_by_id,
-    'assignee__id': utils.get_user_by_id,
-    'task__backup_id': utils.get_task_by_backup_id
-}
-
-EXTERNAL_DEPENDENCIES_FIELD_NAMES = {
-    'member__id': "member",
-    'room__backup_id': 'room',
-    'owner__id': 'owner',
-    'assignee__id': 'assignee',
-    'task__backup_id': 'task'
-}
-
-"""
 Dictionary that links queryset name and model's class.
 Used to creat query set, for example :
 qs = MODEL_DICT[CHATROOM_QS_NAME].objects.all()
 """
 MODEL_DICT = {
-    CHATROOM_QS_NAME: utils.ChatRoomModel,
+    CHATROOM_QS_NAME: ChatRoomModel,
     CHAT_MESSAGE_QS_NAME: ChatMessageModel,
     TASK_QS_NAME: TaskModel,
     TASK_MESSAGE_QS_NAME: Message,
     TASK_ATTACHMENT_QS_NAME: Attachment
+}
+
+MODEL_NAME_DICT = {
+    CHATROOM_QS_NAME: 'chat.chatroommodel',
+    CHAT_MESSAGE_QS_NAME: 'chat.chatmessagemodel',
+    TASK_QS_NAME: 'trackerapp.taskmodel',
+    TASK_MESSAGE_QS_NAME: 'trackerapp.message',
+    TASK_ATTACHMENT_QS_NAME: 'trackerapp.attachment'
+}
+
+HAS_CREATION_DATE_FIELD_REQUEST = lambda file: pandas.read_csv(file, parse_dates=['creation_date'])
+HAS_NO_CREATION_DATE_FIELD_REQUEST = lambda file: pandas.read_csv(file)
+
+REQUEST_TO_READ_CSV = {
+    CHATROOM_QS_NAME: HAS_NO_CREATION_DATE_FIELD_REQUEST,
+    CHAT_MESSAGE_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
+    TASK_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
+    TASK_MESSAGE_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
+    TASK_ATTACHMENT_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST
+}
+
+M2M_FIELD_DICT = {
+    'member': lambda df: df.member.apply(lambda x: [int(v) for v in x[1:-1].split(',') if v != '']),
+    'creation_date': lambda df: df
 }

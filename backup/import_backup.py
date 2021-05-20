@@ -1,20 +1,18 @@
 import csv
+import json
 import logging
 import zipfile
-from io import TextIOWrapper
 from zipfile import ZipFile
 
 from django import forms
+from django.core.serializers import deserialize
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse_lazy
 
-from backup import utils
 from backup.settings import (
     ORDERED_QS_NAME_LIST_TO_UNPACK,
-    MODEL_DICT,
-    EXTERNAL_DEPENDENCIES_FIELD_NAMES,
-    EXTERNAL_DEPENDENCIES_FIELD_VALUES
+    MODEL_NAME_DICT, MODEL_DICT, REQUEST_TO_READ_CSV, M2M_FIELD_DICT
 )
 from tasktracker.exceptions import BadFileContent
 
@@ -42,13 +40,37 @@ def get_dialect(csv_file):
 
 def restore(zip_file, qs_name):
     with zip_file.open(qs_name, 'r') as csv_file:
-        reader = csv.DictReader(TextIOWrapper(csv_file, 'utf-8'), dialect=get_dialect(csv_file))
+        df = REQUEST_TO_READ_CSV[qs_name](csv_file)
 
-        for instance_dict in reader:
-            utils.replace_dict_fields(instance_dict, EXTERNAL_DEPENDENCIES_FIELD_NAMES,
-                                      EXTERNAL_DEPENDENCIES_FIELD_VALUES)
-            instance = MODEL_DICT[qs_name](**instance_dict)
-            print(instance_dict)
+        df_fields = set(df.columns)
+        m2m_fields = df_fields.intersection(set(M2M_FIELD_DICT.keys()))
+
+        if m2m_fields:
+            for m2m_field in m2m_fields:
+                df[m2m_field] = M2M_FIELD_DICT[m2m_field](df)
+
+        if 'creation_date' in df_fields:
+            del df['creation_date']
+
+        for record in df.to_dict(orient='records'):
+            obj_model_as_dict = {
+                'model': MODEL_NAME_DICT[qs_name],
+                'fields': record
+            }
+
+            obj_model_as_json = f"[{json.dumps(obj_model_as_dict)}]"
+            deserialized_data = deserialize("json", obj_model_as_json)
+
+            for deserialized_instance in deserialized_data:
+                if MODEL_DICT[qs_name].objects.filter(backup_id=deserialized_instance.object.backup_id).first():
+                    continue
+
+                deserialized_instance.save()
+                # if deserialized_instance.m2m_data:
+                #     for m2m_field in deserialized_instance.m2m_data.keys():
+                #         deserialized_instance
+
+            print(obj_model_as_json)
 
 
 def handle_request(request):

@@ -1,10 +1,10 @@
 import csv
+import json
 import os
 import shutil
 import tempfile
 import time
 from zipfile import ZipFile
-import json
 
 from django.core.serializers import serialize
 from django.db.models import Q
@@ -17,7 +17,6 @@ from backup.settings import (
     TASK_QS_NAME,
     TASK_MESSAGE_QS_NAME,
     TASK_ATTACHMENT_QS_NAME,
-    QS_DICT,
     MODEL_DICT
 )
 from tasktracker.settings import MEDIA_ROOT
@@ -25,53 +24,43 @@ from tasktracker.settings import MEDIA_ROOT
 
 def json_loads_backup_to_dict(current_user):
     return {
-        CHATROOM_QS_NAME: json.loads(serialize("json", MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user))),
-        CHAT_MESSAGE_QS_NAME: json.loads(serialize("json", MODEL_DICT[CHAT_MESSAGE_QS_NAME].objects.filter(owner=current_user))),
+        CHATROOM_QS_NAME: json.loads(
+            serialize("json", MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user),
+                      use_natural_primary_keys=True)),
+        CHAT_MESSAGE_QS_NAME: json.loads(
+            serialize("json", MODEL_DICT[CHAT_MESSAGE_QS_NAME].objects.filter(owner=current_user),
+                      use_natural_foreign_keys=True,
+                      use_natural_primary_keys=True)),
         TASK_QS_NAME: json.loads(serialize("json", MODEL_DICT[TASK_QS_NAME].objects.filter(
-            Q(owner=current_user) | Q(assignee=current_user)))),
+            Q(owner=current_user) | Q(assignee=current_user)), use_natural_primary_keys=True)),
         TASK_MESSAGE_QS_NAME: json.loads(serialize("json", MODEL_DICT[TASK_MESSAGE_QS_NAME].objects.filter(
-            Q(task__owner=current_user) | Q(task__assignee=current_user)))),
+            Q(task__owner=current_user) | Q(task__assignee=current_user)), use_natural_foreign_keys=True,
+                                                   use_natural_primary_keys=True)),
         TASK_ATTACHMENT_QS_NAME: json.loads(serialize("json", MODEL_DICT[TASK_ATTACHMENT_QS_NAME].objects.filter(
-            Q(task__owner=current_user) | Q(task__assignee=current_user))))
-    }
-
-
-def get_all_qs_as_dict(current_user):
-    return {
-        CHATROOM_QS_NAME: MODEL_DICT[CHATROOM_QS_NAME].objects.filter(owner=current_user).values(
-            *QS_DICT[CHATROOM_QS_NAME]),
-        CHAT_MESSAGE_QS_NAME: MODEL_DICT[CHAT_MESSAGE_QS_NAME].objects.filter(owner=current_user).values(
-            *QS_DICT[CHAT_MESSAGE_QS_NAME]),
-        TASK_QS_NAME: MODEL_DICT[TASK_QS_NAME].objects.filter(Q(owner=current_user) | Q(assignee=current_user)).values(
-            *QS_DICT[TASK_QS_NAME]),
-        TASK_MESSAGE_QS_NAME: MODEL_DICT[TASK_MESSAGE_QS_NAME].objects.filter(
-            Q(task__owner=current_user) | Q(task__assignee=current_user)).values(
-            *QS_DICT[TASK_MESSAGE_QS_NAME]),
-        TASK_ATTACHMENT_QS_NAME: MODEL_DICT[TASK_ATTACHMENT_QS_NAME].objects.filter(
-            Q(task__owner=current_user) | Q(task__assignee=current_user)).values(*QS_DICT[TASK_ATTACHMENT_QS_NAME]),
+            Q(task__owner=current_user) | Q(task__assignee=current_user)), use_natural_foreign_keys=True,
+                                                      use_natural_primary_keys=True))
     }
 
 
 def write_to_file(filepath, backup_data):
-    if len(backup_data)==0:
+    if len(backup_data) == 0:
         return
 
     with open(filepath, 'a+') as csv_file:
-        fieldnames = backup_data[0]['fields'].keys()
-
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer = csv.DictWriter(csv_file, fieldnames=backup_data[0]['fields'].keys())
         writer.writeheader()
 
         for model_instance in backup_data:
             writer.writerow(model_instance['fields'])
 
 
-def compress_attachmnet_files(zipper, attachment_qs):
-    for attachment in attachment_qs:
-        zipper.write(filename=os.path.join(MEDIA_ROOT, attachment['file']), arcname=attachment['file'])
+def compress_attachment_files(zipper, attachment_data):
+    for attachment in attachment_data:
+        zipper.write(filename=os.path.join(MEDIA_ROOT, attachment['fields']['file']),
+                     arcname=attachment['fields']['file'])
 
 
-def compress(dirpath, attachment_qs):
+def compress(dirpath, attachment_data):
     files = os.listdir(dirpath)
     zip_name = os.path.join(dirpath, time.strftime("%Y%m%d-%H%M%S") + '.zip')
 
@@ -81,7 +70,8 @@ def compress(dirpath, attachment_qs):
         for file in files:
             zipper.write(filename=os.path.join(dirpath, file), arcname=file)
 
-        compress_attachmnet_files(zipper, attachment_qs)
+        # compress files separately for convenience when importing
+        compress_attachment_files(zipper, attachment_data)
 
     return zip_name
 

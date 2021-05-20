@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from simple_history.models import HistoricalRecords
 
 TASK_TITLE_MAX_LENGTH = 200
@@ -61,10 +61,17 @@ class UserProfile(models.Model):
         return self.owner.username
 
 
+class TaskModelManager(models.Manager):
+    def get_by_natural_key(self, back_up_id):
+        return self.get(back_up_id=back_up_id)
+
+
 class TaskModel(models.Model):
     """
     Model describes task properties
     """
+
+    objects = TaskModelManager
 
     class Meta:
         ordering = ["-creation_date"]
@@ -99,6 +106,9 @@ class TaskModel(models.Model):
     )
     backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
+    def natural_key(self):
+        return (self.backup_id)
+
     def __str__(self):
         """
         String for representing the Model object (in Admin site etc.)
@@ -118,16 +128,23 @@ class TaskModel(models.Model):
         return self.assignee
 
 
+class AttachmentModelManager(models.Manager):
+    def get_by_natural_key(self, back_up_id):
+        return self.get(back_up_id=back_up_id)
+
+
 class Attachment(models.Model):
     class Meta:
         ordering = [
             "-creation_date"
         ]
 
+    objects = AttachmentModelManager
+
     owner = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
     )
-    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE, null=True)
 
     file = models.FileField(upload_to=ATTACHMENT_UPLOAD_TO, blank=True, null=True)
     description = models.fields.TextField(
@@ -162,14 +179,21 @@ class Attachment(models.Model):
         return self.file.name
 
 
+class MessageModelManager(models.Manager):
+    def get_by_natural_key(self, back_up_id):
+        return self.get(back_up_id=back_up_id)
+
+
 class Message(models.Model):
     body = models.CharField(max_length=DESCRIPTION_MAX_LENGTH, help_text="enter message body")
     owner = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="message_owner"
     )
-    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE)
+    task = models.ForeignKey(TaskModel, on_delete=models.CASCADE, null=True)
     creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
     backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    objects = MessageModelManager
 
     def get_title_from_description(self):
         return self.body[:DESCRIPTION_AS_TITLE_LENGTH] + "..."
