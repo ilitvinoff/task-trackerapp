@@ -19,7 +19,7 @@ class ChatRoomModel(models.Model):
     is_private = models.BooleanField(default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
     member = models.ManyToManyField(User, related_name="member", blank=True)
-    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     objects = ChatRoomModelManager
 
@@ -59,11 +59,20 @@ class MessageModelManager(models.Manager):
 class ChatMessageModel(models.Model):
     body = models.CharField(max_length=MESSAGE_BODY_MAX_LENGTH, help_text="message")
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    room = models.ForeignKey(ChatRoomModel, on_delete=models.SET_NULL, null=True)
+    room = models.ForeignKey(ChatRoomModel, on_delete=models.CASCADE, null=True)
     creation_date = models.DateTimeField(auto_created=True, auto_now_add=True, null=True)
-    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     objects = MessageModelManager
 
     def __str__(self):
         return (f'body:\n"{self.body}"\nowner: {self.owner}')
+
+    def get_room_owner(self):
+        return self.room.owner
+
+    def get_room_members(self):
+        return self.room.get_members()
+
+    def get_owner(self):
+        return self.owner

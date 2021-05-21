@@ -31,7 +31,6 @@ class ChatRoomDetail(ChatRoomPermission, ExtendedDetailView):
         return context_data
 
 
-
 class CreateChatRoomView(LoginRequiredMixin, ExtendedCreateView):
     model = ChatRoomModel
     fields = [
@@ -54,9 +53,9 @@ class ListChatRoomView(LoginRequiredMixin, ExtendedFilterListView):
     filterset_class = ChatRoomFilter
 
     def get_queryset(self):
-        room_list = ChatRoomModel.objects.filter(
-            Q(is_private=False) | Q(Q(is_private=True),
-                                    Q(Q(member=self.request.user) | Q(owner=self.request.user))))
+        room_list = ChatRoomModel.objects.filter(Q(is_private=False) | Q(Q(is_private=True),
+                                                                         Q(Q(member=self.request.user) | Q(
+                                                                             owner=self.request.user)))).distinct()
 
         filtered_list = ChatRoomFilter(self.request.GET, queryset=room_list)
         return filtered_list.qs

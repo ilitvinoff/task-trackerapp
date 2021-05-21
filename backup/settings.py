@@ -1,8 +1,11 @@
 import os
 
 import pandas
+from django.contrib.auth.models import User
+from django.utils.datetime_safe import datetime
 
 from chat.models import ChatMessageModel, ChatRoomModel
+from chat.utils import restore_file
 from tasktracker.settings import MEDIA_ROOT
 from trackerapp.models import TaskModel, Message, Attachment
 
@@ -56,18 +59,45 @@ MODEL_NAME_DICT = {
     TASK_ATTACHMENT_QS_NAME: 'trackerapp.attachment'
 }
 
-HAS_CREATION_DATE_FIELD_REQUEST = lambda file: pandas.read_csv(file, parse_dates=['creation_date'])
-HAS_NO_CREATION_DATE_FIELD_REQUEST = lambda file: pandas.read_csv(file)
+
+def has_creation_date(file):
+    return pandas.read_csv(file, parse_dates=['creation_date'])
+
+
+def has_no_creation_date(file):
+    return pandas.read_csv(file)
+
 
 REQUEST_TO_READ_CSV = {
-    CHATROOM_QS_NAME: HAS_NO_CREATION_DATE_FIELD_REQUEST,
-    CHAT_MESSAGE_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
-    TASK_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
-    TASK_MESSAGE_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST,
-    TASK_ATTACHMENT_QS_NAME: HAS_CREATION_DATE_FIELD_REQUEST
+    CHATROOM_QS_NAME: has_no_creation_date,
+    CHAT_MESSAGE_QS_NAME: has_creation_date,
+    TASK_QS_NAME: has_creation_date,
+    TASK_MESSAGE_QS_NAME: has_creation_date,
+    TASK_ATTACHMENT_QS_NAME: has_creation_date
 }
 
-M2M_FIELD_DICT = {
-    'member': lambda df: df.member.apply(lambda x: [int(v) for v in x[1:-1].split(',') if v != '']),
-    'creation_date': lambda df: df
+FIELDS_NEED_TO_CONVERT = {
+    # member is many to many field and stored to file like "[1,2,3]" when serializing,
+    # so list representing as string. To unpack it correctly let's use func (watch sub)
+    'member': lambda pandas_dataframe: pandas_dataframe.member.apply(
+        lambda members_as_string: [int(member) for member in members_as_string[1:-1].split(',') if member != '']),
+
+    # for models serialized with - use_natural_foreign_keys=True attr, such fields as owner, assignee, task, room
+    # stored to file with it's username for owner or assignee, and another appropriate values for appropriate fields,
+    # thanks django let us to do this, but ...
+    # Django deserializer can't deserialize that data correct (LOL OMG WTF !!!!), that's why we need
+    # dance with a tambourine around the data to deserialize it (LOL OMG WTF !!!!)
+    'owner': lambda pandas_dataframe: pandas_dataframe.owner.apply(
+        lambda x: User.objects.get(username=x[2:-2]).id if type(x) != int else x),
+    'assignee': lambda pandas_dataframe: pandas_dataframe.assignee.apply(
+        lambda x: User.objects.get(username=x[2:-2]).id if type(x) != int else x),
+    'task': lambda pandas_dataframe: pandas_dataframe.task.apply(lambda x: TaskModel.objects.get(backup_id=x).id),
+    'room': lambda pandas_dataframe: pandas_dataframe.room.apply(lambda x: ChatRoomModel.objects.get(backup_id=x).id),
+
+    # replace creation date with datetime.now()
+    'creation_date': lambda pandas_dataframe: pandas_dataframe.creation_date.apply(lambda x: datetime.now()),
+}
+
+BACKUP_FILE_FUNC = {
+    TASK_ATTACHMENT_QS_NAME: restore_file
 }

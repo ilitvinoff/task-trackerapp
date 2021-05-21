@@ -80,4 +80,4 @@ class ListChatRoomViewTestCase(TestCase):
     def test_unauthorized_user_request(self):
         response = self.client.get(reverse_lazy("room-list"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse_lazy("login")+"?next=/chat/room/")
+        self.assertEqual(response.url, reverse_lazy("login") + "?next=/chat/room/")

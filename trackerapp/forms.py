@@ -22,7 +22,7 @@ class UserProfileEditionForm(forms.ModelForm):
         previous_avatar = None
 
         try:
-            previous_avatar= UserProfile.objects.get(id=self.instance.id).picture
+            previous_avatar = UserProfile.objects.get(id=self.instance.id).picture
         except self.Meta.model.DoesNotExist:
             pass
 

@@ -6,14 +6,16 @@ from zipfile import ZipFile
 
 from django import forms
 from django.core.serializers import deserialize
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse_lazy
 
 from backup.settings import (
     ORDERED_QS_NAME_LIST_TO_UNPACK,
-    MODEL_NAME_DICT, MODEL_DICT, REQUEST_TO_READ_CSV, M2M_FIELD_DICT
+    MODEL_NAME_DICT, MODEL_DICT, REQUEST_TO_READ_CSV, FIELDS_NEED_TO_CONVERT, BACKUP_FILE_FUNC,
 )
+from chat.utils import is_owner
 from tasktracker.exceptions import BadFileContent
 
 DIALECT_CLUSTER_SIZE = 1024
@@ -38,19 +40,18 @@ def get_dialect(csv_file):
     return dialect
 
 
-def restore(zip_file, qs_name):
+def restore(zip_file, qs_name, request_user):
     with zip_file.open(qs_name, 'r') as csv_file:
         df = REQUEST_TO_READ_CSV[qs_name](csv_file)
 
         df_fields = set(df.columns)
-        m2m_fields = df_fields.intersection(set(M2M_FIELD_DICT.keys()))
 
-        if m2m_fields:
-            for m2m_field in m2m_fields:
-                df[m2m_field] = M2M_FIELD_DICT[m2m_field](df)
+        # Check if we have fields to convert or edit on current model
+        fields_to_convert = df_fields.intersection(set(FIELDS_NEED_TO_CONVERT.keys()))
 
-        if 'creation_date' in df_fields:
-            del df['creation_date']
+        if fields_to_convert:
+            for m2m_field in fields_to_convert:
+                df[m2m_field] = FIELDS_NEED_TO_CONVERT[m2m_field](df)
 
         for record in df.to_dict(orient='records'):
             obj_model_as_dict = {
@@ -58,19 +59,18 @@ def restore(zip_file, qs_name):
                 'fields': record
             }
 
-            obj_model_as_json = f"[{json.dumps(obj_model_as_dict)}]"
+            obj_model_as_json = f"[{json.dumps(obj_model_as_dict, cls=DjangoJSONEncoder)}]"
             deserialized_data = deserialize("json", obj_model_as_json)
 
             for deserialized_instance in deserialized_data:
-                if MODEL_DICT[qs_name].objects.filter(backup_id=deserialized_instance.object.backup_id).first():
+                if not is_owner(request_user, deserialized_instance.object) or MODEL_DICT[qs_name].objects.filter(
+                        backup_id=deserialized_instance.object.backup_id).first():
                     continue
 
-                deserialized_instance.save()
-                # if deserialized_instance.m2m_data:
-                #     for m2m_field in deserialized_instance.m2m_data.keys():
-                #         deserialized_instance
+                if qs_name in BACKUP_FILE_FUNC.keys():
+                    BACKUP_FILE_FUNC[qs_name](zip_file, deserialized_instance.object.file)
 
-            print(obj_model_as_json)
+                deserialized_instance.save()
 
 
 def handle_request(request):
@@ -89,7 +89,7 @@ def handle_request(request):
 
         for qs_name in ORDERED_QS_NAME_LIST_TO_UNPACK:
             try:
-                restore(zip_file, qs_name)
+                restore(zip_file, qs_name, request.user)
             except csv.Error as e:
                 logging.warning(f"User: \"{request.user}\" sent bad csv file. Err: {e}")
                 return HttpResponseBadRequest()
@@ -105,3 +105,5 @@ def import_backup(request):
     else:
         form = UploadFileForm()
     return render(request, 'upload.html', {'form': form})
+
+# TODO Add try exception and logging. Provide a report about backup success.

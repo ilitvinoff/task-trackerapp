@@ -1,8 +1,10 @@
+import os
 import uuid
 
 from django.contrib.auth.models import User
 from django.core.validators import validate_image_file_extension
 from django.db import models
+from django.dispatch import receiver
 from django.urls import reverse_lazy
 from simple_history.models import HistoricalRecords
 
@@ -88,11 +90,11 @@ class TaskModel(models.Model):
         default="waiting to start",
         help_text="Current task status",
     )
-    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
     owner = models.ForeignKey(
         User,
         related_name="owned_tasks",
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=False,
     )
@@ -104,7 +106,7 @@ class TaskModel(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
-    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     def natural_key(self):
         return (self.backup_id)
@@ -142,7 +144,7 @@ class Attachment(models.Model):
     objects = AttachmentModelManager
 
     owner = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="attachment_owner"
+        User, on_delete=models.CASCADE, null=True, related_name="attachment_owner"
     )
     task = models.ForeignKey(TaskModel, on_delete=models.CASCADE, null=True)
 
@@ -151,9 +153,9 @@ class Attachment(models.Model):
         max_length=DESCRIPTION_MAX_LENGTH, help_text="Enter a brief description of the task."
     )
 
-    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True, null=True)
+    creation_date = models.fields.DateTimeField(auto_created=True, auto_now_add=True)
 
-    backup_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    backup_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     history = HistoricalRecords(cascade_delete_history=True)
 
@@ -177,6 +179,39 @@ class Attachment(models.Model):
 
     def __str__(self):
         return self.file.name
+
+
+# These two auto-delete files from filesystem when they are unneeded:
+@receiver(models.signals.post_delete, sender=Attachment)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `MediaFile` object is deleted.
+    """
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)
+
+
+@receiver(models.signals.pre_save, sender=Attachment)
+def auto_delete_file_on_change(sender, instance, **kwargs):
+    """
+    Deletes old file from filesystem
+    when corresponding `MediaFile` object is updated
+    with new file.
+    """
+    if not instance.pk:
+        return False
+
+    try:
+        old_file = Attachment.objects.get(pk=instance.pk).file
+    except Attachment.DoesNotExist:
+        return False
+
+    new_file = instance.file
+    if not old_file == new_file:
+        if os.path.isfile(old_file.path):
+            os.remove(old_file.path)
 
 
 class MessageModelManager(models.Manager):

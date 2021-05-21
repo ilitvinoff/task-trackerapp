@@ -251,7 +251,7 @@ class UserProfileDetail(LoginRequiredMixin, ExtendedDetailView):
         try:
             profile = UserProfile.objects.get(owner_id=self.request.user.id)
         except UserProfile.DoesNotExist as e:
-            logging.warning(str(e)+"User: {}".format(self.request.user))
+            logging.warning(str(e) + "User: {}".format(self.request.user))
 
         return profile
 
