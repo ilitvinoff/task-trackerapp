@@ -40,6 +40,33 @@ def add_log_and_report_to_user(qs_name, report_dict, request_user, err_msg=None,
         logging.warning(err_msg + f"Request user: {request_user}")
 
 
+def iterate_deserialized_data(deserialized_data, qs_name, report_dict, request_user, zip_file):
+    for deserialized_instance in deserialized_data:
+        if MODEL_DICT[qs_name].objects.filter(
+                backup_id=deserialized_instance.object.backup_id).first():
+            add_log_and_report_to_user(qs_name, report_dict, request_user,
+                                       err_msg=f"Instance {str(deserialized_instance.object)} already exists.")
+            continue
+
+        if not utils.is_owner(request_user, deserialized_instance.object):
+            add_log_and_report_to_user(qs_name, report_dict, request_user,
+                                       err_msg=f"User is not instance's owner {str(deserialized_instance)}.")
+            continue
+
+        if qs_name in BACKUP_FILE_TO_STORAGE_FUNC.keys():
+            try:
+                BACKUP_FILE_TO_STORAGE_FUNC[qs_name](zip_file, deserialized_instance.object.file)
+            except Exception as e:
+                logging.warning(
+                    f"Can't restore file {deserialized_instance.object.file} for {qs_name}. Request user: {request_user}" + str(
+                        e))
+                continue
+
+        deserialized_instance.save()
+        add_log_and_report_to_user(qs_name, report_dict, request_user,
+                                   creation_msg=f"Instance of {type(deserialized_instance.object)} with backup_id : {deserialized_instance.object.backup_id} - created")
+
+
 def restore(zip_file, qs_name, request_user, report_dict):
     with zip_file.open(qs_name, 'r') as csv_file:
         try:
@@ -72,34 +99,10 @@ def restore(zip_file, qs_name, request_user, report_dict):
             obj_model_as_json = f"[{json.dumps(obj_model_as_dict, cls=DjangoJSONEncoder)}]"
             try:
                 deserialized_data = deserialize("json", obj_model_as_json)
+                iterate_deserialized_data(deserialized_data, qs_name, report_dict, request_user, zip_file)
             except DeserializationError:
                 add_log_and_report_to_user(qs_name, report_dict, request_user,
                                            err_msg=f"For file '{qs_name}'. Bad json model format: '{obj_model_as_json}'.")
-
-            for deserialized_instance in deserialized_data:
-                if MODEL_DICT[qs_name].objects.filter(
-                        backup_id=deserialized_instance.object.backup_id).first():
-                    add_log_and_report_to_user(qs_name, report_dict, request_user,
-                                               err_msg=f"Instance {str(deserialized_instance.object)} already exists.")
-                    continue
-
-                if not utils.is_owner(request_user, deserialized_instance.object):
-                    add_log_and_report_to_user(qs_name, report_dict, request_user,
-                                               err_msg=f"User is not instance's owner {str(deserialized_instance)}.")
-                    continue
-
-                if qs_name in BACKUP_FILE_TO_STORAGE_FUNC.keys():
-                    try:
-                        BACKUP_FILE_TO_STORAGE_FUNC[qs_name](zip_file, deserialized_instance.object.file)
-                    except Exception as e:
-                        logging.warning(
-                            f"Can't restore file {deserialized_instance.object.file} for {qs_name}. Request user: {request_user}" + str(
-                                e))
-                        continue
-
-                deserialized_instance.save()
-                add_log_and_report_to_user(qs_name, report_dict, request_user,
-                                           creation_msg=f"Instance of {type(deserialized_instance.object)} with backup_id : {deserialized_instance.object.backup_id} - created")
 
 
 def handle_request(request):
