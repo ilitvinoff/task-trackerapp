@@ -115,7 +115,7 @@ class TaskModel(models.Model):
         """
         String for representing the Model object (in Admin site etc.)
         """
-        return self.title
+        return f"Task: {self.title}"
 
     def get_absolute_url(self):
         """
@@ -178,7 +178,7 @@ class Attachment(models.Model):
         return self.task.assignee
 
     def __str__(self):
-        return self.file.name
+        return f"Attachment: {self.file.name}"
 
 
 # These two auto-delete files from filesystem when they are unneeded:
@@ -249,7 +249,7 @@ class Message(models.Model):
         return self.task.assignee
 
     def __str__(self):
-        return self.body
+        return f'Task message:\n{self.body}\n'
 
     class Meta:
         ordering = [

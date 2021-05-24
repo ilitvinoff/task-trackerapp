@@ -1,0 +1,52 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>REPORT:</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="page-header">
+            <h3>errors:</h3>
+        </div>
+    </div>
+
+    {% if errors %}
+        {% for error in errors %}
+
+            <div class="well"
+                 style="border-width:2px;border-color: #655f42 ;background-color: #ecdb98;padding-top: 5px;box-shadow: none;margin-bottom: 5px">
+                <strong>Err: </strong>{{ error }}
+            </div>
+
+        {% endfor %}
+    {% endif %}
+
+    <div class="col-md-12">
+        <div class="page-header">
+            <h3>report messages:</h3>
+        </div>
+    </div>
+
+    {% if restored_models %}
+        {% for model, value_list in restored_models.items %}
+
+            {% for element in value_list %}
+
+                <div class="well"
+                     style="border-width:2px;border-color: #655f42 ;background-color: #ecdb98;padding-top: 5px;box-shadow: none;margin-bottom: 5px">
+                    <strong>report message: </strong>model{{ model }}; {{ element }}
+                </div>
+            {% endfor %}
+
+        {% endfor %}
+    {% endif %}
+
+
+{% endblock %}

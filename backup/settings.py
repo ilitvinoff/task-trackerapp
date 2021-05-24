@@ -1,13 +1,12 @@
 import os
 
 import pandas
-from django.contrib.auth.models import User
 from django.utils.datetime_safe import datetime
 
 from chat.models import ChatMessageModel, ChatRoomModel
-from chat.utils import restore_file
 from tasktracker.settings import MEDIA_ROOT
 from trackerapp.models import TaskModel, Message, Attachment
+from . import utils
 
 """
 Directory path for managing user's data to import/export backup of this data
@@ -79,25 +78,24 @@ REQUEST_TO_READ_CSV = {
 FIELDS_NEED_TO_CONVERT = {
     # member is many to many field and stored to file like "[1,2,3]" when serializing,
     # so list representing as string. To unpack it correctly let's use func (watch sub)
-    'member': lambda pandas_dataframe: pandas_dataframe.member.apply(
-        lambda members_as_string: [int(member) for member in members_as_string[1:-1].split(',') if member != '']),
+    'member': lambda pandas_dataframe: pandas_dataframe.member.apply(utils.m2m_format),
 
     # for models serialized with - use_natural_foreign_keys=True attr, such fields as owner, assignee, task, room
     # stored to file with it's username for owner or assignee, and another appropriate values for appropriate fields,
     # thanks django let us to do this, but ...
     # Django deserializer can't deserialize that data correct (LOL OMG WTF !!!!), that's why we need
     # dance with a tambourine around the data to deserialize it (LOL OMG WTF !!!!)
-    'owner': lambda pandas_dataframe: pandas_dataframe.owner.apply(
-        lambda x: User.objects.get(username=x[2:-2]).id if type(x) != int else x),
-    'assignee': lambda pandas_dataframe: pandas_dataframe.assignee.apply(
-        lambda x: User.objects.get(username=x[2:-2]).id if type(x) != int else x),
-    'task': lambda pandas_dataframe: pandas_dataframe.task.apply(lambda x: TaskModel.objects.get(backup_id=x).id),
-    'room': lambda pandas_dataframe: pandas_dataframe.room.apply(lambda x: ChatRoomModel.objects.get(backup_id=x).id),
+    'owner': lambda pandas_dataframe: pandas_dataframe.owner.apply(utils.get_user_id_by_username),
+    'assignee': lambda pandas_dataframe: pandas_dataframe.assignee.apply(utils.get_user_id_by_username),
+    'task': lambda pandas_dataframe: pandas_dataframe.task.apply(
+        lambda backup_id: utils.get_model_id_by_backup_id(TaskModel, backup_id)),
+    'room': lambda pandas_dataframe: pandas_dataframe.room.apply(
+        lambda backup_id: utils.get_model_id_by_backup_id(ChatRoomModel, backup_id)),
 
     # replace creation date with datetime.now()
     'creation_date': lambda pandas_dataframe: pandas_dataframe.creation_date.apply(lambda x: datetime.now()),
 }
 
-BACKUP_FILE_FUNC = {
-    TASK_ATTACHMENT_QS_NAME: restore_file
+BACKUP_FILE_TO_STORAGE_FUNC = {
+    TASK_ATTACHMENT_QS_NAME: utils.restore_file
 }

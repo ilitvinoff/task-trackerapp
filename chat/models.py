@@ -66,7 +66,7 @@ class ChatMessageModel(models.Model):
     objects = MessageModelManager
 
     def __str__(self):
-        return (f'body:\n"{self.body}"\nowner: {self.owner}')
+        return (f'Chat message:\n"{self.body}"\nowner: {self.owner}')
 
     def get_room_owner(self):
         return self.room.owner
